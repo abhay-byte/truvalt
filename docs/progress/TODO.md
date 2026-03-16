@@ -9,13 +9,13 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Retrofit) — Priority: High — Target: v1.0
 - [ ] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
 - [ ] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
-- [ ] TASK-003 Implement Argon2id key derivation (Android + PHP) — Priority: High — Target: v1.0
-- [ ] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
-- [ ] TASK-005 Implement AES-256-GCM vault item encryption/decryption (PHP) — Priority: High — Target: v1.0
-- [ ] TASK-006 User registration endpoint and flow — Priority: High — Target: v1.0
-- [ ] TASK-007 User login endpoint and flow — Priority: High — Target: v1.0
-- [ ] TASK-008 Email + password authentication (Android) — Priority: High — Target: v1.0
-- [ ] TASK-009 Room database setup with vault items, folders, tags tables — Priority: High — Target: v1.0
+- [x] TASK-003 Implement Argon2id key derivation (Android + PHP) — Priority: High — Target: v1.0
+- [x] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
+- [x] TASK-008 Email + password authentication (Android) — Priority: High — Target: v1.0
+- [x] TASK-009 Room database setup with vault items, folders, tags tables — Priority: High — Target: v1.0
+- [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
+- [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
+- [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
 - [ ] TASK-010 Create vault item (Login type) — Priority: High — Target: v1.0
 - [ ] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [ ] TASK-012 Update vault item — Priority: High — Target: v1.0
