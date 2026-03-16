@@ -1,0 +1,10 @@
+Initial release of truvalt.
+- Password, passphrase, passkey, and secure note storage
+- TOTP 2FA code and security/recovery code storage
+- AES-256-GCM end-to-end encryption, Argon2id key derivation
+- Password generator and passphrase generator
+- Cloud sync with self-hosted server or fully local offline mode
+- Biometric unlock, TOTP 2FA login
+- Import from Bitwarden, LastPass, Chrome CSV
+- Encrypted .truvalt export format
+- Vault health & Have I Been Pwned breach check

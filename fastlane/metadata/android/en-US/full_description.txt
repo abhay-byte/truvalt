@@ -1,0 +1,39 @@
+<b>Your passwords, your rules — zero-knowledge encryption, self-hosted or offline.</b>
+
+truvalt is the password manager that puts you in complete control of your digital security. With military-grade encryption and a choice between cloud sync or fully local offline storage, your credentials are exactly where you want them — and nowhere else.
+
+<b>Key Features:</b>
+<ul>
+<li>Secure password vault with AES-256-GCM encryption</li>
+<li>Passphrase & passkey storage</li>
+<li>TOTP 2FA code storage with live countdown</li>
+<li>Security & recovery code storage</li>
+<li>Secure notes for sensitive information</li>
+<li>Password generator and passphrase generator</li>
+<li>Vault health check with Have I Been Pwned breach monitoring</li>
+<li>Import from Bitwarden, LastPass, Chrome, and more</li>
+<li>Encrypted export in .truvalt format</li>
+<li>Biometric unlock (fingerprint/face)</li>
+<li>Cloud sync with self-hosted server OR fully local offline mode</li>
+</ul>
+
+<b>How It Works:</b>
+truvalt uses zero-knowledge encryption, meaning your master password never leaves your device. All your data is encrypted locally before it's ever transmitted or stored. The server only sees encrypted blobs — it cannot read your passwords even if it wanted to. You hold the keys to your data.
+
+<b>Who It's For:</b>
+<ul>
+<li>Privacy-conscious users who want control over their data</li>
+<li>Self-hosters running their own infrastructure</li>
+<li>Developers managing API keys, SSH passphrases, and server credentials</li>
+<li>Teams needing secure credential sharing without per-seat subscriptions</li>
+<li>Anyone tired of subscription-based password managers</li>
+</ul>
+
+<b>Privacy & Permissions:</b>
+<ul>
+<li>Biometric: Used to unlock your vault securely without typing your master password each time</li>
+<li>Network: Required for cloud sync with your self-hosted server (optional — works fully offline)</li>
+<li>Storage: Used for encrypted vault backup and restore</li>
+</ul>
+
+<b>Start protecting your digital life today.</b> Download truvalt and take back control of your passwords.

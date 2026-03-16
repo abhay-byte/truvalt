@@ -1,0 +1,1 @@
+Secure, encrypted password manager with cloud & offline support

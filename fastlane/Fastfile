@@ -1,0 +1,122 @@
+default_platform(:android)
+
+platform :android do
+  desc "Runs all Android unit tests"
+  lane :test do
+    gradle(task: "test")
+  end
+
+  desc "Assembles debug APK"
+  lane :build_debug do
+    gradle(task: "assembleDebug")
+  end
+
+  desc "Assembles signed release AAB"
+  lane :build_release do
+    ensure_env_vars(
+      env_vars: ["KEYSTORE_PATH", "KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD"]
+    )
+
+    gradle(
+      task: "assembleRelease",
+      properties: {
+        "android.signing.keyStore" => ENV["KEYSTORE_PATH"],
+        "android.signing.keyAlias" => ENV["KEY_ALIAS"],
+        "android.signing.keyPass" => ENV["KEY_PASSWORD"],
+        "android.signing.storePass" => ENV["KEYSTORE_PASSWORD"]
+      }
+    )
+  end
+
+  desc "Build release and upload to internal track"
+  lane :deploy_internal do
+    build_release
+    upload_to_play_store(
+      track: "internal",
+      package_name: "com.ivarna.truvalt"
+    )
+  end
+
+  desc "Upload to alpha track"
+  lane :deploy_alpha do
+    build_release
+    upload_to_play_store(
+      track: "alpha",
+      package_name: "com.ivarna.truvalt"
+    )
+  end
+
+  desc "Upload to beta track"
+  lane :deploy_beta do
+    build_release
+    upload_to_play_store(
+      track: "beta",
+      package_name: "com.ivarna.truvalt"
+    )
+  end
+
+  desc "Upload to production track"
+  lane :deploy_production do
+    UI.confirm("Deploy truvalt to production?")
+    build_release
+    upload_to_play_store(
+      track: "production",
+      package_name: "com.ivarna.truvalt"
+    )
+  end
+
+  desc "Runs lint + test + git tag for F-Droid"
+  lane :deploy_fdroid do
+    gradle(task: "lint")
+    gradle(task: "test")
+    
+    version = get_version_name(
+      gradle_file: "android/app/build.gradle.kts"
+    )
+    
+    add_git_tag(tag: "v#{version}")
+    
+    UI.message("F-Droid builds automatically from tagged commits. Please ensure metadata/com.ivarna.truvalt.yml is maintained in the F-Droid data repository.")
+  end
+
+  desc "Bumps versionCode and creates git tag"
+  lane :increment_version do
+    ensure_env_vars(
+      env_vars: ["KEYSTORE_PATH", "KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD"]
+    )
+
+    gradle_file = "android/app/build.gradle.kts"
+    version = increment_version_name(gradle_file: gradle_file)
+    code = increment_version_code(gradle_file: gradle_file)
+
+    add_git_tag(tag: "v#{version}")
+    
+    UI.success("Version bumped to #{version} (#{code})")
+  end
+
+  desc "Placeholder for Screengrab screenshot capture"
+  lane :screenshot do
+    UI.message("Screengrab setup required for com.ivarna.truvalt")
+    UI.message("Run: fastlane screengrab --package com.ivarna.truvalt")
+    UI.message("Configure in Screengrabfile with package_name: 'com.ivarna.truvalt'")
+  end
+
+  desc "Posts deployment summary to Slack"
+  lane :send_slack_notification do
+    if ENV["SLACK_WEBHOOK_URL"].nil? || ENV["SLACK_WEBHOOK_URL"].empty?
+      UI.error("SLACK_WEBHOOK_URL environment variable not set")
+      next
+    end
+
+    version = get_version_name(
+      gradle_file: "android/app/build.gradle.kts"
+    )
+    
+    slack_message = "truvalt #{version} deployed successfully!"
+    
+    slack(
+      message: slack_message,
+      slack_url: ENV["SLACK_WEBHOOK_URL"]
+    )
+  end
+end
