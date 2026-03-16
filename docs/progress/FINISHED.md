@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-16 | 17 |
+| 2026-03-16 | 21 |
 
 ---
 
@@ -31,3 +31,6 @@
 | TASK-023 | Import from Chrome/Firefox CSV | 2026-03-16 | Browser CSV import supported |
 | TASK-027 | HIBP breach check | 2026-03-16 | k-anonymity SHA-1 check |
 | TASK-028 | Vault health dashboard | 2026-03-16 | HealthScreen with score |
+| TASK-031 | Auto-lock timeout | 2026-03-16 | SettingsViewModel with timeout |
+| TASK-034 | Clipboard timeout setting | 2026-03-16 | Configurable in settings |
+| TASK-047 | Dark/Light/AMOLED theme | 2026-03-16 | Theme options in settings |

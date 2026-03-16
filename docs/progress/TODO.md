@@ -15,12 +15,6 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-009 Room database setup with vault items, folders, tags tables — Priority: High — Target: v1.0
 - [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
-- [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
-- [x] TASK-010 Create vault item (Login type) — Priority: High — Target: v1.0
-- [x] TASK-014 Password generator (random string) — Priority: High — Target: v1.0
-- [x] TASK-015 Passphrase generator (EFF wordlist) — Priority: High — Target: v1.0
-- [x] TASK-016 Password strength meter (zxcvbn) — Priority: High — Target: v1.0
-- [ ] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
 - [ ] TASK-018 Cloud sync implementation — Priority: High — Target: v1.0
 - [ ] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
 - [ ] TASK-020 Conflict resolution (last-write-wins) — Priority: High — Target: v1.0
@@ -34,10 +28,10 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-028 Vault health dashboard — Priority: High — Target: v1.0
 - [ ] TASK-029 Audit log backend — Priority: High — Target: v1.0
 - [ ] TASK-030 Session management backend — Priority: High — Target: v1.0
-- [ ] TASK-031 Auto-lock timeout implementation — Priority: High — Target: v1.0
+- [x] TASK-031 Auto-lock timeout implementation — Priority: High — Target: v1.0
 - [ ] TASK-032 Master password change — Priority: High — Target: v1.0
-- [ ] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
-- [ ] TASK-034 Clipboard timeout setting — Priority: High — Target: v1.0
+- [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
+- [x] TASK-034 Clipboard timeout setting — Priority: High — Target: v1.0
 
 ---
 
@@ -55,7 +49,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-044 Full-text search — Priority: Medium — Target: v1.0
 - [ ] TASK-045 Soft delete / Trash — Priority: Medium — Target: v1.0
 - [ ] TASK-046 Biometric unlock (Android) — Priority: Medium — Target: v1.0
-- [ ] TASK-047 Dark / Light / AMOLED theme — Priority: Medium — Target: v1.0
+- [x] TASK-047 Dark / Light / AMOLED theme — Priority: Medium — Target: v1.0
 - [ ] TASK-048 Material You dynamic color (Android 12+) — Priority: Medium — Target: v1.0
 - [ ] TASK-049 Web vault UI (Laravel Blade) — Priority: Medium — Target: v1.0
 
