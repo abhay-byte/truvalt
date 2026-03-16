@@ -24,9 +24,9 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-018 Cloud sync implementation — Priority: High — Target: v1.0
 - [ ] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
 - [ ] TASK-020 Conflict resolution (last-write-wins) — Priority: High — Target: v1.0
-- [ ] TASK-021 Import from Bitwarden JSON — Priority: High — Target: v1.0
-- [ ] TASK-022 Import from LastPass CSV — Priority: High — Target: v1.0
-- [ ] TASK-023 Import from Chrome/Firefox CSV — Priority: High — Target: v1.0
+- [x] TASK-021 Import from Bitwarden JSON — Priority: High — Target: v1.0
+- [x] TASK-022 Import from LastPass CSV — Priority: High — Target: v1.0
+- [x] TASK-023 Import from Chrome/Firefox CSV — Priority: High — Target: v1.0
 - [ ] TASK-024 Export encrypted .truvalt format — Priority: High — Target: v1.0
 - [ ] TASK-025 Export unencrypted JSON — Priority: High — Target: v1.0
 - [ ] TASK-026 Export unencrypted CSV — Priority: High — Target: v1.0

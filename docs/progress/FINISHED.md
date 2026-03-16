@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-16 | 12 |
+| 2026-03-16 | 15 |
 
 ---
 
@@ -26,3 +26,6 @@
 | TASK-014 | Password generator (random string) | 2026-03-16 | PasswordGenerator with config options |
 | TASK-015 | Passphrase generator (EFF wordlist) | 2026-03-16 | EFF wordlist with word count |
 | TASK-016 | Password strength meter | 2026-03-16 | Strength calculation with 5 levels |
+| TASK-021 | Import from Bitwarden JSON | 2026-03-16 | ImportExportService with parser |
+| TASK-022 | Import from LastPass CSV | 2026-03-16 | CSV parser implemented |
+| TASK-023 | Import from Chrome/Firefox CSV | 2026-03-16 | Browser CSV import supported |
