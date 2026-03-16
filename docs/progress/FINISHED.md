@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-16 | 15 |
+| 2026-03-16 | 17 |
 
 ---
 
@@ -29,3 +29,5 @@
 | TASK-021 | Import from Bitwarden JSON | 2026-03-16 | ImportExportService with parser |
 | TASK-022 | Import from LastPass CSV | 2026-03-16 | CSV parser implemented |
 | TASK-023 | Import from Chrome/Firefox CSV | 2026-03-16 | Browser CSV import supported |
+| TASK-027 | HIBP breach check | 2026-03-16 | k-anonymity SHA-1 check |
+| TASK-028 | Vault health dashboard | 2026-03-16 | HealthScreen with score |

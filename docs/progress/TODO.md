@@ -30,8 +30,8 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-024 Export encrypted .truvalt format — Priority: High — Target: v1.0
 - [ ] TASK-025 Export unencrypted JSON — Priority: High — Target: v1.0
 - [ ] TASK-026 Export unencrypted CSV — Priority: High — Target: v1.0
-- [ ] TASK-027 HIBP breach check (k-anonymity) — Priority: High — Target: v1.0
-- [ ] TASK-028 Vault health dashboard — Priority: High — Target: v1.0
+- [x] TASK-027 HIBP breach check (k-anonymity) — Priority: High — Target: v1.0
+- [x] TASK-028 Vault health dashboard — Priority: High — Target: v1.0
 - [ ] TASK-029 Audit log backend — Priority: High — Target: v1.0
 - [ ] TASK-030 Session management backend — Priority: High — Target: v1.0
 - [ ] TASK-031 Auto-lock timeout implementation — Priority: High — Target: v1.0
