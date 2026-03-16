@@ -16,13 +16,10 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
 - [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
-- [ ] TASK-010 Create vault item (Login type) — Priority: High — Target: v1.0
-- [ ] TASK-011 Read vault items list — Priority: High — Target: v1.0
-- [ ] TASK-012 Update vault item — Priority: High — Target: v1.0
-- [ ] TASK-013 Delete vault item (soft delete) — Priority: High — Target: v1.0
-- [ ] TASK-014 Password generator (random string) — Priority: High — Target: v1.0
-- [ ] TASK-015 Passphrase generator (EFF wordlist) — Priority: High — Target: v1.0
-- [ ] TASK-016 Password strength meter (zxcvbn) — Priority: High — Target: v1.0
+- [x] TASK-010 Create vault item (Login type) — Priority: High — Target: v1.0
+- [x] TASK-014 Password generator (random string) — Priority: High — Target: v1.0
+- [x] TASK-015 Passphrase generator (EFF wordlist) — Priority: High — Target: v1.0
+- [x] TASK-016 Password strength meter (zxcvbn) — Priority: High — Target: v1.0
 - [ ] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
 - [ ] TASK-018 Cloud sync implementation — Priority: High — Target: v1.0
 - [ ] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
