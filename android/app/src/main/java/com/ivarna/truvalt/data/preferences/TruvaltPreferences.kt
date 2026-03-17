@@ -45,7 +45,9 @@ class TruvaltPreferences @Inject constructor(
     val lastSyncTime: Flow<Long> = context.dataStore.data.map { it[LAST_SYNC_TIME] ?: 0L }
     val isOnboardingComplete: Flow<Boolean> = context.dataStore.data.map { it[IS_ONBOARDING_COMPLETE] ?: false }
     val isVaultUnlocked: Flow<Boolean> = context.dataStore.data.map { it[IS_VAULT_UNLOCKED] ?: false }
-    val encryptedVaultKey: Flow<String?> = context.dataStore.data.map { it[ENCRYPTED_VAULT_KEY] }
+    val encryptedVaultKey: Flow<String?> = context.dataStore.data.map { 
+        it[ENCRYPTED_VAULT_KEY]?.takeIf { key -> key.isNotEmpty() }
+    }
     val userEmail: Flow<String?> = context.dataStore.data.map { it[USER_EMAIL] }
     val authKeyHash: Flow<String?> = context.dataStore.data.map { it[AUTH_KEY_HASH] }
 
