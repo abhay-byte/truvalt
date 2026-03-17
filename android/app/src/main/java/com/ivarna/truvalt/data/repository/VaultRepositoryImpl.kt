@@ -58,8 +58,8 @@ class VaultRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getItemsByType(type: VaultItemType): Flow<List<VaultItem>> {
-        return vaultItemDao.getItemsByType(type.name).map { entities ->
+    override fun getItemsByType(type: String): Flow<List<VaultItem>> {
+        return vaultItemDao.getItemsByType(type).map { entities ->
             entities.mapNotNull { it.toDomain() }
         }
     }
@@ -165,7 +165,7 @@ class VaultRepositoryImpl @Inject constructor(
             )
             VaultItem(
                 id = id,
-                type = VaultItemType.valueOf(type),
+                type = type,
                 name = name,
                 folderId = folderId,
                 encryptedData = decryptedData,
@@ -185,7 +185,7 @@ class VaultRepositoryImpl @Inject constructor(
         val blob = cryptoManager.encryptVaultItem(encryptedData, key)
         return VaultItemEntity(
             id = id,
-            type = type.name,
+            type = type,
             name = name,
             folderId = folderId,
             encryptedData = blob.iv + blob.ciphertext,

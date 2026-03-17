@@ -55,7 +55,7 @@ class VaultViewModel @Inject constructor(
                 "favorites" -> vaultRepository.getFavoriteItems().collect { items ->
                     _uiState.value = _uiState.value.copy(items = items.map { it.toUi() })
                 }
-                else -> vaultRepository.getItemsByType(VaultItemType.valueOf(filter)).collect { items ->
+                else -> vaultRepository.getItemsByType(filter).collect { items ->
                     _uiState.value = _uiState.value.copy(items = items.map { it.toUi() })
                 }
             }
@@ -79,8 +79,8 @@ class VaultViewModel @Inject constructor(
         return VaultItemUi(
             id = id,
             name = name,
-            type = type.name,
-            subtitle = "", // Would need to decrypt to get username
+            type = type,
+            subtitle = "",
             isFavorite = favorite
         )
     }

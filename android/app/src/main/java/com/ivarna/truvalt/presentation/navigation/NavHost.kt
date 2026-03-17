@@ -13,6 +13,7 @@ import com.ivarna.truvalt.presentation.ui.auth.ServerSetupScreen
 import com.ivarna.truvalt.presentation.ui.auth.SplashScreen
 import com.ivarna.truvalt.presentation.ui.settings.SettingsScreen
 import com.ivarna.truvalt.presentation.ui.vault.VaultHomeScreen
+import com.ivarna.truvalt.presentation.ui.vault.VaultItemTypeSelectionScreen
 
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
@@ -20,6 +21,7 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Register : Screen("register")
     data object VaultHome : Screen("vault_home")
+    data object VaultItemTypeSelection : Screen("vault_item/type_selection")
     data object VaultItemDetail : Screen("vault_item/{itemId}") {
         fun createRoute(itemId: String) = "vault_item/$itemId"
     }
@@ -119,6 +121,9 @@ fun TruvaltNavHost(
                 onNavigateToItemCreate = { type ->
                     navController.navigate(Screen.VaultItemCreate.createRoute(type))
                 },
+                onNavigateToTypeSelection = {
+                    navController.navigate(Screen.VaultItemTypeSelection.route)
+                },
                 onNavigateToGenerator = {
                     navController.navigate(Screen.Generator.route)
                 },
@@ -130,6 +135,19 @@ fun TruvaltNavHost(
                 },
                 onNavigateToTrash = {
                     navController.navigate(Screen.Trash.route)
+                }
+            )
+        }
+
+        composable(Screen.VaultItemTypeSelection.route) {
+            VaultItemTypeSelectionScreen(
+                onTypeSelected = { type ->
+                    navController.navigate(Screen.VaultItemCreate.createRoute(type.id)) {
+                        popUpTo(Screen.VaultItemTypeSelection.route) { inclusive = true }
+                    }
+                },
+                onDismiss = {
+                    navController.popBackStack()
                 }
             )
         }

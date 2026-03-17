@@ -13,6 +13,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
 - [x] TASK-008 Email + password authentication (Android) — Priority: High — Target: v1.0
 - [x] TASK-009 Room database setup with vault items, folders, tags tables — Priority: High — Target: v1.0
+- [x] TASK-010 Create vault item (all types) — Priority: High — Target: v1.0
 - [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
 - [ ] TASK-018 Cloud sync implementation — Priority: High — Target: v1.0

@@ -56,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun VaultHomeScreen(
     onNavigateToItemDetail: (String) -> Unit,
     onNavigateToItemCreate: (String?) -> Unit,
+    onNavigateToTypeSelection: () -> Unit = {},
     onNavigateToGenerator: () -> Unit,
     onNavigateToHealth: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -95,14 +96,14 @@ fun VaultHomeScreen(
                         DropdownMenuItem(
                             text = { Text("Logins") },
                             onClick = { 
-                                viewModel.setFilter("LOGIN")
+                                viewModel.setFilter("login")
                                 showFilterMenu = false
                             }
                         )
                         DropdownMenuItem(
                             text = { Text("Notes") },
                             onClick = { 
-                                viewModel.setFilter("NOTE")
+                                viewModel.setFilter("secure_note")
                                 showFilterMenu = false
                             }
                         )
@@ -152,7 +153,7 @@ fun VaultHomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onNavigateToItemCreate(null) }
+                onClick = { onNavigateToTypeSelection() }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add item")
             }
@@ -163,7 +164,7 @@ fun VaultHomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                onAddItem = { onNavigateToItemCreate(null) }
+                onAddItem = { onNavigateToTypeSelection() }
             )
         } else {
             LazyColumn(
@@ -267,9 +268,13 @@ fun EmptyVaultState(
 
 fun getItemIcon(type: String): ImageVector {
     return when (type) {
-        "LOGIN" -> Icons.Default.Lock
-        "NOTE" -> Icons.Default.Security
-        "PASSPHRASE" -> Icons.Default.Password
+        "login" -> Icons.Default.Lock
+        "passkey" -> Icons.Default.Security
+        "passphrase" -> Icons.Default.Password
+        "secure_note" -> Icons.Default.Folder
+        "security_code" -> Icons.Default.Security
+        "credit_card" -> Icons.Default.Lock
+        "identity" -> Icons.Default.Security
         else -> Icons.Default.Lock
     }
 }

@@ -43,7 +43,7 @@ class HealthViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val items = vaultRepository.getAllItems().first()
-                val passwordItems = items.filter { it.type == VaultItemType.LOGIN }
+                val passwordItems = items.filter { it.type == "login" }
 
                 var weak = 0
                 var reused = 0

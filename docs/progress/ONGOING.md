@@ -6,7 +6,7 @@
 
 | Category | Count |
 |---|---|
-| Tasks In Progress | 0 |
+| Tasks In Progress | 1 |
 | Tasks Blocked | 0 |
 
 ---
@@ -15,13 +15,7 @@
 
 | Task ID | Description | Started | Progress |
 |---|---|---|---|
-
----
-
-## Blocked Tasks
-
-| Task ID | Description | Blocker | Notes |
-|---|---|---|---|
+| TASK-010 | Vault item type system implementation | 2026-03-17 | 90% - Core system complete, testing needed |
 
 ---
 

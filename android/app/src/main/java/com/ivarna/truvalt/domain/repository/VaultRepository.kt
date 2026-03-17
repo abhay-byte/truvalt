@@ -10,7 +10,7 @@ interface VaultRepository {
     fun getAllItems(): Flow<List<VaultItem>>
     fun getFavoriteItems(): Flow<List<VaultItem>>
     fun getItemsByFolder(folderId: String): Flow<List<VaultItem>>
-    fun getItemsByType(type: VaultItemType): Flow<List<VaultItem>>
+    fun getItemsByType(type: String): Flow<List<VaultItem>>
     fun getTrashItems(): Flow<List<VaultItem>>
     fun searchItems(query: String): Flow<List<VaultItem>>
     

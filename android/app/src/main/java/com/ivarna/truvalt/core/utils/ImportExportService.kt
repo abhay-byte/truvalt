@@ -67,10 +67,10 @@ class ImportExportService @Inject constructor() {
                     try {
                         val i = item.asJsonObject
                         val type = when (i.get("type").asInt) {
-                            1 -> VaultItemType.LOGIN
-                            2 -> VaultItemType.NOTE
-                            3 -> VaultItemType.CARD
-                            else -> VaultItemType.LOGIN
+                            1 -> "login"
+                            2 -> "secure_note"
+                            3 -> "credit_card"
+                            else -> "login"
                         }
 
                         val name = i.get("name")?.asString ?: "Unknown"
@@ -137,7 +137,7 @@ class ImportExportService @Inject constructor() {
                     items.add(
                         VaultItem(
                             id = UUID.randomUUID().toString(),
-                            type = VaultItemType.LOGIN,
+                            type = "login",
                             name = name,
                             encryptedData = data.toByteArray(Charsets.UTF_8)
                         )
@@ -200,7 +200,7 @@ class ImportExportService @Inject constructor() {
                     items.add(
                         VaultItem(
                             id = UUID.randomUUID().toString(),
-                            type = VaultItemType.LOGIN,
+                            type = "login",
                             name = name,
                             encryptedData = data.toByteArray(Charsets.UTF_8)
                         )
@@ -222,8 +222,7 @@ class ImportExportService @Inject constructor() {
             if (json.has("items")) {
                 json.getAsJsonArray("items").forEach { item ->
                     val i = item.asJsonObject
-                    val typeName = i.get("type").asString
-                    val type = VaultItemType.valueOf(typeName)
+                    val type = i.get("type").asString
                     val data = i.get("data").asString
                     
                     items.add(

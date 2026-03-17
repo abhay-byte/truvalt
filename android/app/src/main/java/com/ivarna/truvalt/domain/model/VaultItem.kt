@@ -4,7 +4,7 @@ import java.util.UUID
 
 data class VaultItem(
     val id: String = UUID.randomUUID().toString(),
-    val type: VaultItemType,
+    val type: String,
     val name: String,
     val folderId: String? = null,
     val encryptedData: ByteArray,
@@ -47,17 +47,6 @@ data class VaultItem(
         result = 31 * result + syncStatus.hashCode()
         return result
     }
-}
-
-enum class VaultItemType {
-    LOGIN,
-    PASSKEY,
-    PASSPHRASE,
-    NOTE,
-    SECURITY_CODE,
-    CARD,
-    IDENTITY,
-    CUSTOM
 }
 
 enum class SyncStatus {
