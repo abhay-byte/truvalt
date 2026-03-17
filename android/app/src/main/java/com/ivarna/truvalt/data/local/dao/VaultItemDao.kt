@@ -27,7 +27,7 @@ interface VaultItemDao {
     @Query("SELECT * FROM vault_items WHERE id = :id")
     suspend fun getItemById(id: String): VaultItemEntity?
 
-    @Query("SELECT * FROM vault_items WHERE deletedAt IS NULL AND (name LIKE '%' || :query || '%' OR username LIKE '%' || :query || '%' OR url LIKE '%' || :query || '%')")
+    @Query("SELECT * FROM vault_items WHERE deletedAt IS NULL AND name LIKE '%' || :query || '%'")
     fun searchItems(query: String): Flow<List<VaultItemEntity>>
 
     @Query("SELECT * FROM vault_items WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC")

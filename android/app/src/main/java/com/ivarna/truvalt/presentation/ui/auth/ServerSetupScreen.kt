@@ -51,7 +51,11 @@ fun ServerSetupScreen(
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
-            onNavigateToLogin()
+            if (useLocalOnly) {
+                onNavigateToRegister()
+            } else {
+                onNavigateToLogin()
+            }
         }
     }
 

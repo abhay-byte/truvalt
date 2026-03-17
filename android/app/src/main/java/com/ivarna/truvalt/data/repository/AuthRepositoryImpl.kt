@@ -7,6 +7,7 @@ import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 

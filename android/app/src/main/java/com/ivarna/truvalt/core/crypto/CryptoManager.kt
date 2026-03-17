@@ -18,6 +18,7 @@ import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import android.util.Base64
 import kotlin.io.encoding.Base64 as KotlinBase64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 @Singleton
 class CryptoManager @Inject constructor() {
@@ -43,18 +44,18 @@ class CryptoManager @Inject constructor() {
     fun deriveKeyFromPassword(password: String, email: String): DerivedKeys {
         val salt = deriveSalt(email)
         
-        val params = Argon2Parameters.Builder(Argon2Parameters.Algorithm.ARGON2id)
-            .withMemory(ARGON2_MEMORY)
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withMemoryAsKB(ARGON2_MEMORY)
             .withIterations(ARGON2_ITERATIONS)
             .withParallelism(ARGON2_PARALLELISM)
             .withSalt(salt)
             .build()
 
-        val generator = Argon2BytesGenerator(params)
-        generator.init(KEY_LENGTH / 8, password)
+        val generator = Argon2BytesGenerator()
+        generator.init(params)
 
         val masterKey = ByteArray(KEY_LENGTH / 8)
-        generator.generateBytes(masterKey)
+        generator.generateBytes(password.toCharArray(), masterKey)
 
         val authKey = hkdf(masterKey, "auth".toByteArray())
         val vaultKey = hkdf(masterKey, "vault".toByteArray())
@@ -115,18 +116,18 @@ class CryptoManager @Inject constructor() {
         val salt = ByteArray(32).also { secureRandom.nextBytes(it) }
         val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
         
-        val params = Argon2Parameters.Builder(Argon2Parameters.Algorithm.ARGON2id)
-            .withMemory(ARGON2_MEMORY)
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withMemoryAsKB(ARGON2_MEMORY)
             .withIterations(ARGON2_ITERATIONS)
             .withParallelism(ARGON2_PARALLELISM)
             .withSalt(salt)
             .build()
 
-        val generator = Argon2BytesGenerator(params)
-        generator.init(KEY_LENGTH / 8, password)
+        val generator = Argon2BytesGenerator()
+        generator.init(params)
 
         val exportKey = ByteArray(KEY_LENGTH / 8)
-        generator.generateBytes(exportKey)
+        generator.generateBytes(password.toCharArray(), exportKey)
 
         val cipher = Cipher.getInstance(AES_MODE)
         val keySpec = SecretKeySpec(exportKey, "AES")
@@ -143,18 +144,18 @@ class CryptoManager @Inject constructor() {
     }
 
     fun decryptExport(blob: ExportedEncryptedBlob, password: String): ByteArray {
-        val params = Argon2Parameters.Builder(Argon2Parameters.Algorithm.ARGON2id)
-            .withMemory(ARGON2_MEMORY)
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withMemoryAsKB(ARGON2_MEMORY)
             .withIterations(ARGON2_ITERATIONS)
             .withParallelism(ARGON2_PARALLELISM)
             .withSalt(blob.salt)
             .build()
 
-        val generator = Argon2BytesGenerator(params)
-        generator.init(KEY_LENGTH / 8, password)
+        val generator = Argon2BytesGenerator()
+        generator.init(params)
 
         val exportKey = ByteArray(KEY_LENGTH / 8)
-        generator.generateBytes(exportKey)
+        generator.generateBytes(password.toCharArray(), exportKey)
 
         val cipher = Cipher.getInstance(AES_MODE)
         val keySpec = SecretKeySpec(exportKey, "AES")
@@ -164,6 +165,7 @@ class CryptoManager @Inject constructor() {
         return cipher.doFinal(blob.ciphertext)
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     fun hashAuthKey(authKey: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(authKey)

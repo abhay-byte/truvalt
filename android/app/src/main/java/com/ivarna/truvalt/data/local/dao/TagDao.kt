@@ -33,10 +33,10 @@ interface TagDao {
     @Query("DELETE FROM tags WHERE id = :id")
     suspend fun deleteTagById(id: String)
 
-    @Query("SELECT * FROM vault_item_tags WHERE itemId = :itemId")
+    @Query("SELECT tags.* FROM tags INNER JOIN vault_item_tags ON tags.id = vault_item_tags.tagId WHERE vault_item_tags.itemId = :itemId")
     fun getTagsForItem(itemId: String): Flow<List<TagEntity>>
 
-    @Query("SELECT * FROM vault_item_tags WHERE tagId = :tagId")
+    @Query("SELECT vault_item_tags.itemId FROM vault_item_tags WHERE vault_item_tags.tagId = :tagId")
     fun getItemsForTag(tagId: String): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

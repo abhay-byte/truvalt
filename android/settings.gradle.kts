@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "truvalt"
-include ':app'
+include(":app")

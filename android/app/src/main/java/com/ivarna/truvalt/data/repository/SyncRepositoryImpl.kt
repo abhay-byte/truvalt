@@ -6,6 +6,7 @@ import android.net.NetworkCapabilities
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -51,7 +51,7 @@ class ImportExportService @Inject constructor() {
         val errors = mutableListOf<String>()
         val items = mutableListOf<VaultItem>()
 
-        try {
+        return try {
             val json = gson.fromJson(content, JsonObject::class.java)
             val folders = mutableMapOf<String, String>()
             
@@ -68,7 +68,7 @@ class ImportExportService @Inject constructor() {
                         val i = item.asJsonObject
                         val type = when (i.get("type").asInt) {
                             1 -> VaultItemType.LOGIN
-                            2 -> VaultItemType.NOTECARD
+                            2 -> VaultItemType.NOTE
                             3 -> VaultItemType.CARD
                             else -> VaultItemType.LOGIN
                         }

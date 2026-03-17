@@ -1,0 +1,2 @@
+-keep,allowobfuscation,allowshrinking class com.ivarna.truvalt.presentation.ui.auth.AuthViewModel
+-keep,allowobfuscation,allowshrinking class com.ivarna.truvalt.presentation.ui.auth.AuthViewModel

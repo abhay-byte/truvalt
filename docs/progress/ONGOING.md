@@ -6,7 +6,7 @@
 
 | Category | Count |
 |---|---|
-| Tasks In Progress | 1 |
+| Tasks In Progress | 0 |
 | Tasks Blocked | 0 |
 
 ---
@@ -15,7 +15,13 @@
 
 | Task ID | Description | Started | Progress |
 |---|---|---|---|
-| TASK-018 | Cloud sync implementation | 2026-03-16 | Starting implementation |
+
+---
+
+## Blocked Tasks
+
+| Task ID | Description | Blocker | Notes |
+|---|---|---|---|
 
 ---
 
