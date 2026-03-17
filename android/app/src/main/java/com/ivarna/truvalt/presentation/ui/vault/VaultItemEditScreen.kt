@@ -74,6 +74,18 @@ fun VaultItemEditScreen(
         }
     }
 
+    LaunchedEffect(uiState.item) {
+        uiState.item?.let { item ->
+            val data = String(item.encryptedData, Charsets.UTF_8)
+            val parts = data.split("|||")
+            name = item.name
+            url = parts.getOrNull(0) ?: ""
+            username = parts.getOrNull(1) ?: ""
+            password = parts.getOrNull(2) ?: ""
+            notes = parts.getOrNull(3) ?: ""
+        }
+    }
+
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
             onSaveComplete()
