@@ -15,7 +15,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
-| BUG-001 | Fix local-only mode navigation (ServerSetup → Register) | 2026-03-17 | Fixed ServerSetupScreen to route to Register in local-only mode |
+| BUG-001 | Fix local-only mode to skip auth and go directly to vault | 2026-03-17 | ServerSetup → VaultHome in local-only, Splash → VaultHome if local-only configured |
 | BUG-002 | Fix KSP + Hilt compatibility issue | 2026-03-17 | Switched Hilt to KAPT, upgraded Kotlin 2.0.21→2.1.21 |
 | BUG-003 | Fix BouncyCastle Argon2 API usage | 2026-03-17 | Fixed Algorithm enum and withMemory() calls |
 | TASK-000 | Project and documentation initialized | 2026-03-16 | All /docs files created |

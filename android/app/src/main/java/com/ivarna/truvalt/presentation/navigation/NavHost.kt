@@ -76,6 +76,11 @@ fun TruvaltNavHost(
                     navController.navigate(Screen.Register.route) {
                         popUpTo(Screen.ServerSetup.route) { inclusive = true }
                     }
+                },
+                onNavigateToVault = {
+                    navController.navigate(Screen.VaultHome.route) {
+                        popUpTo(Screen.ServerSetup.route) { inclusive = true }
+                    }
                 }
             )
         }

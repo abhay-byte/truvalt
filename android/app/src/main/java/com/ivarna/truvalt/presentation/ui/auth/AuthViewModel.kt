@@ -55,6 +55,7 @@ class AuthViewModel @Inject constructor(
 
             when {
                 isVaultUnlocked -> onHasVault()
+                isLocalOnly -> onHasVault()
                 hasVault -> onHasAccount()
                 else -> onNoVault()
             }

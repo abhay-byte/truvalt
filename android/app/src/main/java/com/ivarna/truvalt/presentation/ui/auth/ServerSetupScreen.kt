@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun ServerSetupScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToRegister: () -> Unit,
+    onNavigateToVault: () -> Unit,
     viewModel: ServerSetupViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -52,7 +53,7 @@ fun ServerSetupScreen(
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
             if (useLocalOnly) {
-                onNavigateToRegister()
+                onNavigateToVault()
             } else {
                 onNavigateToLogin()
             }
