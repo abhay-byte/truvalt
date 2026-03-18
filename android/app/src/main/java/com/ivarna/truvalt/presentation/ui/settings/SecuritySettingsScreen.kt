@@ -5,23 +5,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ivarna.truvalt.core.biometric.BiometricHelper
 import com.ivarna.truvalt.core.biometric.BiometricStatus
-import com.ivarna.truvalt.core.pin.PinStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecuritySettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPinSetup: () -> Unit,
-    biometricHelper: BiometricHelper = hiltViewModel<SettingsViewModel>().biometricHelper,
-    pinStorage: PinStorage = hiltViewModel<SettingsViewModel>().pinStorage
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val biometricStatus = remember { biometricHelper.canAuthenticate() }
-    val isPinEnabled = remember { pinStorage.isEnabled() }
+    val uiState by viewModel.uiState.collectAsState()
+    val biometricStatus = remember { viewModel.biometricHelper.canAuthenticate() }
+    val isPinEnabled = remember { viewModel.pinStorage.isEnabled() }
+    var showAutoLockDialog by remember { mutableStateOf(false) }
     
     Scaffold(
         topBar = {
@@ -67,8 +67,8 @@ fun SecuritySettingsScreen(
                             )
                         }
                         Switch(
-                            checked = false,
-                            onCheckedChange = {},
+                            checked = uiState.isBiometricEnabled,
+                            onCheckedChange = { viewModel.setBiometricEnabled(it) },
                             enabled = biometricStatus == BiometricStatus.AVAILABLE
                         )
                     }
@@ -95,7 +95,7 @@ fun SecuritySettingsScreen(
                                 if (enabled) {
                                     onNavigateToPinSetup()
                                 } else {
-                                    pinStorage.clear()
+                                    viewModel.pinStorage.clear()
                                 }
                             }
                         )
@@ -109,6 +109,69 @@ fun SecuritySettingsScreen(
                     }
                 }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "Auto-lock",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showAutoLockDialog = true }
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Auto-lock Timeout", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = uiState.autoLockLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        
+        if (showAutoLockDialog) {
+            AlertDialog(
+                onDismissRequest = { showAutoLockDialog = false },
+                title = { Text("Auto-lock Timeout") },
+                text = {
+                    Column {
+                        listOf(
+                            0L to "Immediately (when app is closed)",
+                            60000L to "1 minute",
+                            300000L to "5 minutes",
+                            900000L to "15 minutes",
+                            3600000L to "1 hour",
+                            -1L to "Never"
+                        ).forEach { (timeout, label) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = uiState.autoLockTimeout == timeout,
+                                    onClick = {
+                                        viewModel.setAutoLockTimeout(timeout)
+                                        showAutoLockDialog = false
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(label)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAutoLockDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

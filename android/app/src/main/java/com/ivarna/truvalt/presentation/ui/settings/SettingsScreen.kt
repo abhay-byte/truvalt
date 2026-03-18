@@ -99,18 +99,6 @@ fun SettingsScreen(
                 )
 
                 SettingsItem(
-                    icon = Icons.Default.Fingerprint,
-                    title = "Biometric Unlock",
-                    subtitle = if (uiState.isBiometricEnabled) "Enabled" else "Disabled",
-                    trailing = {
-                        Switch(
-                            checked = uiState.isBiometricEnabled,
-                            onCheckedChange = { viewModel.setBiometricEnabled(it) }
-                        )
-                    }
-                )
-
-                SettingsItem(
                     icon = Icons.Default.Timer,
                     title = "Auto-lock",
                     subtitle = uiState.autoLockLabel,

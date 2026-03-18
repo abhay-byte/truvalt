@@ -30,7 +30,8 @@ data class SettingsUiState(
             300000L -> "5 minutes"
             900000L -> "15 minutes"
             3600000L -> "1 hour"
-            else -> "Never"
+            -1L -> "Never"
+            else -> "5 minutes"
         }
 }
 
