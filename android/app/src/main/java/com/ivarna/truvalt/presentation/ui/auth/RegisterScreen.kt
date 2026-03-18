@@ -163,6 +163,12 @@ fun RegisterScreen(
             TextButton(onClick = onNavigateToLogin) {
                 Text("Already have an account? Login")
             }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            TextButton(onClick = onNavigateToVault) {
+                Text("Continue in Offline Mode")
+            }
         }
     }
 }
