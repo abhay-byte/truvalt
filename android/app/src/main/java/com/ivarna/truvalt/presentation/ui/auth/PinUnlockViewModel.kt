@@ -17,7 +17,8 @@ data class PinUnlockUiState(
     val error: String? = null,
     val failCount: Int = 0,
     val isLocked: Boolean = false,
-    val unlockSuccess: Boolean = false
+    val unlockSuccess: Boolean = false,
+    val pinLength: Int = 6
 )
 
 @HiltViewModel
@@ -35,22 +36,26 @@ class PinUnlockViewModel @Inject constructor(
     }
     
     init {
-        _uiState.value = _uiState.value.copy(failCount = pinStorage.getFailCount())
+        _uiState.value = _uiState.value.copy(
+            failCount = pinStorage.getFailCount(),
+            pinLength = pinStorage.getPinLength()
+        )
     }
     
     fun onDigitEntered(digit: String) {
         if (_uiState.value.isLocked) return
         
         val current = _uiState.value.currentInput
-        if (current.length < 8) {
+        val maxLength = _uiState.value.pinLength
+        if (current.length < maxLength) {
             val newInput = current + digit
             _uiState.value = _uiState.value.copy(
                 currentInput = newInput,
                 error = null
             )
             
-            // Auto-submit when reaching 4-8 digits
-            if (newInput.length >= 4) {
+            // Auto-submit when reaching stored PIN length
+            if (newInput.length == maxLength) {
                 onConfirm()
             }
         }

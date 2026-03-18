@@ -86,7 +86,7 @@ class PinSetupViewModel @Inject constructor(
             viewModelScope.launch {
                 val salt = pinHasher.generateSalt()
                 val hash = pinHasher.hashPin(confirmEntry, salt)
-                pinStorage.saveHash(hash, salt)
+                pinStorage.saveHash(hash, salt, confirmEntry.length)
                 _uiState.value = state.copy(isComplete = true)
             }
         } else {

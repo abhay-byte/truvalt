@@ -31,13 +31,15 @@ class PinStorage @Inject constructor(
         private const val KEY_PIN_SALT = "pin_salt"
         private const val KEY_PIN_ENABLED = "pin_enabled"
         private const val KEY_FAIL_COUNT = "pin_fail_count"
+        private const val KEY_PIN_LENGTH = "pin_length"
     }
     
-    fun saveHash(hash: String, salt: ByteArray) {
+    fun saveHash(hash: String, salt: ByteArray, pinLength: Int) {
         sharedPreferences.edit()
             .putString(KEY_PIN_HASH, hash)
             .putString(KEY_PIN_SALT, Base64.getEncoder().encodeToString(salt))
             .putBoolean(KEY_PIN_ENABLED, true)
+            .putInt(KEY_PIN_LENGTH, pinLength)
             .apply()
     }
     
@@ -48,6 +50,8 @@ class PinStorage @Inject constructor(
         return Base64.getDecoder().decode(saltString)
     }
     
+    fun getPinLength(): Int = sharedPreferences.getInt(KEY_PIN_LENGTH, 6)
+    
     fun isEnabled(): Boolean = sharedPreferences.getBoolean(KEY_PIN_ENABLED, false)
     
     fun clear() {
@@ -56,6 +60,7 @@ class PinStorage @Inject constructor(
             .remove(KEY_PIN_SALT)
             .putBoolean(KEY_PIN_ENABLED, false)
             .remove(KEY_FAIL_COUNT)
+            .remove(KEY_PIN_LENGTH)
             .apply()
     }
     
