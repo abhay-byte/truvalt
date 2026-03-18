@@ -39,8 +39,8 @@ fun SplashScreen(
         val destination = when {
             isLocked && isBiometricEnabled -> SplashDestination.UNLOCK_BIOMETRIC
             isLocked && isPinEnabled -> SplashDestination.UNLOCK_PIN
-            isLocked -> SplashDestination.UNLOCK_PASSWORD
             isFirstLaunch -> SplashDestination.ONBOARDING
+            isLocked -> SplashDestination.UNLOCK_PASSWORD
             else -> SplashDestination.VAULT_HOME
         }
         

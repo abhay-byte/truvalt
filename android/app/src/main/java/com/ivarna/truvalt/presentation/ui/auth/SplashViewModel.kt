@@ -20,7 +20,7 @@ class SplashViewModel @Inject constructor(
     private val appLockManager: AppLockManager,
     private val preferences: TruvaltPreferences,
     private val biometricHelper: BiometricHelper,
-    pinStorage: PinStorage
+    private val pinStorage: PinStorage
 ) : ViewModel() {
 
     val isLocked: StateFlow<Boolean> = appLockManager.isLocked
@@ -29,7 +29,8 @@ class SplashViewModel @Inject constructor(
     val isBiometricEnabled: StateFlow<Boolean> = preferences.isBiometricEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val isPinEnabled = MutableStateFlow(pinStorage.isEnabled())
+    val isPinEnabled: StateFlow<Boolean> = MutableStateFlow(pinStorage.isEnabled())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, pinStorage.isEnabled())
 
     val isFirstLaunch: StateFlow<Boolean> = preferences.isFirstLaunch
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
