@@ -37,10 +37,14 @@ fun SplashScreen(
         delay(1500)
         
         val destination = when {
+            // If locked, check unlock methods first
             isLocked && isBiometricEnabled -> SplashDestination.UNLOCK_BIOMETRIC
             isLocked && isPinEnabled -> SplashDestination.UNLOCK_PIN
-            isFirstLaunch -> SplashDestination.ONBOARDING
+            // Only go to onboarding if truly first launch AND not locked with auth method
+            isFirstLaunch && !isPinEnabled && !isBiometricEnabled -> SplashDestination.ONBOARDING
+            // If locked but no auth method, require password
             isLocked -> SplashDestination.UNLOCK_PASSWORD
+            // Otherwise go to vault
             else -> SplashDestination.VAULT_HOME
         }
         
