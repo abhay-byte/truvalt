@@ -56,7 +56,7 @@ fun PinUnlockScreen(
             
             PinDotsRow(
                 currentLength = uiState.currentInput.length,
-                maxLength = 8,
+                maxLength = 6,
                 hasError = uiState.error != null
             )
             

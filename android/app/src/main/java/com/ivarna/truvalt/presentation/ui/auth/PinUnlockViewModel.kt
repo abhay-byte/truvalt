@@ -43,10 +43,16 @@ class PinUnlockViewModel @Inject constructor(
         
         val current = _uiState.value.currentInput
         if (current.length < 8) {
+            val newInput = current + digit
             _uiState.value = _uiState.value.copy(
-                currentInput = current + digit,
+                currentInput = newInput,
                 error = null
             )
+            
+            // Auto-submit when reaching 4-8 digits
+            if (newInput.length >= 4) {
+                onConfirm()
+            }
         }
     }
     
