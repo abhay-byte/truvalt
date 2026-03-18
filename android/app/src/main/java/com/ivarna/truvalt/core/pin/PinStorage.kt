@@ -56,7 +56,18 @@ class PinStorage @Inject constructor(
         return if (stored == -1) 4 else stored
     }
     
-    fun isEnabled(): Boolean = sharedPreferences.getBoolean(KEY_PIN_ENABLED, false)
+    fun isEnabled(): Boolean {
+        val enabled = sharedPreferences.getBoolean(KEY_PIN_ENABLED, false)
+        val hasHash = sharedPreferences.getString(KEY_PIN_HASH, null) != null
+        
+        // Migration: If we have a hash but not marked as enabled, enable it
+        if (hasHash && !enabled) {
+            sharedPreferences.edit().putBoolean(KEY_PIN_ENABLED, true).apply()
+            return true
+        }
+        
+        return enabled || hasHash
+    }
     
     fun clear() {
         sharedPreferences.edit()
