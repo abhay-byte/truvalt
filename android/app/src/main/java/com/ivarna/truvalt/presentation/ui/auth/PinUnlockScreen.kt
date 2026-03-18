@@ -8,12 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ivarna.truvalt.presentation.ui.shared.PinDotsRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinUnlockScreen(
     onUnlockSuccess: () -> Unit,
-    onRequireMasterPassword: () -> Unit,
+    onForgotPin: () -> Unit = {},
     viewModel: PinUnlockViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -26,7 +27,7 @@ fun PinUnlockScreen(
     
     LaunchedEffect(uiState.isLocked) {
         if (uiState.isLocked) {
-            onRequireMasterPassword()
+            onForgotPin()
         }
     }
     
@@ -53,9 +54,10 @@ fun PinUnlockScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            PinDotIndicators(
-                pinLength = uiState.currentInput.length,
-                maxLength = 8
+            PinDotsRow(
+                currentLength = uiState.currentInput.length,
+                maxLength = 8,
+                hasError = uiState.error != null
             )
             
             if (uiState.error != null) {
@@ -70,10 +72,15 @@ fun PinUnlockScreen(
             Spacer(modifier = Modifier.height(48.dp))
             
             NumericKeypad(
-                onDigitClick = { viewModel.onDigitEntered(it) },
-                onBackspace = { viewModel.onBackspace() },
-                onConfirm = { viewModel.onConfirm() }
+                onDigitClick = { viewModel.onDigitEntered(it.toString()) },
+                onBackspace = { viewModel.onBackspace() }
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            TextButton(onClick = onForgotPin) {
+                Text("Forgot PIN? Use master password")
+            }
         }
     }
 }

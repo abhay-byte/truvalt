@@ -1,7 +1,10 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivarna.truvalt.data.local.SeedDataInserter
+import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.domain.model.VaultItem
 import com.ivarna.truvalt.domain.model.VaultItemType
 import com.ivarna.truvalt.domain.repository.VaultRepository
@@ -9,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,14 +26,24 @@ data class VaultUiState(
 
 @HiltViewModel
 class VaultViewModel @Inject constructor(
-    private val vaultRepository: VaultRepository
+    private val vaultRepository: VaultRepository,
+    private val seedDataInserter: SeedDataInserter,
+    private val preferences: TruvaltPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VaultUiState())
     val uiState: StateFlow<VaultUiState> = _uiState.asStateFlow()
 
     init {
-        loadItems()
+        viewModelScope.launch {
+            val isFirstLaunch = preferences.isFirstLaunch.first()
+            if (isFirstLaunch) {
+                Log.d("VaultViewModel", "First launch detected, inserting seed data")
+                seedDataInserter.insertSeedData()
+                preferences.setFirstLaunch(false)
+            }
+            loadItems()
+        }
     }
 
     private fun loadItems() {

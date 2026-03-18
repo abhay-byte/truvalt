@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-18 | 2 |
+| 2026-03-18 | 6 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
 
@@ -16,6 +16,9 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| FIX-004 | Build fixes and UI improvements | 2026-03-18 | Fixed SeedDataInserter encryption method (encryptData→encryptWithKeystore); removed duplicate bottom navigation bar from VaultHomeScreen; app now builds successfully |
+| FIX-003 | Round 2 Critical Fixes (MainActivity, Biometric, PIN, Navigation, Content Clipping, Seed Data) | 2026-03-18 | Fixed 8 tasks: MainActivity→AppCompatActivity for BiometricPrompt; BiometricPromptManager with auto-trigger; PinDotsRow with dynamic dots; removed back arrows from tab screens; fixed innerPadding/WindowInsets; moved PinSetup to outer NavHost; SeedDataInserter with first-launch tracking; 3 new files, 15 modified |
+| CHORE-001 | Update .gitignore to exclude build files | 2026-03-18 | Added comprehensive build exclusions (**/build/, **/out/, **/.gradle/, **/.kotlin/, **/generated/, **/intermediates/, **/tmp/, **/outputs/); removed cached build files from git; prevents committing build artifacts |
 | FIX-002 | Critical Bug Fixes (Biometric, PIN, Lock, Splash, Seed, Generator, TOTP, Bottom Nav) | 2026-03-18 | Implemented 7 tasks: BiometricUnlock with Keystore, PIN lock with Argon2id, AppLockManager, SplashScreen with branding, 16 seed items, generator 128 chars, TOTP auto-refresh, nested navigation graphs; 13 new files created; APK: Truvalt-20260318-0645.apk (24MB) |
 | FIX-001 | Complete UI/UX overhaul of VaultHomeScreen and AddEditItemScreen | 2026-03-18 | Fixed app branding (Truvalt), rewrote VaultHomeScreen with search bar, filter chips, bottom navigation, AddItemTypeSheet modal; created VaultItemCard, PasswordStrengthBar, AddItemTypeSheet components; created type-aware AddEditItemScreen with proper validation; APK built successfully |
 | TASK-010 | Vault item type system (8 types) | 2026-03-17 | VaultItemType sealed class, type selection screen, comprehensive edit screen with Login/Passphrase/SecureNote/SecurityCode/CreditCard/Identity/Passkey support |

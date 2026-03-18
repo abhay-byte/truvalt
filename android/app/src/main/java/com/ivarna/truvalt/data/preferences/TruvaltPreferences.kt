@@ -34,6 +34,7 @@ class TruvaltPreferences @Inject constructor(
         private val ENCRYPTED_VAULT_KEY = stringPreferencesKey("encrypted_vault_key")
         private val USER_EMAIL = stringPreferencesKey("user_email")
         private val AUTH_KEY_HASH = stringPreferencesKey("auth_key_hash")
+        private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
     }
 
     val serverUrl: Flow<String?> = context.dataStore.data.map { it[SERVER_URL] }
@@ -50,6 +51,7 @@ class TruvaltPreferences @Inject constructor(
     }
     val userEmail: Flow<String?> = context.dataStore.data.map { it[USER_EMAIL] }
     val authKeyHash: Flow<String?> = context.dataStore.data.map { it[AUTH_KEY_HASH] }
+    val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { it[IS_FIRST_LAUNCH] ?: true }
 
     suspend fun setServerUrl(url: String?) {
         context.dataStore.edit { it[SERVER_URL] = url ?: "" }
@@ -77,6 +79,10 @@ class TruvaltPreferences @Inject constructor(
 
     suspend fun setLastSyncTime(time: Long) {
         context.dataStore.edit { it[LAST_SYNC_TIME] = time }
+    }
+    
+    suspend fun setFirstLaunch(isFirst: Boolean) {
+        context.dataStore.edit { it[IS_FIRST_LAUNCH] = isFirst }
     }
 
     suspend fun setOnboardingComplete(complete: Boolean) {

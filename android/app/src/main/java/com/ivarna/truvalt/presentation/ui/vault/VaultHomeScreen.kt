@@ -39,11 +39,10 @@ fun VaultHomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedTypeFilter by remember { mutableStateOf<VaultItemType?>(null) }
     val listState = rememberLazyListState()
-    
-    // Bottom nav state
-    var selectedTab by remember { mutableStateOf(0) }
+
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         topBar = {
             Column {
                 TopAppBar(
@@ -173,43 +172,6 @@ fun VaultHomeScreen(
                 text = { Text("New Item") },
                 expanded = !listState.isScrollInProgress
             )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                    label = { Text("Vault") },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.AutoFixHigh, contentDescription = null) },
-                    label = { Text("Generator") },
-                    selected = selectedTab == 1,
-                    onClick = {
-                        selectedTab = 1
-                        onNavigateToGenerator()
-                    }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = null) },
-                    label = { Text("Health") },
-                    selected = selectedTab == 2,
-                    onClick = {
-                        selectedTab = 2
-                        onNavigateToHealth()
-                    }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text("Settings") },
-                    selected = selectedTab == 3,
-                    onClick = {
-                        selectedTab = 3
-                        onNavigateToSettings()
-                    }
-                )
-            }
         }
     ) { padding ->
         if (uiState.items.isEmpty()) {
@@ -229,10 +191,11 @@ fun VaultHomeScreen(
         } else {
             LazyColumn(
                 state = listState,
+                contentPadding = padding,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                    .consumeWindowInsets(padding)
+                    .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {

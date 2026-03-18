@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,11 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ivarna.truvalt.presentation.ui.shared.PinDotsRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinSetupScreen(
     onComplete: () -> Unit,
+    onBack: () -> Unit = {},
     viewModel: PinSetupViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -61,15 +62,16 @@ fun PinSetupScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            PinDotIndicators(
-                pinLength = uiState.currentInput.length,
-                maxLength = 8
+            PinDotsRow(
+                currentLength = uiState.pin.length,
+                maxLength = uiState.maxPinLength,
+                hasError = uiState.hasError
             )
             
-            if (uiState.error != null) {
+            if (uiState.errorMessage != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = uiState.error!!,
+                    text = uiState.errorMessage!!,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -80,46 +82,28 @@ fun PinSetupScreen(
             NumericKeypad(
                 onDigitClick = { viewModel.onDigitEntered(it) },
                 onBackspace = { viewModel.onBackspace() },
-                onConfirm = { viewModel.onConfirm() }
+                showConfirm = uiState.step == PinSetupStep.ENTER_PIN && uiState.pin.length >= 4,
+                onConfirm = { viewModel.onConfirmStep() }
             )
         }
     }
 }
 
 @Composable
-fun PinDotIndicators(pinLength: Int, maxLength: Int) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(maxLength) { index ->
-            Surface(
-                modifier = Modifier.size(16.dp),
-                shape = CircleShape,
-                color = if (index < pinLength) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                }
-            ) {}
-        }
-    }
-}
-
-@Composable
 fun NumericKeypad(
-    onDigitClick: (String) -> Unit,
+    onDigitClick: (Int) -> Unit,
     onBackspace: () -> Unit,
-    onConfirm: () -> Unit
+    showConfirm: Boolean = false,
+    onConfirm: () -> Unit = {}
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val rows = listOf(
-            listOf("1", "2", "3"),
-            listOf("4", "5", "6"),
-            listOf("7", "8", "9")
+            listOf(1, 2, 3),
+            listOf(4, 5, 6),
+            listOf(7, 8, 9)
         )
         
         rows.forEach { row ->
@@ -133,7 +117,7 @@ fun NumericKeypad(
                         shape = CircleShape
                     ) {
                         Text(
-                            text = digit,
+                            text = digit.toString(),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -157,7 +141,7 @@ fun NumericKeypad(
             }
             
             FilledTonalButton(
-                onClick = { onDigitClick("0") },
+                onClick = { onDigitClick(0) },
                 modifier = Modifier.size(72.dp),
                 shape = CircleShape
             ) {
@@ -168,16 +152,16 @@ fun NumericKeypad(
                 )
             }
             
-            IconButton(
-                onClick = onConfirm,
-                modifier = Modifier.size(72.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Confirm",
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            if (showConfirm) {
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.size(72.dp),
+                    shape = CircleShape
+                ) {
+                    Text("✓", style = MaterialTheme.typography.headlineMedium)
+                }
+            } else {
+                Spacer(Modifier.size(72.dp))
             }
         }
     }

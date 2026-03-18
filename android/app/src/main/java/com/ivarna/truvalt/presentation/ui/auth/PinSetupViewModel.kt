@@ -18,8 +18,11 @@ enum class PinSetupStep {
 
 data class PinSetupUiState(
     val step: PinSetupStep = PinSetupStep.ENTER_PIN,
-    val currentInput: String = "",
-    val error: String? = null,
+    val pin: String = "",
+    val confirmedPin: String = "",
+    val hasError: Boolean = false,
+    val errorMessage: String? = null,
+    val maxPinLength: Int = 8,
     val isComplete: Boolean = false
 )
 
@@ -32,68 +35,68 @@ class PinSetupViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PinSetupUiState())
     val uiState: StateFlow<PinSetupUiState> = _uiState.asStateFlow()
     
-    private var firstPin: String = ""
-    
-    fun onDigitEntered(digit: String) {
-        val current = _uiState.value.currentInput
-        if (current.length < 8) {
-            _uiState.value = _uiState.value.copy(
-                currentInput = current + digit,
-                error = null
-            )
+    fun onDigitEntered(digit: Int) {
+        val state = _uiState.value
+        if (state.pin.length >= state.maxPinLength) return
+        
+        val newPin = state.pin + digit.toString()
+        
+        if (state.step == PinSetupStep.ENTER_PIN) {
+            if (newPin.length == state.maxPinLength) {
+                advanceToConfirm(newPin)
+            } else {
+                _uiState.value = state.copy(pin = newPin, hasError = false)
+            }
+        } else if (state.step == PinSetupStep.CONFIRM_PIN) {
+            val updated = state.pin + digit.toString()
+            if (updated.length == state.confirmedPin.length) {
+                verifyAndSave(updated)
+            } else {
+                _uiState.value = state.copy(pin = updated, hasError = false)
+            }
         }
     }
     
     fun onBackspace() {
-        val current = _uiState.value.currentInput
-        if (current.isNotEmpty()) {
-            _uiState.value = _uiState.value.copy(
-                currentInput = current.dropLast(1),
-                error = null
-            )
+        val state = _uiState.value
+        if (state.pin.isNotEmpty()) {
+            _uiState.value = state.copy(pin = state.pin.dropLast(1), hasError = false)
         }
     }
     
-    fun onConfirm() {
-        val current = _uiState.value.currentInput
-        
-        if (current.length < 4) {
-            _uiState.value = _uiState.value.copy(
-                error = "PIN must be at least 4 digits"
-            )
-            return
-        }
-        
-        when (_uiState.value.step) {
-            PinSetupStep.ENTER_PIN -> {
-                firstPin = current
-                _uiState.value = PinSetupUiState(
-                    step = PinSetupStep.CONFIRM_PIN,
-                    currentInput = "",
-                    error = null
-                )
-            }
-            PinSetupStep.CONFIRM_PIN -> {
-                if (current == firstPin) {
-                    savePinAndComplete(current)
-                } else {
-                    _uiState.value = PinSetupUiState(
-                        step = PinSetupStep.ENTER_PIN,
-                        currentInput = "",
-                        error = "PINs do not match"
-                    )
-                    firstPin = ""
-                }
-            }
+    fun onConfirmStep() {
+        val state = _uiState.value
+        if (state.step == PinSetupStep.ENTER_PIN && state.pin.length >= 4) {
+            advanceToConfirm(state.pin)
         }
     }
     
-    private fun savePinAndComplete(pin: String) {
-        viewModelScope.launch {
-            val salt = pinHasher.generateSalt()
-            val hash = pinHasher.hashPin(pin, salt)
-            pinStorage.saveHash(hash, salt)
-            _uiState.value = _uiState.value.copy(isComplete = true)
+    private fun advanceToConfirm(pin: String) {
+        _uiState.value = _uiState.value.copy(
+            step = PinSetupStep.CONFIRM_PIN,
+            confirmedPin = pin,
+            pin = "",
+            hasError = false
+        )
+    }
+    
+    private fun verifyAndSave(confirmEntry: String) {
+        val state = _uiState.value
+        if (confirmEntry == state.confirmedPin) {
+            viewModelScope.launch {
+                val salt = pinHasher.generateSalt()
+                val hash = pinHasher.hashPin(confirmEntry, salt)
+                pinStorage.saveHash(hash, salt)
+                _uiState.value = state.copy(isComplete = true)
+            }
+        } else {
+            _uiState.value = PinSetupUiState(
+                hasError = true,
+                errorMessage = "PINs do not match. Try again.",
+                step = PinSetupStep.ENTER_PIN,
+                pin = "",
+                confirmedPin = ""
+            )
         }
     }
 }

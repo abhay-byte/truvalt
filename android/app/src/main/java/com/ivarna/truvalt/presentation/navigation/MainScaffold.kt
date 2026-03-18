@@ -1,10 +1,14 @@
 package com.ivarna.truvalt.presentation.navigation
 
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -61,7 +65,11 @@ fun MainScaffold(rootNavController: NavHostController) {
     ) { paddingValues ->
         NavHost(
             navController = tabNavController,
-            startDestination = "vault_graph"
+            startDestination = "vault_graph",
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
         ) {
             navigation(startDestination = Screen.VaultHome.route, route = "vault_graph") {
                 composable(Screen.VaultHome.route) {
@@ -211,7 +219,7 @@ fun MainScaffold(rootNavController: NavHostController) {
                             tabNavController.navigate(Screen.SecuritySettings.route)
                         },
                         onNavigateToPinSetup = {
-                            tabNavController.navigate(Screen.PinSetup.route)
+                            rootNavController.navigate(Screen.PinSetup.route)
                         }
                     )
                 }
@@ -220,15 +228,7 @@ fun MainScaffold(rootNavController: NavHostController) {
                     com.ivarna.truvalt.presentation.ui.settings.SecuritySettingsScreen(
                         onNavigateBack = { tabNavController.popBackStack() },
                         onNavigateToPinSetup = {
-                            tabNavController.navigate(Screen.PinSetup.route)
-                        }
-                    )
-                }
-
-                composable(Screen.PinSetup.route) {
-                    com.ivarna.truvalt.presentation.ui.auth.PinSetupScreen(
-                        onComplete = {
-                            tabNavController.popBackStack()
+                            rootNavController.navigate(Screen.PinSetup.route)
                         }
                     )
                 }

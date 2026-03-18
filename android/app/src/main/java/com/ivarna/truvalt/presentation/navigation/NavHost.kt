@@ -78,7 +78,7 @@ fun TruvaltNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onFallbackToPIN = {
+                onFallbackToPin = {
                     navController.navigate(Screen.PinUnlock.route) {
                         popUpTo(Screen.BiometricUnlock.route) { inclusive = true }
                     }
@@ -93,7 +93,7 @@ fun TruvaltNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onRequireMasterPassword = {
+                onForgotPin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -104,6 +104,9 @@ fun TruvaltNavHost(
         composable(Screen.PinSetup.route) {
             PinSetupScreen(
                 onComplete = {
+                    navController.popBackStack()
+                },
+                onBack = {
                     navController.popBackStack()
                 }
             )
