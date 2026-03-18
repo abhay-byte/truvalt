@@ -6,6 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
+| 2026-03-18 | 1 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
 
@@ -15,6 +16,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| FIX-001 | Complete UI/UX overhaul of VaultHomeScreen and AddEditItemScreen | 2026-03-18 | Fixed app branding (Truvalt), rewrote VaultHomeScreen with search bar, filter chips, bottom navigation, AddItemTypeSheet modal; created VaultItemCard, PasswordStrengthBar, AddItemTypeSheet components; created type-aware AddEditItemScreen with proper validation; APK built successfully |
 | TASK-010 | Vault item type system (8 types) | 2026-03-17 | VaultItemType sealed class, type selection screen, comprehensive edit screen with Login/Passphrase/SecureNote/SecurityCode/CreditCard/Identity/Passkey support |
 | BUG-001 | Fix local-only mode to skip auth and go directly to vault | 2026-03-17 | ServerSetup → VaultHome in local-only, Splash → VaultHome if local-only configured |
 | BUG-002 | Fix KSP + Hilt compatibility issue | 2026-03-17 | Switched Hilt to KAPT, upgraded Kotlin 2.0.21→2.1.21 |

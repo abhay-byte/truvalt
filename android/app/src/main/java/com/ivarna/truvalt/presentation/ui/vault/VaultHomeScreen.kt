@@ -1,55 +1,23 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.HealthAndSafety
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Password
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ivarna.truvalt.domain.model.VaultItemType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,97 +33,181 @@ fun VaultHomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
-    var showFilterMenu by remember { mutableStateOf(false) }
+    var showAddItemSheet by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedTypeFilter by remember { mutableStateOf<VaultItemType?>(null) }
+    val listState = rememberLazyListState()
+    
+    // Bottom nav state
+    var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("truvalt") },
-                actions = {
-                    IconButton(onClick = { showFilterMenu = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Truvalt",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { isSearchActive = !isSearchActive }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search")
+                        }
+                        IconButton(onClick = { /* TODO: Filter bottom sheet */ }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                        }
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                leadingIcon = { Icon(Icons.Default.Settings, null) },
+                                onClick = {
+                                    onNavigateToSettings()
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Import") },
+                                leadingIcon = { Icon(Icons.Default.Upload, null) },
+                                onClick = {
+                                    // TODO: Navigate to import
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Export") },
+                                leadingIcon = { Icon(Icons.Default.Download, null) },
+                                onClick = {
+                                    // TODO: Navigate to export
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Lock Vault") },
+                                leadingIcon = { Icon(Icons.Default.Lock, null) },
+                                onClick = {
+                                    // TODO: Lock vault
+                                    showMenu = false
+                                }
+                            )
+                        }
                     }
-                    DropdownMenu(
-                        expanded = showFilterMenu,
-                        onDismissRequest = { showFilterMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("All Items") },
-                            onClick = { 
+                )
+                
+                // Search bar
+                AnimatedVisibility(visible = isSearchActive) {
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChange = {
+                            searchQuery = it
+                            viewModel.setSearchQuery(it)
+                        },
+                        onSearch = { viewModel.setSearchQuery(searchQuery) },
+                        active = false,
+                        onActiveChange = {},
+                        placeholder = { Text("Search vault…") },
+                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    searchQuery = ""
+                                    viewModel.setSearchQuery("")
+                                }) {
+                                    Icon(Icons.Default.Close, "Clear")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {}
+                }
+                
+                // Filter chips
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedTypeFilter == null,
+                            onClick = {
+                                selectedTypeFilter = null
                                 viewModel.setFilter(null)
-                                showFilterMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Favorites") },
-                            onClick = { 
-                                viewModel.setFilter("favorites")
-                                showFilterMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Logins") },
-                            onClick = { 
-                                viewModel.setFilter("login")
-                                showFilterMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Notes") },
-                            onClick = { 
-                                viewModel.setFilter("secure_note")
-                                showFilterMenu = false
-                            }
+                            },
+                            label = { Text("All") }
                         )
                     }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Password Generator") },
-                            leadingIcon = { Icon(Icons.Default.Password, null) },
-                            onClick = { 
-                                onNavigateToGenerator()
-                                showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Vault Health") },
-                            leadingIcon = { Icon(Icons.Default.HealthAndSafety, null) },
-                            onClick = { 
-                                onNavigateToHealth()
-                                showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Trash") },
-                            leadingIcon = { Icon(Icons.Default.Delete, null) },
-                            onClick = { 
-                                onNavigateToTrash()
-                                showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Settings") },
-                            leadingIcon = { Icon(Icons.Default.Settings, null) },
-                            onClick = { 
-                                onNavigateToSettings()
-                                showMenu = false
-                            }
+                    items(VaultItemType.getAllTypes()) { type ->
+                        FilterChip(
+                            selected = selectedTypeFilter == type,
+                            onClick = {
+                                selectedTypeFilter = type
+                                viewModel.setFilter(type.id)
+                            },
+                            label = { Text(getTypeLabel(type)) },
+                            leadingIcon = if (selectedTypeFilter == type) {
+                                { Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp)) }
+                            } else null
                         )
                     }
                 }
-            )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToTypeSelection() }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add item")
+            ExtendedFloatingActionButton(
+                onClick = { showAddItemSheet = true },
+                icon = { Icon(Icons.Rounded.Add, contentDescription = "Add item") },
+                text = { Text("New Item") },
+                expanded = !listState.isScrollInProgress
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    label = { Text("Vault") },
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.AutoFixHigh, contentDescription = null) },
+                    label = { Text("Generator") },
+                    selected = selectedTab == 1,
+                    onClick = {
+                        selectedTab = 1
+                        onNavigateToGenerator()
+                    }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.HealthAndSafety, contentDescription = null) },
+                    label = { Text("Health") },
+                    selected = selectedTab == 2,
+                    onClick = {
+                        selectedTab = 2
+                        onNavigateToHealth()
+                    }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Settings") },
+                    selected = selectedTab == 3,
+                    onClick = {
+                        selectedTab = 3
+                        onNavigateToSettings()
+                    }
+                )
             }
         }
     ) { padding ->
@@ -164,118 +216,137 @@ fun VaultHomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                onAddItem = { onNavigateToTypeSelection() }
+                hasFilter = selectedTypeFilter != null || searchQuery.isNotEmpty(),
+                onAddItem = { showAddItemSheet = true },
+                onClearFilters = {
+                    selectedTypeFilter = null
+                    searchQuery = ""
+                    viewModel.setFilter(null)
+                    viewModel.setSearchQuery("")
+                }
             )
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    Text(
+                        text = "${uiState.items.size} items",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                
                 items(uiState.items, key = { it.id }) { item ->
                     VaultItemCard(
                         item = item,
-                        onClick = { onNavigateToItemDetail(item.id) }
+                        onClick = { onNavigateToItemDetail(item.id) },
+                        onCopy = {
+                            // TODO: Copy to clipboard
+                        },
+                        onMoreClick = {
+                            // TODO: Show more menu
+                        }
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-fun VaultItemCard(
-    item: VaultItemUi,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = getItemIcon(item.type),
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                if (item.subtitle.isNotEmpty()) {
-                    Text(
-                        text = item.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            if (item.isFavorite) {
-                Icon(
-                    imageVector = Icons.Default.Security,
-                    contentDescription = "Favorite",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
+    
+    // Add Item Type Sheet
+    if (showAddItemSheet) {
+        AddItemTypeSheet(
+            onTypeSelected = { type ->
+                showAddItemSheet = false
+                onNavigateToItemCreate(type.id)
+            },
+            onDismiss = { showAddItemSheet = false }
+        )
     }
 }
 
 @Composable
 fun EmptyVaultState(
     modifier: Modifier = Modifier,
-    onAddItem: () -> Unit
+    hasFilter: Boolean = false,
+    onAddItem: () -> Unit,
+    onClearFilters: () -> Unit
 ) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Your vault is empty",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Add your first password to get started",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (hasFilter) {
+                Icon(
+                    imageVector = Icons.Default.SearchOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "No results",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Try a different filter or search term",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(onClick = onClearFilters) {
+                    Text("Clear filters")
+                }
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Your vault is empty",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Tap + to add your first item",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onAddItem) {
+                    Icon(Icons.Rounded.Add, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add your first item")
+                }
+            }
         }
     }
 }
 
-fun getItemIcon(type: String): ImageVector {
+fun getTypeLabel(type: VaultItemType): String {
     return when (type) {
-        "login" -> Icons.Default.Lock
-        "passkey" -> Icons.Default.Security
-        "passphrase" -> Icons.Default.Password
-        "secure_note" -> Icons.Default.Folder
-        "security_code" -> Icons.Default.Security
-        "credit_card" -> Icons.Default.Lock
-        "identity" -> Icons.Default.Security
-        else -> Icons.Default.Lock
+        is VaultItemType.Login -> "🔑 Logins"
+        is VaultItemType.Passkey -> "🔐 Passkeys"
+        is VaultItemType.Passphrase -> "💬 Passphrases"
+        is VaultItemType.SecureNote -> "📝 Notes"
+        is VaultItemType.SecurityCode -> "🛡 Security Codes"
+        is VaultItemType.CreditCard -> "💳 Cards"
+        is VaultItemType.Identity -> "👤 Identities"
+        is VaultItemType.Custom -> "⚙️ Custom"
     }
 }
 
