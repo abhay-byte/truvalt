@@ -27,15 +27,16 @@ class SplashViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val isBiometricEnabled: StateFlow<Boolean> = preferences.isBiometricEnabled
-        .combine(MutableStateFlow(biometricHelper.canAuthenticate())) { enabled, status ->
-            enabled && status == BiometricStatus.AVAILABLE
-        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val isPinEnabled = MutableStateFlow(pinStorage.isEnabled())
 
     val isFirstLaunch: StateFlow<Boolean> = preferences.isFirstLaunch
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    
+    fun isBiometricAvailable(): Boolean {
+        return isBiometricEnabled.value && biometricHelper.canAuthenticate() == BiometricStatus.AVAILABLE
+    }
     
     fun unlock() {
         appLockManager.unlock()

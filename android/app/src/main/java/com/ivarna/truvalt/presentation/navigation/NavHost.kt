@@ -3,6 +3,7 @@ package com.ivarna.truvalt.presentation.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -55,6 +56,11 @@ fun TruvaltNavHost(
     val isPinEnabled by viewModel.isPinEnabled.collectAsState()
     val isFirstLaunch by viewModel.isFirstLaunch.collectAsState()
     
+    // Check biometric availability dynamically
+    val isBiometricAvailable = remember(isLocked) {
+        viewModel.isBiometricAvailable()
+    }
+    
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
@@ -75,7 +81,7 @@ fun TruvaltNavHost(
                 },
                 isFirstLaunch = isFirstLaunch,
                 isLocked = isLocked,
-                isBiometricEnabled = isBiometricEnabled,
+                isBiometricEnabled = isBiometricAvailable,
                 isPinEnabled = isPinEnabled
             )
         }
