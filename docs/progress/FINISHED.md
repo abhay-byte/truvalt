@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-18 | 7 |
+| 2026-03-18 | 8 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
 
@@ -16,6 +16,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| FIX-006 | Fix app lock not triggering on relaunch | 2026-03-18 | Created SplashViewModel; added MainActivity lifecycle callbacks (onPause/onResume); fixed hardcoded isLocked state; immediate lock now works when app is closed |
 | FIX-005 | Fix biometric authentication and security settings | 2026-03-18 | Fixed duplicate biometric toggle; connected toggle to ViewModel; added auto-lock dialog with "Immediately" option; improved security settings UI |
 | FIX-004 | Build fixes and UI improvements | 2026-03-18 | Fixed SeedDataInserter encryption method (encryptData→encryptWithKeystore); removed duplicate bottom navigation bar from VaultHomeScreen; app now builds successfully |
 | FIX-003 | Round 2 Critical Fixes (MainActivity, Biometric, PIN, Navigation, Content Clipping, Seed Data) | 2026-03-18 | Fixed 8 tasks: MainActivity→AppCompatActivity for BiometricPrompt; BiometricPromptManager with auto-trigger; PinDotsRow with dynamic dots; removed back arrows from tab screens; fixed innerPadding/WindowInsets; moved PinSetup to outer NavHost; SeedDataInserter with first-launch tracking; 3 new files, 15 modified |
