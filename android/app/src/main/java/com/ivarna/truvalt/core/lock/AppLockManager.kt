@@ -1,16 +1,19 @@
 package com.ivarna.truvalt.core.lock
 
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
+import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AppLockManager @Inject constructor(
-    private val vaultKeyManager: VaultKeyManager
+    private val vaultKeyManager: VaultKeyManager,
+    private val preferences: TruvaltPreferences
 ) {
     
     private val _isLocked = MutableStateFlow(true)
@@ -19,15 +22,8 @@ class AppLockManager @Inject constructor(
     private var autoLockJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     
-    private var autoLockTimeoutMs: Long = 60_000L // Default 1 minute
-    
-    fun setAutoLockTimeout(timeoutMs: Long) {
-        autoLockTimeoutMs = timeoutMs
-    }
-    
     fun unlock() {
         _isLocked.value = false
-        resetAutoLockTimer()
     }
     
     fun lock() {
@@ -36,18 +32,15 @@ class AppLockManager @Inject constructor(
         autoLockJob?.cancel()
     }
     
-    fun resetAutoLockTimer() {
+    fun startAutoLockCountdown() {
         autoLockJob?.cancel()
-        if (autoLockTimeoutMs > 0) {
-            autoLockJob = scope.launch {
-                delay(autoLockTimeoutMs)
+        autoLockJob = scope.launch {
+            val timeout = preferences.autoLockTimeout.first()
+            if (timeout > 0) {
+                delay(timeout)
                 lock()
             }
         }
-    }
-    
-    fun startAutoLockCountdown() {
-        resetAutoLockTimer()
     }
     
     fun cancelAutoLockCountdown() {

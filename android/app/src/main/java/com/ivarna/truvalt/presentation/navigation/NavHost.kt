@@ -1,6 +1,9 @@
 package com.ivarna.truvalt.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -44,8 +47,14 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun TruvaltNavHost(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    viewModel: SplashViewModel = hiltViewModel()
 ) {
+    val isLocked by viewModel.isLocked.collectAsState()
+    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
+    val isPinEnabled by viewModel.isPinEnabled.collectAsState()
+    val isFirstLaunch by viewModel.isFirstLaunch.collectAsState()
+    
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route
@@ -64,16 +73,17 @@ fun TruvaltNavHost(
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
-                isFirstLaunch = false,
-                isLocked = false,
-                isBiometricEnabled = false,
-                isPinEnabled = false
+                isFirstLaunch = isFirstLaunch,
+                isLocked = isLocked,
+                isBiometricEnabled = isBiometricEnabled,
+                isPinEnabled = isPinEnabled
             )
         }
 
         composable(Screen.BiometricUnlock.route) {
             BiometricUnlockScreen(
                 onUnlockSuccess = {
+                    viewModel.unlock()
                     navController.navigate(Screen.Main.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -89,6 +99,7 @@ fun TruvaltNavHost(
         composable(Screen.PinUnlock.route) {
             PinUnlockScreen(
                 onUnlockSuccess = {
+                    viewModel.unlock()
                     navController.navigate(Screen.Main.route) {
                         popUpTo(0) { inclusive = true }
                     }
