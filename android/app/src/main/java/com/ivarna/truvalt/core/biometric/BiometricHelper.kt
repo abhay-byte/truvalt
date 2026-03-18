@@ -18,9 +18,15 @@ class BiometricHelper @Inject constructor(
 ) {
     fun canAuthenticate(): BiometricStatus {
         val manager = BiometricManager.from(context)
-        return when (manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            BiometricManager.BIOMETRIC_SUCCESS -> BiometricStatus.AVAILABLE
-            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> BiometricStatus.NONE_ENROLLED
+        // Try BIOMETRIC_STRONG first, fallback to BIOMETRIC_WEAK
+        val strongResult = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+        val weakResult = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        
+        return when {
+            strongResult == BiometricManager.BIOMETRIC_SUCCESS || 
+            weakResult == BiometricManager.BIOMETRIC_SUCCESS -> BiometricStatus.AVAILABLE
+            strongResult == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ||
+            weakResult == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> BiometricStatus.NONE_ENROLLED
             else -> BiometricStatus.UNAVAILABLE
         }
     }

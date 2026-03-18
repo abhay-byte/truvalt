@@ -25,20 +25,32 @@ class BiometricPromptManager(
 
     fun canAuthenticate(): Boolean {
         val manager = BiometricManager.from(activity)
-        return manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+        val strongResult = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+        val weakResult = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        return strongResult == BiometricManager.BIOMETRIC_SUCCESS || 
+               weakResult == BiometricManager.BIOMETRIC_SUCCESS
     }
 
     fun showPrompt(title: String = "Unlock Truvalt", negativeText: String = "Use PIN") {
         val manager = BiometricManager.from(activity)
-        when (manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-                resultChannel.trySend(BiometricResult.NotEnrolled)
-                return
-            }
-            BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
-            BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
-                resultChannel.trySend(BiometricResult.HardwareUnavailable)
-                return
+        
+        // Check STRONG first, fallback to WEAK
+        val authenticators = when {
+            manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS ->
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS ->
+                BiometricManager.Authenticators.BIOMETRIC_WEAK
+            else -> {
+                when (manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)) {
+                    BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                        resultChannel.trySend(BiometricResult.NotEnrolled)
+                        return
+                    }
+                    else -> {
+                        resultChannel.trySend(BiometricResult.HardwareUnavailable)
+                        return
+                    }
+                }
             }
         }
 
@@ -46,7 +58,7 @@ class BiometricPromptManager(
             .setTitle(title)
             .setSubtitle("Verify your identity to access your vault")
             .setNegativeButtonText(negativeText)
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .setAllowedAuthenticators(authenticators)
             .setConfirmationRequired(false)
             .build()
 
