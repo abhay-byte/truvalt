@@ -37,10 +37,10 @@ fun SplashScreen(
         delay(1500)
         
         val destination = when {
-            isFirstLaunch -> SplashDestination.ONBOARDING
             isLocked && isBiometricEnabled -> SplashDestination.UNLOCK_BIOMETRIC
             isLocked && isPinEnabled -> SplashDestination.UNLOCK_PIN
             isLocked -> SplashDestination.UNLOCK_PASSWORD
+            isFirstLaunch -> SplashDestination.ONBOARDING
             else -> SplashDestination.VAULT_HOME
         }
         
