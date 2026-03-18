@@ -36,16 +36,35 @@ fun SplashScreen(
         visible = true
         delay(1500)
         
+        // Debug logging
+        println("SplashScreen - isLocked: $isLocked, isBiometricEnabled: $isBiometricEnabled, isPinEnabled: $isPinEnabled, isFirstLaunch: $isFirstLaunch")
+        
         val destination = when {
-            // If locked, check unlock methods first
-            isLocked && isBiometricEnabled -> SplashDestination.UNLOCK_BIOMETRIC
-            isLocked && isPinEnabled -> SplashDestination.UNLOCK_PIN
-            // Only go to onboarding if truly first launch AND not locked with auth method
-            isFirstLaunch && !isPinEnabled && !isBiometricEnabled -> SplashDestination.ONBOARDING
-            // If locked but no auth method, require password
-            isLocked -> SplashDestination.UNLOCK_PASSWORD
-            // Otherwise go to vault
-            else -> SplashDestination.VAULT_HOME
+            // Priority 1: If locked and has biometric, use it
+            isLocked && isBiometricEnabled -> {
+                println("Going to BIOMETRIC")
+                SplashDestination.UNLOCK_BIOMETRIC
+            }
+            // Priority 2: If locked and has PIN, use it
+            isLocked && isPinEnabled -> {
+                println("Going to PIN")
+                SplashDestination.UNLOCK_PIN
+            }
+            // Priority 3: If locked but no auth, need password
+            isLocked -> {
+                println("Going to PASSWORD")
+                SplashDestination.UNLOCK_PASSWORD
+            }
+            // Priority 4: First launch onboarding
+            isFirstLaunch -> {
+                println("Going to ONBOARDING")
+                SplashDestination.ONBOARDING
+            }
+            // Priority 5: Already unlocked, go to vault
+            else -> {
+                println("Going to VAULT")
+                SplashDestination.VAULT_HOME
+            }
         }
         
         onNavigationDecided(destination)
