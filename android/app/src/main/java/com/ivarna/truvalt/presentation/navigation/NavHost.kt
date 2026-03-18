@@ -7,10 +7,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ivarna.truvalt.presentation.ui.auth.LoginScreen
-import com.ivarna.truvalt.presentation.ui.auth.RegisterScreen
-import com.ivarna.truvalt.presentation.ui.auth.ServerSetupScreen
-import com.ivarna.truvalt.presentation.ui.auth.SplashScreen
+import androidx.navigation.navigation
+import com.ivarna.truvalt.presentation.ui.auth.*
 import com.ivarna.truvalt.presentation.ui.settings.SettingsScreen
 import com.ivarna.truvalt.presentation.ui.vault.VaultHomeScreen
 import com.ivarna.truvalt.presentation.ui.vault.VaultItemTypeSelectionScreen
@@ -20,6 +18,10 @@ sealed class Screen(val route: String) {
     data object ServerSetup : Screen("server_setup")
     data object Login : Screen("login")
     data object Register : Screen("register")
+    data object BiometricUnlock : Screen("biometric_unlock")
+    data object PinUnlock : Screen("pin_unlock")
+    data object PinSetup : Screen("pin_setup")
+    data object Main : Screen("main")
     data object VaultHome : Screen("vault_home")
     data object VaultItemTypeSelection : Screen("vault_item/type_selection")
     data object VaultItemDetail : Screen("vault_item/{itemId}") {
@@ -36,6 +38,7 @@ sealed class Screen(val route: String) {
     data object Import : Screen("import")
     data object Export : Screen("export")
     data object Settings : Screen("settings")
+    data object SecuritySettings : Screen("security_settings")
     data object Trash : Screen("trash")
 }
 
@@ -48,21 +51,60 @@ fun TruvaltNavHost(
         startDestination = Screen.Splash.route
     ) {
         composable(Screen.Splash.route) {
-            SplashScreen(
-                onNavigateToServerSetup = {
-                    navController.navigate(Screen.ServerSetup.route) {
+            com.ivarna.truvalt.presentation.ui.auth.SplashScreen(
+                onNavigationDecided = { destination ->
+                    val route = when (destination) {
+                        SplashDestination.ONBOARDING -> Screen.ServerSetup.route
+                        SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
+                        SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
+                        SplashDestination.UNLOCK_PASSWORD -> Screen.Login.route
+                        SplashDestination.VAULT_HOME -> Screen.Main.route
+                    }
+                    navController.navigate(route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
-                onNavigateToLogin = {
+                isFirstLaunch = false,
+                isLocked = false,
+                isBiometricEnabled = false,
+                isPinEnabled = false
+            )
+        }
+
+        composable(Screen.BiometricUnlock.route) {
+            BiometricUnlockScreen(
+                onUnlockSuccess = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onFallbackToPIN = {
+                    navController.navigate(Screen.PinUnlock.route) {
+                        popUpTo(Screen.BiometricUnlock.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.PinUnlock.route) {
+            PinUnlockScreen(
+                onUnlockSuccess = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onRequireMasterPassword = {
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
-                },
-                onNavigateToVault = {
-                    navController.navigate(Screen.VaultHome.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
-                    }
+                }
+            )
+        }
+
+        composable(Screen.PinSetup.route) {
+            PinSetupScreen(
+                onComplete = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -80,7 +122,7 @@ fun TruvaltNavHost(
                     }
                 },
                 onNavigateToVault = {
-                    navController.navigate(Screen.VaultHome.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.ServerSetup.route) { inclusive = true }
                     }
                 }
@@ -93,7 +135,7 @@ fun TruvaltNavHost(
                     navController.navigate(Screen.Register.route)
                 },
                 onNavigateToVault = {
-                    navController.navigate(Screen.VaultHome.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -106,140 +148,15 @@ fun TruvaltNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToVault = {
-                    navController.navigate(Screen.VaultHome.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Screen.VaultHome.route) {
-            VaultHomeScreen(
-                onNavigateToItemDetail = { itemId ->
-                    navController.navigate(Screen.VaultItemDetail.createRoute(itemId))
-                },
-                onNavigateToItemCreate = { type ->
-                    navController.navigate(Screen.VaultItemCreate.createRoute(type))
-                },
-                onNavigateToTypeSelection = {
-                    navController.navigate(Screen.VaultItemTypeSelection.route)
-                },
-                onNavigateToGenerator = {
-                    navController.navigate(Screen.Generator.route)
-                },
-                onNavigateToHealth = {
-                    navController.navigate(Screen.Health.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
-                },
-                onNavigateToTrash = {
-                    navController.navigate(Screen.Trash.route)
-                }
-            )
-        }
-
-        composable(Screen.VaultItemTypeSelection.route) {
-            VaultItemTypeSelectionScreen(
-                onTypeSelected = { type ->
-                    navController.navigate(Screen.VaultItemCreate.createRoute(type.id)) {
-                        popUpTo(Screen.VaultItemTypeSelection.route) { inclusive = true }
-                    }
-                },
-                onDismiss = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(
-            route = Screen.VaultItemDetail.route,
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
-            com.ivarna.truvalt.presentation.ui.vault.VaultItemDetailScreen(
-                itemId = itemId,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToEdit = { navController.navigate(Screen.VaultItemEdit.createRoute(itemId)) }
-            )
-        }
-
-        composable(
-            route = Screen.VaultItemCreate.route,
-            arguments = listOf(navArgument("type") { 
-                type = NavType.StringType 
-                nullable = true 
-                defaultValue = null 
-            })
-        ) { backStackEntry ->
-            val type = backStackEntry.arguments?.getString("type")
-            com.ivarna.truvalt.presentation.ui.vault.VaultItemEditScreen(
-                itemId = null,
-                itemType = type,
-                onNavigateBack = { navController.popBackStack() },
-                onSaveComplete = { navController.popBackStack() }
-            )
-        }
-
-        composable(
-            route = Screen.VaultItemEdit.route,
-            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
-            com.ivarna.truvalt.presentation.ui.vault.VaultItemEditScreen(
-                itemId = itemId,
-                itemType = null,
-                onNavigateBack = { navController.popBackStack() },
-                onSaveComplete = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Generator.route) {
-            com.ivarna.truvalt.presentation.ui.generator.GeneratorScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Health.route) {
-            com.ivarna.truvalt.presentation.ui.health.HealthScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToItem = { itemId ->
-                    navController.navigate(Screen.VaultItemDetail.createRoute(itemId))
-                }
-            )
-        }
-
-        composable(Screen.Import.route) {
-            com.ivarna.truvalt.presentation.ui.import.ImportScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onImportComplete = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Export.route) {
-            com.ivarna.truvalt.presentation.ui.settings.ExportScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Settings.route) {
-            SettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Trash.route) {
-            com.ivarna.truvalt.presentation.ui.vault.TrashScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToItem = { itemId ->
-                    navController.navigate(Screen.VaultItemDetail.createRoute(itemId))
-                }
-            )
+        composable(Screen.Main.route) {
+            MainScaffold(navController)
         }
     }
 }

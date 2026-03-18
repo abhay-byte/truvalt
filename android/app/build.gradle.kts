@@ -75,6 +75,7 @@ dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
     implementation("androidx.activity:activity-compose:1.8.2")
 
     // Compose BOM
@@ -117,7 +118,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     // Biometric
-    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    
+    // Security - EncryptedSharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Crypto - BouncyCastle for Argon2
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
@@ -125,6 +129,7 @@ dependencies {
 
     // TOTP
     implementation("dev.samstevens.totp:totp:1.7.1")
+    implementation("commons-codec:commons-codec:1.16.0")
 
     // SQLCipher for encrypted database
     // implementation("net.zetetic:android-database-sqlcipher:4.5.4")

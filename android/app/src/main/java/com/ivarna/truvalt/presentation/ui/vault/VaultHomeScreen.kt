@@ -29,6 +29,7 @@ fun VaultHomeScreen(
     onNavigateToHealth: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTrash: () -> Unit,
+    onLockVault: () -> Unit = {},
     viewModel: VaultViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -96,7 +97,7 @@ fun VaultHomeScreen(
                                 text = { Text("Lock Vault") },
                                 leadingIcon = { Icon(Icons.Default.Lock, null) },
                                 onClick = {
-                                    // TODO: Lock vault
+                                    onLockVault()
                                     showMenu = false
                                 }
                             )

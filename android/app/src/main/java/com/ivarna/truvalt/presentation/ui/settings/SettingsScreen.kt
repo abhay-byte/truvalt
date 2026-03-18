@@ -58,6 +58,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onNavigateToSecuritySettings: () -> Unit = {},
+    onNavigateToPinSetup: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -84,6 +86,13 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             SettingsSection(title = "Security") {
+                SettingsItem(
+                    icon = Icons.Default.Security,
+                    title = "Security Settings",
+                    subtitle = "Biometric, PIN, and lock settings",
+                    onClick = onNavigateToSecuritySettings
+                )
+
                 SettingsItem(
                     icon = Icons.Default.Fingerprint,
                     title = "Biometric Unlock",

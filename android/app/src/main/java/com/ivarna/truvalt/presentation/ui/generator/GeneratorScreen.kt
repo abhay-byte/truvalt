@@ -208,8 +208,8 @@ fun GeneratorScreen(
                                     excludeAmbiguous = excludeAmbiguous
                                 )
                             },
-                            valueRange = 8f..64f,
-                            steps = 55
+                            valueRange = 8f..128f,
+                            steps = 119
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))

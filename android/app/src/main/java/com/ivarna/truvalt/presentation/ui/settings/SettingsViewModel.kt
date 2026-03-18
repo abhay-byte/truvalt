@@ -38,7 +38,9 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val preferences: TruvaltPreferences,
     private val authRepository: AuthRepository,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    val biometricHelper: com.ivarna.truvalt.core.biometric.BiometricHelper,
+    val pinStorage: com.ivarna.truvalt.core.pin.PinStorage
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
