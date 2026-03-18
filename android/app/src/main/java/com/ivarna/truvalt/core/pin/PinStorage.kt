@@ -50,7 +50,11 @@ class PinStorage @Inject constructor(
         return Base64.getDecoder().decode(saltString)
     }
     
-    fun getPinLength(): Int = sharedPreferences.getInt(KEY_PIN_LENGTH, 6)
+    fun getPinLength(): Int {
+        val stored = sharedPreferences.getInt(KEY_PIN_LENGTH, -1)
+        // If not stored (old PINs), default to 4 for backward compatibility
+        return if (stored == -1) 4 else stored
+    }
     
     fun isEnabled(): Boolean = sharedPreferences.getBoolean(KEY_PIN_ENABLED, false)
     
