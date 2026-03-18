@@ -31,42 +31,56 @@ fun SplashScreen(
     isPinEnabled: Boolean
 ) {
     var visible by remember { mutableStateOf(false) }
+    var debugInfo by remember { mutableStateOf("") }
     
     LaunchedEffect(Unit) {
         visible = true
         delay(1500)
         
-        // Debug logging
-        println("SplashScreen - isLocked: $isLocked, isBiometricEnabled: $isBiometricEnabled, isPinEnabled: $isPinEnabled, isFirstLaunch: $isFirstLaunch")
+        // Debug info
+        val info = """
+            isLocked: $isLocked
+            isBiometric: $isBiometricEnabled
+            isPinEnabled: $isPinEnabled
+            isFirstLaunch: $isFirstLaunch
+        """.trimIndent()
+        debugInfo = info
+        println("SplashScreen - $info")
         
         val destination = when {
             // Priority 1: If locked and has biometric, use it
             isLocked && isBiometricEnabled -> {
+                debugInfo += "\n\n→ BIOMETRIC"
                 println("Going to BIOMETRIC")
                 SplashDestination.UNLOCK_BIOMETRIC
             }
             // Priority 2: If locked and has PIN, use it
             isLocked && isPinEnabled -> {
+                debugInfo += "\n\n→ PIN"
                 println("Going to PIN")
                 SplashDestination.UNLOCK_PIN
             }
             // Priority 3: If locked but no auth, need password
             isLocked -> {
+                debugInfo += "\n\n→ PASSWORD"
                 println("Going to PASSWORD")
                 SplashDestination.UNLOCK_PASSWORD
             }
             // Priority 4: First launch onboarding
             isFirstLaunch -> {
+                debugInfo += "\n\n→ ONBOARDING"
                 println("Going to ONBOARDING")
                 SplashDestination.ONBOARDING
             }
             // Priority 5: Already unlocked, go to vault
             else -> {
+                debugInfo += "\n\n→ VAULT"
                 println("Going to VAULT")
                 SplashDestination.VAULT_HOME
             }
         }
         
+        delay(2000) // Show debug info for 2 seconds
         onNavigationDecided(destination)
     }
     
@@ -110,6 +124,22 @@ fun SplashScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                
+                if (debugInfo.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = debugInfo,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(16.dp),
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
             }
         }
     }
