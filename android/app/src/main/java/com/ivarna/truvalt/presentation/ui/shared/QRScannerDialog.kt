@@ -1,6 +1,5 @@
 package com.ivarna.truvalt.presentation.ui.shared
 
-import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,7 +17,8 @@ import com.google.zxing.MultiFormatReader
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import android.graphics.BitmapFactory
-import android.provider.MediaStore
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 @Composable
 fun QRScannerDialog(
@@ -26,8 +26,19 @@ fun QRScannerDialog(
     onQRCodeScanned: (String) -> Unit
 ) {
     val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val barcodeLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        if (result.contents != null) {
+            val qrText = result.contents
+            val secret = if (qrText.startsWith("otpauth://")) {
+                Uri.parse(qrText).getQueryParameter("secret") ?: qrText
+            } else {
+                qrText
+            }
+            onQRCodeScanned(secret)
+        }
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -51,7 +62,6 @@ fun QRScannerDialog(
                     val result = reader.decode(binaryBitmap)
                     val qrText = result.text
                     
-                    // Extract TOTP secret from otpauth:// URL
                     val secret = if (qrText.startsWith("otpauth://")) {
                         Uri.parse(qrText).getQueryParameter("secret") ?: qrText
                     } else {
@@ -77,6 +87,22 @@ fun QRScannerDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text("Choose an option to scan the 2FA QR code:")
+
+                Button(
+                    onClick = {
+                        val options = ScanOptions()
+                        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                        options.setPrompt("Scan 2FA QR Code")
+                        options.setBeepEnabled(false)
+                        options.setOrientationLocked(false)
+                        barcodeLauncher.launch(options)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.CameraAlt, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Scan with Camera")
+                }
 
                 Button(
                     onClick = { imagePickerLauncher.launch("image/*") },

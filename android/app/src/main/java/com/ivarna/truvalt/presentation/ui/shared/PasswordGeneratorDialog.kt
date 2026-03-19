@@ -63,8 +63,8 @@ fun PasswordGeneratorDialog(
                             useSymbols = useSymbols
                         )
                     },
-                    valueRange = 8f..32f,
-                    steps = 23
+                    valueRange = 8f..128f,
+                    steps = 119
                 )
 
                 Row(modifier = Modifier.fillMaxWidth()) {

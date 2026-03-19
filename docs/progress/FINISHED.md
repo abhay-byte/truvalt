@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-19 | 5 |
+| 2026-03-19 | 6 |
 | 2026-03-18 | 8 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
@@ -17,6 +17,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| BUG-009 | Update password generator to 128 chars & add camera for QR | 2026-03-19 | Updated password generator dialog length slider from 32 to 128 characters (matching main generator page); added camera scanning option using ZXing ScanContract; added CAMERA permission to manifest |
 | FEAT-001 | Add password auto-generate & QR code scanner for 2FA | 2026-03-19 | Added password generator dialog in login creation with length slider (8-32) and character options; added QR code scanner for TOTP seed using ZXing library; supports gallery image selection; extracts secret from otpauth:// URLs |
 | BUG-008 | Fix passphrase refresh button & duplicate passphrases | 2026-03-19 | Fixed generatePassphrase to use random words from wordlist; added refresh key to force state update; passphrases now unique on each generation |
 | BUG-007 | Fix passphrase refresh button & add passphrase count/length options | 2026-03-19 | Fixed refresh button to regenerate passphrases correctly; added word count slider (3-8 words); added passphrase count slider (1-10); displays all generated passphrases; copies all to clipboard |
