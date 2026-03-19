@@ -2,6 +2,8 @@ package com.ivarna.truvalt.presentation.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivarna.truvalt.core.crypto.CryptoManager
+import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +22,8 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val vaultRepository: VaultRepository
+    private val vaultRepository: VaultRepository,
+    private val cryptoManager: CryptoManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -34,6 +37,10 @@ class LoginViewModel @Inject constructor(
             
             result.fold(
                 onSuccess = {
+                    // Set vault key after successful login
+                    val derivedKeys = cryptoManager.deriveKeyFromPassword(password, email)
+                    (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(derivedKeys.vaultKey)
+                    
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isLoggedIn = true

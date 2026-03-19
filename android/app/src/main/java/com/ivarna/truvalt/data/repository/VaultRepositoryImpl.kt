@@ -15,6 +15,7 @@ import com.ivarna.truvalt.domain.model.Tag
 import com.ivarna.truvalt.domain.model.VaultItem
 import com.ivarna.truvalt.domain.model.VaultItemType
 import com.ivarna.truvalt.domain.repository.VaultRepository
+import com.ivarna.truvalt.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -27,7 +28,8 @@ class VaultRepositoryImpl @Inject constructor(
     private val folderDao: FolderDao,
     private val tagDao: TagDao,
     private val cryptoManager: CryptoManager,
-    private val preferences: TruvaltPreferences
+    private val preferences: TruvaltPreferences,
+    private val authRepository: AuthRepository
 ) : VaultRepository {
 
     private var vaultKey: ByteArray? = null
@@ -38,6 +40,20 @@ class VaultRepositoryImpl @Inject constructor(
 
     fun clearVaultKey() {
         vaultKey = null
+    }
+    
+    private fun getVaultKey(): ByteArray {
+        // Try to get from memory first
+        if (vaultKey != null) return vaultKey!!
+        
+        // Get from AuthRepository
+        val masterKey = (authRepository as? AuthRepositoryImpl)?.getMasterKey()
+        if (masterKey != null) {
+            vaultKey = masterKey
+            return masterKey
+        }
+        
+        throw IllegalStateException("Vault not unlocked")
     }
 
     override fun getAllItems(): Flow<List<VaultItem>> {
@@ -154,8 +170,8 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     private fun VaultItemEntity.toDomain(): VaultItem? {
-        val key = vaultKey ?: return null
         return try {
+            val key = getVaultKey()
             val decryptedData = cryptoManager.decryptVaultItem(
                 com.ivarna.truvalt.core.crypto.EncryptedBlob(
                     iv = encryptedData.take(12).toByteArray(),
@@ -181,7 +197,7 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     private fun VaultItem.toEntity(): VaultItemEntity {
-        val key = vaultKey ?: throw IllegalStateException("Vault not unlocked")
+        val key = getVaultKey()
         val blob = cryptoManager.encryptVaultItem(encryptedData, key)
         return VaultItemEntity(
             id = id,
