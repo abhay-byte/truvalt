@@ -31,10 +31,10 @@ After implementation complete:
 cd ~/repos/Truvalt/android
 ./gradlew assembleDebug
 
-# Install via adb
+# Option 1: Install via adb (preferred)
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Optional: Copy to downloads folder for backup
+# Option 2: Copy to downloads folder (fallback)
 cp app/build/outputs/apk/debug/app-debug.apk /sdcard/Download/Truvalt-$(date +%Y%m%d-%H%M).apk
 ```
 
@@ -86,8 +86,8 @@ git push origin main
 
 ### APK Build & Install
 - **Build output:** `android/app/build/outputs/apk/debug/app-debug.apk`
-- **Install:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
-- **Backup copy:** `/sdcard/Download/Truvalt-YYYYMMDD-HHMM.apk`
+- **Install (Option 1):** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+- **Install (Option 2):** Copy to `/sdcard/Download/Truvalt-YYYYMMDD-HHMM.apk`
 
 ### Commit Message Format
 ```
@@ -113,7 +113,7 @@ git push origin main
 cd ~/repos/Truvalt/android
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-cp app/build/outputs/apk/debug/app-debug.apk /sdcard/Download/Truvalt-$(date +%Y%m%d-%H%M).apk
+# Fallback: cp app/build/outputs/apk/debug/app-debug.apk /sdcard/Download/Truvalt-$(date +%Y%m%d-%H%M).apk
 
 # 4. Update docs (manual edit)
 # Move TASK-018 from ONGOING.md to FINISHED.md
