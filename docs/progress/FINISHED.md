@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-19 | 1 |
+| 2026-03-19 | 2 |
 | 2026-03-18 | 8 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
@@ -17,6 +17,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| BUG-006 | Remove emoji from vault filter text & add quit app menu option | 2026-03-19 | Removed emoji from filter chip labels (Logins, Passkeys, etc.); added "Quit App" option in top menu with divider |
 | BUG-005 | Fix PIN dots to be dynamic (min 4, grow with input) | 2026-03-19 | Updated PinDotsRow to show minimum 4 dots, dynamically grow as user types; setup screen shows dynamic dots, unlock screen shows fixed dots based on stored PIN length |
 | FIX-006 | Fix app lock not triggering on relaunch | 2026-03-18 | Created SplashViewModel; added MainActivity lifecycle callbacks (onPause/onResume); fixed hardcoded isLocked state; immediate lock now works when app is closed |
 | FIX-005 | Fix biometric authentication and security settings | 2026-03-18 | Fixed duplicate biometric toggle; connected toggle to ViewModel; added auto-lock dialog with "Immediately" option; improved security settings UI |

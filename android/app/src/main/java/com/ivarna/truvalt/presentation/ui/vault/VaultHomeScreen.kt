@@ -100,6 +100,14 @@ fun VaultHomeScreen(
                                     showMenu = false
                                 }
                             )
+                            Divider()
+                            DropdownMenuItem(
+                                text = { Text("Quit App") },
+                                leadingIcon = { Icon(Icons.Default.ExitToApp, null) },
+                                onClick = {
+                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                }
+                            )
                         }
                     }
                 )
@@ -303,14 +311,14 @@ fun EmptyVaultState(
 
 fun getTypeLabel(type: VaultItemType): String {
     return when (type) {
-        is VaultItemType.Login -> "🔑 Logins"
-        is VaultItemType.Passkey -> "🔐 Passkeys"
-        is VaultItemType.Passphrase -> "💬 Passphrases"
-        is VaultItemType.SecureNote -> "📝 Notes"
-        is VaultItemType.SecurityCode -> "🛡 Security Codes"
-        is VaultItemType.CreditCard -> "💳 Cards"
-        is VaultItemType.Identity -> "👤 Identities"
-        is VaultItemType.Custom -> "⚙️ Custom"
+        is VaultItemType.Login -> "Logins"
+        is VaultItemType.Passkey -> "Passkeys"
+        is VaultItemType.Passphrase -> "Passphrases"
+        is VaultItemType.SecureNote -> "Notes"
+        is VaultItemType.SecurityCode -> "Security Codes"
+        is VaultItemType.CreditCard -> "Cards"
+        is VaultItemType.Identity -> "Identities"
+        is VaultItemType.Custom -> "Custom"
     }
 }
 
