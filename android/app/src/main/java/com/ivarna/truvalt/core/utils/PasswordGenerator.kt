@@ -45,10 +45,9 @@ class PasswordGenerator {
         capitalize: Boolean = false,
         appendNumber: Boolean = false
     ): String {
-        val words = EFF_WORDLIST.filterIndexed { index, _ -> 
-            index < wordCount || wordCount > EFF_WORDLIST.size
-        }.take(wordCount).map { word ->
-            if (capitalize) word.replaceFirstChar { it.uppercase() } else word
+        val words = (1..wordCount).map {
+            val randomWord = EFF_WORDLIST[secureRandom.nextInt(EFF_WORDLIST.size)]
+            if (capitalize) randomWord.replaceFirstChar { it.uppercase() } else randomWord
         }
 
         var passphrase = words.joinToString(separator)

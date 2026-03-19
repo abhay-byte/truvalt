@@ -72,6 +72,7 @@ fun GeneratorScreen(
     var passphraseWordCount by remember { mutableIntStateOf(4) }
     var passphraseCount by remember { mutableIntStateOf(1) }
     var generatedPassphrases by remember { mutableStateOf(listOf<String>()) }
+    var passphraseRefreshKey by remember { mutableIntStateOf(0) }
 
     val strength = remember(generatedPassword) { strengthMeter.calculate(generatedPassword) }
 
@@ -197,10 +198,12 @@ fun GeneratorScreen(
                                     excludeAmbiguous = excludeAmbiguous
                                 )
                             } else {
-                                generatedPassphrases = List(passphraseCount) {
+                                passphraseRefreshKey++
+                                val newPassphrases = List(passphraseCount) {
                                     passwordGenerator.generatePassphrase(wordCount = passphraseWordCount)
                                 }
-                                generatedPassword = generatedPassphrases.firstOrNull() ?: ""
+                                generatedPassphrases = newPassphrases
+                                generatedPassword = newPassphrases.firstOrNull() ?: ""
                             }
                         }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Regenerate")
