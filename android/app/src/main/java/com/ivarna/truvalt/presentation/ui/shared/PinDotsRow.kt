@@ -18,11 +18,16 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun PinDotsRow(
     currentLength: Int,
-    maxLength: Int = 8,
+    maxLength: Int? = null,
     hasError: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val shakeOffset = remember { Animatable(0f) }
+    
+    // Dynamic dot count:
+    // - If maxLength is provided (unlock screen), use it
+    // - Otherwise (setup screen), show at least 4 or current length if greater
+    val displayDots = maxLength ?: maxOf(4, currentLength)
     
     LaunchedEffect(hasError) {
         if (hasError) {
@@ -39,7 +44,7 @@ fun PinDotsRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(maxLength) { index ->
+        repeat(displayDots) { index ->
             val isFilled = index < currentLength
             Box(
                 modifier = Modifier

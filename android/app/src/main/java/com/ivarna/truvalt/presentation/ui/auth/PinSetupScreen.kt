@@ -64,7 +64,6 @@ fun PinSetupScreen(
             
             PinDotsRow(
                 currentLength = uiState.pin.length,
-                maxLength = uiState.maxPinLength,
                 hasError = uiState.hasError
             )
             
