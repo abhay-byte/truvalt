@@ -24,14 +24,17 @@ Work on the task following project structure:
 
 ---
 
-### 3. Build APK
+### 3. Build & Install APK
 After implementation complete:
 
 ```bash
 cd ~/repos/Truvalt/android
 ./gradlew assembleDebug
 
-# Copy APK to Android downloads folder (proot-distro Debian in Termux)
+# Install via adb
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Optional: Copy to downloads folder for backup
 cp app/build/outputs/apk/debug/app-debug.apk /sdcard/Download/Truvalt-$(date +%Y%m%d-%H%M).apk
 ```
 
@@ -81,9 +84,10 @@ git push origin main
 - 🟡 In Progress (in ONGOING.md)
 - 🟢 Complete (in FINISHED.md)
 
-### APK Location
+### APK Build & Install
 - **Build output:** `android/app/build/outputs/apk/debug/app-debug.apk`
-- **Copy to:** `/sdcard/Download/Truvalt-YYYYMMDD-HHMM.apk`
+- **Install:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+- **Backup copy:** `/sdcard/Download/Truvalt-YYYYMMDD-HHMM.apk`
 
 ### Commit Message Format
 ```
@@ -105,9 +109,10 @@ git push origin main
 # 2. Implement feature
 # ... code changes ...
 
-# 3. Build APK
+# 3. Build & install APK
 cd ~/repos/Truvalt/android
 ./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 cp app/build/outputs/apk/debug/app-debug.apk /sdcard/Download/Truvalt-$(date +%Y%m%d-%H%M).apk
 
 # 4. Update docs (manual edit)
