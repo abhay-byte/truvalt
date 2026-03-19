@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-19 | 2 |
+| 2026-03-19 | 3 |
 | 2026-03-18 | 8 |
 | 2026-03-17 | 5 |
 | 2026-03-16 | 21 |
@@ -17,6 +17,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| BUG-007 | Fix passphrase refresh button & add passphrase count/length options | 2026-03-19 | Fixed refresh button to regenerate passphrases correctly; added word count slider (3-8 words); added passphrase count slider (1-10); displays all generated passphrases; copies all to clipboard |
 | BUG-006 | Remove emoji from vault filter text & add quit app menu option | 2026-03-19 | Removed emoji from filter chip labels (Logins, Passkeys, etc.); added "Quit App" option in top menu with divider |
 | BUG-005 | Fix PIN dots to be dynamic (min 4, grow with input) | 2026-03-19 | Updated PinDotsRow to show minimum 4 dots, dynamically grow as user types; setup screen shows dynamic dots, unlock screen shows fixed dots based on stored PIN length |
 | FIX-006 | Fix app lock not triggering on relaunch | 2026-03-18 | Created SplashViewModel; added MainActivity lifecycle callbacks (onPause/onResume); fixed hardcoded isLocked state; immediate lock now works when app is closed |

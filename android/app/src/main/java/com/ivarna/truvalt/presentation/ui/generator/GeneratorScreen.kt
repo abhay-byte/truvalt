@@ -67,6 +67,11 @@ fun GeneratorScreen(
     var useSymbols by remember { mutableStateOf(true) }
     var excludeAmbiguous by remember { mutableStateOf(false) }
     var selectedMode by remember { mutableStateOf(0) }
+    
+    // Passphrase options
+    var passphraseWordCount by remember { mutableIntStateOf(4) }
+    var passphraseCount by remember { mutableIntStateOf(1) }
+    var generatedPassphrases by remember { mutableStateOf(listOf<String>()) }
 
     val strength = remember(generatedPassword) { strengthMeter.calculate(generatedPassword) }
 
@@ -118,7 +123,10 @@ fun GeneratorScreen(
                     selected = selectedMode == 1,
                     onClick = { 
                         selectedMode = 1
-                        generatedPassword = passwordGenerator.generatePassphrase(wordCount = 4)
+                        generatedPassphrases = List(passphraseCount) {
+                            passwordGenerator.generatePassphrase(wordCount = passphraseWordCount)
+                        }
+                        generatedPassword = generatedPassphrases.firstOrNull() ?: ""
                     },
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                 ) {
@@ -132,41 +140,55 @@ fun GeneratorScreen(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Text(
-                        text = generatedPassword,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (selectedMode == 0) {
+                        Text(
+                            text = generatedPassword,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        // Show all generated passphrases
+                        generatedPassphrases.forEachIndexed { index, passphrase ->
+                            if (index > 0) Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = passphrase,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    LinearProgressIndicator(
-                        progress = { when (strength) {
-                            PasswordStrength.VERY_WEAK -> 0.2f
-                            PasswordStrength.WEAK -> 0.4f
-                            PasswordStrength.MEDIUM -> 0.6f
-                            PasswordStrength.STRONG -> 0.8f
-                            PasswordStrength.VERY_STRONG -> 1.0f
-                        }},
-                        modifier = Modifier.fillMaxWidth(),
-                        color = androidx.compose.ui.graphics.Color(strength.color),
-                    )
-                    
-                    Text(
-                        text = strength.label,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = androidx.compose.ui.graphics.Color(strength.color)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
+                    if (selectedMode == 0) {
+                        LinearProgressIndicator(
+                            progress = { when (strength) {
+                                PasswordStrength.VERY_WEAK -> 0.2f
+                                PasswordStrength.WEAK -> 0.4f
+                                PasswordStrength.MEDIUM -> 0.6f
+                                PasswordStrength.STRONG -> 0.8f
+                                PasswordStrength.VERY_STRONG -> 1.0f
+                            }},
+                            modifier = Modifier.fillMaxWidth(),
+                            color = androidx.compose.ui.graphics.Color(strength.color),
+                        )
+                        
+                        Text(
+                            text = strength.label,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = androidx.compose.ui.graphics.Color(strength.color)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
                         IconButton(onClick = { 
-                            generatedPassword = if (selectedMode == 0) {
-                                passwordGenerator.generate(
+                            if (selectedMode == 0) {
+                                generatedPassword = passwordGenerator.generate(
                                     length = passwordLength,
                                     useUppercase = useUppercase,
                                     useLowercase = useLowercase,
@@ -175,13 +197,21 @@ fun GeneratorScreen(
                                     excludeAmbiguous = excludeAmbiguous
                                 )
                             } else {
-                                passwordGenerator.generatePassphrase(wordCount = 4)
+                                generatedPassphrases = List(passphraseCount) {
+                                    passwordGenerator.generatePassphrase(wordCount = passphraseWordCount)
+                                }
+                                generatedPassword = generatedPassphrases.firstOrNull() ?: ""
                             }
                         }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Regenerate")
                         }
                         IconButton(onClick = {
-                            clipboardManager.setText(AnnotatedString(generatedPassword))
+                            val textToCopy = if (selectedMode == 0) {
+                                generatedPassword
+                            } else {
+                                generatedPassphrases.joinToString("\n")
+                            }
+                            clipboardManager.setText(AnnotatedString(textToCopy))
                         }) {
                             Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
                         }
@@ -270,6 +300,52 @@ fun GeneratorScreen(
                                 excludeAmbiguous = excludeAmbiguous
                             )
                         }
+                    }
+                }
+            }
+            
+            if (selectedMode == 1) {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Word Count: $passphraseWordCount",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Slider(
+                            value = passphraseWordCount.toFloat(),
+                            onValueChange = { 
+                                passphraseWordCount = it.toInt()
+                                generatedPassphrases = List(passphraseCount) {
+                                    passwordGenerator.generatePassphrase(wordCount = passphraseWordCount)
+                                }
+                                generatedPassword = generatedPassphrases.firstOrNull() ?: ""
+                            },
+                            valueRange = 3f..8f,
+                            steps = 4
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Number of Passphrases: $passphraseCount",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Slider(
+                            value = passphraseCount.toFloat(),
+                            onValueChange = { 
+                                passphraseCount = it.toInt()
+                                generatedPassphrases = List(passphraseCount) {
+                                    passwordGenerator.generatePassphrase(wordCount = passphraseWordCount)
+                                }
+                                generatedPassword = generatedPassphrases.firstOrNull() ?: ""
+                            },
+                            valueRange = 1f..10f,
+                            steps = 8
+                        )
                     }
                 }
             }
