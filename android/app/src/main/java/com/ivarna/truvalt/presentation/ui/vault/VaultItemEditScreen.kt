@@ -17,6 +17,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ivarna.truvalt.domain.model.*
+import com.ivarna.truvalt.presentation.ui.shared.PasswordGeneratorDialog
+import com.ivarna.truvalt.presentation.ui.shared.QRScannerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,6 +198,8 @@ fun VaultItemEditScreen(
 fun LoginItemFields(viewModel: VaultItemEditViewModel) {
     val loginData by viewModel.loginData.collectAsState()
     var showPassword by remember { mutableStateOf(false) }
+    var showPasswordGenerator by remember { mutableStateOf(false) }
+    var showQRScanner by remember { mutableStateOf(false) }
 
     Column {
         OutlinedTextField(
@@ -231,11 +235,16 @@ fun LoginItemFields(viewModel: VaultItemEditViewModel) {
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             leadingIcon = { Icon(Icons.Default.VpnKey, null) },
             trailingIcon = {
-                IconButton(onClick = { showPassword = !showPassword }) {
-                    Icon(
-                        if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        null
-                    )
+                Row {
+                    IconButton(onClick = { showPasswordGenerator = true }) {
+                        Icon(Icons.Default.AutoAwesome, "Generate")
+                    }
+                    IconButton(onClick = { showPassword = !showPassword }) {
+                        Icon(
+                            if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            null
+                        )
+                    }
                 }
             }
         )
@@ -248,6 +257,11 @@ fun LoginItemFields(viewModel: VaultItemEditViewModel) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             singleLine = true,
+            trailingIcon = {
+                IconButton(onClick = { showQRScanner = true }) {
+                    Icon(Icons.Default.QrCodeScanner, "Scan QR")
+                }
+            },
             leadingIcon = { Icon(Icons.Default.AccessTime, null) },
             supportingText = { Text("Optional: For 2FA/authenticator app codes") }
         )
@@ -261,6 +275,26 @@ fun LoginItemFields(viewModel: VaultItemEditViewModel) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             minLines = 3,
             maxLines = 5
+        )
+    }
+    
+    if (showPasswordGenerator) {
+        PasswordGeneratorDialog(
+            onDismiss = { showPasswordGenerator = false },
+            onPasswordSelected = { password ->
+                viewModel.updateLoginData(loginData.copy(password = password))
+                showPasswordGenerator = false
+            }
+        )
+    }
+    
+    if (showQRScanner) {
+        QRScannerDialog(
+            onDismiss = { showQRScanner = false },
+            onQRCodeScanned = { secret ->
+                viewModel.updateLoginData(loginData.copy(totpSeed = secret))
+                showQRScanner = false
+            }
         )
     }
 }
