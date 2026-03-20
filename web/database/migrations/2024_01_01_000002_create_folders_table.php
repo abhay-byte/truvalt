@@ -17,9 +17,13 @@ return new class extends Migration
             $table->bigInteger('updated_at');
             
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('parent_id')->references('id')->on('folders')->onDelete('cascade');
             
             $table->index(['user_id', 'parent_id']);
+        });
+        
+        // Add self-referencing foreign key after table creation
+        Schema::table('folders', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('folders')->onDelete('cascade');
         });
     }
 
