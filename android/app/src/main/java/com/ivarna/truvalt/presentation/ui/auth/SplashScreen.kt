@@ -18,7 +18,7 @@ enum class SplashDestination {
     ONBOARDING,
     UNLOCK_BIOMETRIC,
     UNLOCK_PIN,
-    UNLOCK_PASSWORD,
+    UNLOCK_MASTER_PASSWORD,
     VAULT_HOME
 }
 
@@ -60,11 +60,11 @@ fun SplashScreen(
                 println("Going to PIN")
                 SplashDestination.UNLOCK_PIN
             }
-            // Priority 3: If locked but no auth, need password
+            // Priority 3: If locked but no auth, need master password
             isLocked -> {
-                debugInfo += "\n\n→ PASSWORD"
-                println("Going to PASSWORD")
-                SplashDestination.UNLOCK_PASSWORD
+                debugInfo += "\n\n→ MASTER PASSWORD"
+                println("Going to MASTER PASSWORD")
+                SplashDestination.UNLOCK_MASTER_PASSWORD
             }
             // Priority 4: First launch onboarding
             isFirstLaunch -> {

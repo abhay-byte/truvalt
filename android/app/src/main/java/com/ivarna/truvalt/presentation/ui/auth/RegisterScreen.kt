@@ -166,7 +166,10 @@ fun RegisterScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            TextButton(onClick = onNavigateToVault) {
+            TextButton(onClick = {
+                viewModel.setupOfflineMode()
+                onNavigateToVault()
+            }) {
                 Text("Continue in Offline Mode")
             }
         }

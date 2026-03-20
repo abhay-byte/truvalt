@@ -1,5 +1,6 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ivarna.truvalt.domain.model.*
@@ -142,8 +143,12 @@ class VaultItemEditViewModel @Inject constructor(
 
     fun saveItem() {
         viewModelScope.launch {
+            Log.d("VaultItemEdit", "=== SAVE ITEM START ===")
             _uiState.value = _uiState.value.copy(isSaving = true)
             try {
+                Log.d("VaultItemEdit", "Item type: ${_selectedType.value}")
+                Log.d("VaultItemEdit", "Item name: ${_itemName.value}")
+                
                 val encryptedData = when (_selectedType.value) {
                     is VaultItemType.Login -> Json.encodeToString(_loginData.value)
                     is VaultItemType.Passphrase -> Json.encodeToString(_passphraseData.value)
@@ -155,6 +160,8 @@ class VaultItemEditViewModel @Inject constructor(
                     is VaultItemType.Custom -> "{}"
                 }.toByteArray(Charsets.UTF_8)
 
+                Log.d("VaultItemEdit", "Encrypted data size: ${encryptedData.size} bytes")
+
                 val item = VaultItem(
                     id = _uiState.value.item?.id ?: java.util.UUID.randomUUID().toString(),
                     type = _selectedType.value.id,
@@ -165,12 +172,20 @@ class VaultItemEditViewModel @Inject constructor(
                     updatedAt = System.currentTimeMillis()
                 )
 
+                Log.d("VaultItemEdit", "Calling vaultRepository.saveItem()...")
                 vaultRepository.saveItem(item)
+                Log.d("VaultItemEdit", "Save successful!")
+                
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     isSaved = true
                 )
             } catch (e: Exception) {
+                Log.e("VaultItemEdit", "=== SAVE FAILED ===")
+                Log.e("VaultItemEdit", "Error type: ${e.javaClass.simpleName}")
+                Log.e("VaultItemEdit", "Error message: ${e.message}")
+                Log.e("VaultItemEdit", "Stack trace:", e)
+                
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     error = e.message ?: "Failed to save item"

@@ -3,8 +3,11 @@ package com.ivarna.truvalt.presentation.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
+import com.ivarna.truvalt.core.lock.AppLockManager
 import com.ivarna.truvalt.core.pin.PinHasher
 import com.ivarna.truvalt.core.pin.PinStorage
+import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
+import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +28,9 @@ data class PinUnlockUiState(
 class PinUnlockViewModel @Inject constructor(
     private val pinHasher: PinHasher,
     private val pinStorage: PinStorage,
-    private val vaultKeyManager: VaultKeyManager
+    private val vaultKeyManager: VaultKeyManager,
+    private val vaultRepository: VaultRepository,
+    private val appLockManager: AppLockManager
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(PinUnlockUiState())
@@ -96,6 +101,14 @@ class PinUnlockViewModel @Inject constructor(
             
             if (pinHasher.verifyPin(pin, salt, storedHash)) {
                 pinStorage.resetFailCount()
+                
+                // Retrieve and set vault key
+                val vaultKey = vaultKeyManager.getInMemoryKey()
+                if (vaultKey != null) {
+                    (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(vaultKey)
+                }
+                appLockManager.unlock()
+                
                 _uiState.value = _uiState.value.copy(
                     unlockSuccess = true,
                     error = null

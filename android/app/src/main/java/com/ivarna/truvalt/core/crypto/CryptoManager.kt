@@ -68,6 +68,25 @@ class CryptoManager @Inject constructor() {
         )
     }
 
+    fun deriveKey(password: String): ByteArray {
+        val salt = "truvalt-local-only".toByteArray()
+        
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withMemoryAsKB(ARGON2_MEMORY)
+            .withIterations(ARGON2_ITERATIONS)
+            .withParallelism(ARGON2_PARALLELISM)
+            .withSalt(salt)
+            .build()
+
+        val generator = Argon2BytesGenerator()
+        generator.init(params)
+
+        val vaultKey = ByteArray(KEY_LENGTH / 8)
+        generator.generateBytes(password.toCharArray(), vaultKey)
+
+        return vaultKey
+    }
+
     private fun deriveSalt(email: String): ByteArray {
         val normalizedEmail = email.lowercase().trim()
         val digest = MessageDigest.getInstance("SHA-256")

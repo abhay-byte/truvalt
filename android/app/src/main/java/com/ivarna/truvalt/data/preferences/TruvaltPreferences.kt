@@ -32,6 +32,7 @@ class TruvaltPreferences @Inject constructor(
         private val IS_ONBOARDING_COMPLETE = booleanPreferencesKey("is_onboarding_complete")
         private val IS_VAULT_UNLOCKED = booleanPreferencesKey("is_vault_unlocked")
         private val ENCRYPTED_VAULT_KEY = stringPreferencesKey("encrypted_vault_key")
+        private val WRAPPED_VAULT_KEY = stringPreferencesKey("wrapped_vault_key")
         private val USER_EMAIL = stringPreferencesKey("user_email")
         private val AUTH_KEY_HASH = stringPreferencesKey("auth_key_hash")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
@@ -48,6 +49,9 @@ class TruvaltPreferences @Inject constructor(
     val isVaultUnlocked: Flow<Boolean> = context.dataStore.data.map { it[IS_VAULT_UNLOCKED] ?: false }
     val encryptedVaultKey: Flow<String?> = context.dataStore.data.map { 
         it[ENCRYPTED_VAULT_KEY]?.takeIf { key -> key.isNotEmpty() }
+    }
+    val wrappedVaultKey: Flow<String?> = context.dataStore.data.map { 
+        it[WRAPPED_VAULT_KEY]?.takeIf { key -> key.isNotEmpty() }
     }
     val userEmail: Flow<String?> = context.dataStore.data.map { it[USER_EMAIL] }
     val authKeyHash: Flow<String?> = context.dataStore.data.map { it[AUTH_KEY_HASH] }
@@ -98,6 +102,16 @@ class TruvaltPreferences @Inject constructor(
             if (key != null) it[ENCRYPTED_VAULT_KEY] = key
             else it.remove(ENCRYPTED_VAULT_KEY)
         }
+    }
+
+    suspend fun setWrappedVaultKey(keyBytes: ByteArray) {
+        val base64 = android.util.Base64.encodeToString(keyBytes, android.util.Base64.NO_WRAP)
+        context.dataStore.edit { it[WRAPPED_VAULT_KEY] = base64 }
+    }
+
+    suspend fun getWrappedVaultKey(): ByteArray? {
+        val base64 = wrappedVaultKey.first() ?: return null
+        return android.util.Base64.decode(base64, android.util.Base64.NO_WRAP)
     }
 
     suspend fun setUserEmail(email: String?) {

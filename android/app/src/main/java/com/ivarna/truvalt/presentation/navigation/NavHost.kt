@@ -20,6 +20,8 @@ import com.ivarna.truvalt.presentation.ui.vault.VaultItemTypeSelectionScreen
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object ServerSetup : Screen("server_setup")
+    data object MasterPasswordSetup : Screen("master_password_setup")
+    data object MasterPasswordUnlock : Screen("master_password_unlock")
     data object Login : Screen("login")
     data object Register : Screen("register")
     data object BiometricUnlock : Screen("biometric_unlock")
@@ -72,7 +74,7 @@ fun TruvaltNavHost(
                         SplashDestination.ONBOARDING -> Screen.ServerSetup.route
                         SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
                         SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
-                        SplashDestination.UNLOCK_PASSWORD -> Screen.Login.route
+                        SplashDestination.UNLOCK_MASTER_PASSWORD -> Screen.MasterPasswordUnlock.route
                         SplashDestination.VAULT_HOME -> Screen.Main.route
                     }
                     navController.navigate(route) {
@@ -111,7 +113,7 @@ fun TruvaltNavHost(
                     }
                 },
                 onForgotPin = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.MasterPasswordUnlock.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
@@ -142,8 +144,28 @@ fun TruvaltNavHost(
                     }
                 },
                 onNavigateToVault = {
-                    navController.navigate(Screen.Main.route) {
+                    navController.navigate(Screen.MasterPasswordSetup.route) {
                         popUpTo(Screen.ServerSetup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.MasterPasswordSetup.route) {
+            MasterPasswordSetupScreen(
+                onComplete = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.MasterPasswordUnlock.route) {
+            MasterPasswordUnlockScreen(
+                onUnlockSuccess = {
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

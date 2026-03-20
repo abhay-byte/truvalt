@@ -2,6 +2,8 @@ package com.ivarna.truvalt.core.lock
 
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
+import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
+import com.ivarna.truvalt.domain.repository.VaultRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,8 @@ import javax.inject.Singleton
 @Singleton
 class AppLockManager @Inject constructor(
     private val vaultKeyManager: VaultKeyManager,
-    private val preferences: TruvaltPreferences
+    private val preferences: TruvaltPreferences,
+    private val vaultRepository: VaultRepository
 ) {
     
     private val _isLocked = MutableStateFlow(true)
@@ -28,6 +31,7 @@ class AppLockManager @Inject constructor(
     
     fun lock() {
         vaultKeyManager.clearInMemoryKey()
+        (vaultRepository as? VaultRepositoryImpl)?.clearVaultKey()
         _isLocked.value = true
         autoLockJob?.cancel()
     }

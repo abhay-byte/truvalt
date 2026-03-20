@@ -3,6 +3,9 @@ package com.ivarna.truvalt.presentation.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
+import com.ivarna.truvalt.core.lock.AppLockManager
+import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
+import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +22,9 @@ sealed class BiometricUnlockState {
 
 @HiltViewModel
 class BiometricUnlockViewModel @Inject constructor(
-    private val vaultKeyManager: VaultKeyManager
+    private val vaultKeyManager: VaultKeyManager,
+    private val vaultRepository: VaultRepository,
+    private val appLockManager: AppLockManager
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow<BiometricUnlockState>(BiometricUnlockState.Authenticating)
@@ -27,6 +32,13 @@ class BiometricUnlockViewModel @Inject constructor(
     
     fun onBiometricSuccess() {
         viewModelScope.launch {
+            // Retrieve and set vault key
+            val vaultKey = vaultKeyManager.getInMemoryKey()
+            if (vaultKey != null) {
+                (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(vaultKey)
+            }
+            appLockManager.unlock()
+            
             _uiState.value = BiometricUnlockState.Success
         }
     }

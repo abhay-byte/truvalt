@@ -1,6 +1,8 @@
 package com.ivarna.truvalt.data.repository
 
+import android.util.Log
 import com.ivarna.truvalt.core.crypto.CryptoManager
+import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.data.local.dao.FolderDao
 import com.ivarna.truvalt.data.local.dao.TagDao
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
@@ -15,7 +17,6 @@ import com.ivarna.truvalt.domain.model.Tag
 import com.ivarna.truvalt.domain.model.VaultItem
 import com.ivarna.truvalt.domain.model.VaultItemType
 import com.ivarna.truvalt.domain.repository.VaultRepository
-import com.ivarna.truvalt.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -29,30 +30,37 @@ class VaultRepositoryImpl @Inject constructor(
     private val tagDao: TagDao,
     private val cryptoManager: CryptoManager,
     private val preferences: TruvaltPreferences,
-    private val authRepository: AuthRepository
+    private val vaultKeyManager: VaultKeyManager
 ) : VaultRepository {
 
     private var vaultKey: ByteArray? = null
 
     fun setVaultKey(key: ByteArray) {
+        Log.d("VaultRepository", "setVaultKey called, key size: ${key.size}")
         vaultKey = key
     }
 
     fun clearVaultKey() {
+        Log.d("VaultRepository", "clearVaultKey called")
         vaultKey = null
     }
     
     private fun getVaultKey(): ByteArray {
-        // Try to get from memory first
-        if (vaultKey != null) return vaultKey!!
-        
-        // Get from AuthRepository
-        val masterKey = (authRepository as? AuthRepositoryImpl)?.getMasterKey()
-        if (masterKey != null) {
-            vaultKey = masterKey
-            return masterKey
+        // Try memory cache first
+        if (vaultKey != null) {
+            Log.d("VaultRepository", "getVaultKey: Using cached key (${vaultKey!!.size} bytes)")
+            return vaultKey!!
         }
         
+        // Try to get from VaultKeyManager
+        val keyFromManager = vaultKeyManager.getInMemoryKey()
+        if (keyFromManager != null) {
+            Log.d("VaultRepository", "getVaultKey: Retrieved from VaultKeyManager (${keyFromManager.size} bytes)")
+            vaultKey = keyFromManager
+            return keyFromManager
+        }
+        
+        Log.e("VaultRepository", "getVaultKey: No key available - vault not unlocked!")
         throw IllegalStateException("Vault not unlocked")
     }
 
