@@ -7,8 +7,8 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 ## 🔴 High Priority
 
 - [x] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Retrofit) — Priority: High — Target: v1.0
-- [ ] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
-- [ ] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
+- [x] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
+- [x] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
 - [x] TASK-003 Implement Argon2id key derivation (Android + PHP) — Priority: High — Target: v1.0
 - [x] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
 - [x] TASK-008 Email + password authentication (Android) — Priority: High — Target: v1.0

@@ -28,7 +28,8 @@ fun SplashScreen(
     isFirstLaunch: Boolean,
     isLocked: Boolean,
     isBiometricEnabled: Boolean,
-    isPinEnabled: Boolean
+    isPinEnabled: Boolean,
+    hasMasterPassword: Boolean
 ) {
     var visible by remember { mutableStateOf(false) }
     var debugInfo by remember { mutableStateOf("") }
@@ -43,36 +44,43 @@ fun SplashScreen(
             isBiometric: $isBiometricEnabled
             isPinEnabled: $isPinEnabled
             isFirstLaunch: $isFirstLaunch
+            hasMasterPassword: $hasMasterPassword
         """.trimIndent()
         debugInfo = info
         println("SplashScreen - $info")
         
         val destination = when {
-            // Priority 1: If locked and has biometric, use it
-            isLocked && isBiometricEnabled -> {
-                debugInfo += "\n\n→ BIOMETRIC"
-                println("Going to BIOMETRIC")
-                SplashDestination.UNLOCK_BIOMETRIC
-            }
-            // Priority 2: If locked and has PIN, use it
-            isLocked && isPinEnabled -> {
-                debugInfo += "\n\n→ PIN"
-                println("Going to PIN")
-                SplashDestination.UNLOCK_PIN
-            }
-            // Priority 3: If locked but no auth, need master password
-            isLocked -> {
-                debugInfo += "\n\n→ MASTER PASSWORD"
-                println("Going to MASTER PASSWORD")
-                SplashDestination.UNLOCK_MASTER_PASSWORD
-            }
-            // Priority 4: First launch onboarding
+            // Priority 1: First launch onboarding
             isFirstLaunch -> {
                 debugInfo += "\n\n→ ONBOARDING"
                 println("Going to ONBOARDING")
                 SplashDestination.ONBOARDING
             }
-            // Priority 5: Already unlocked, go to vault
+            // Priority 2: If locked and has biometric, use it
+            isLocked && isBiometricEnabled -> {
+                debugInfo += "\n\n→ BIOMETRIC"
+                println("Going to BIOMETRIC")
+                SplashDestination.UNLOCK_BIOMETRIC
+            }
+            // Priority 3: If locked and has PIN, use it
+            isLocked && isPinEnabled -> {
+                debugInfo += "\n\n→ PIN"
+                println("Going to PIN")
+                SplashDestination.UNLOCK_PIN
+            }
+            // Priority 4: If locked and has master password, unlock with it
+            isLocked && hasMasterPassword -> {
+                debugInfo += "\n\n→ MASTER PASSWORD"
+                println("Going to MASTER PASSWORD")
+                SplashDestination.UNLOCK_MASTER_PASSWORD
+            }
+            // Priority 5: If locked but no auth set up, go to onboarding
+            isLocked -> {
+                debugInfo += "\n\n→ ONBOARDING (no auth)"
+                println("Going to ONBOARDING (no auth)")
+                SplashDestination.ONBOARDING
+            }
+            // Priority 6: Already unlocked, go to vault
             else -> {
                 debugInfo += "\n\n→ VAULT"
                 println("Going to VAULT")

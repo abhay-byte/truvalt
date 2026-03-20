@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-20 | 1 |
+| 2026-03-20 | 3 |
 | 2026-03-19 | 7 |
 | 2026-03-18 | 8 |
 | 2026-03-17 | 5 |
@@ -18,6 +18,8 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-002 | PostgreSQL schema migrations (all tables) | 2026-03-20 | Created 10 migration files: users, folders, tags, vault_items, vault_item_tags, sessions, audit_logs, passkeys, share_links, devices; added user_id FK to folders and tags; updated ER diagram |
+| TASK-001 | Initialize Laravel 12 project structure | 2026-03-20 | Created web/ directory with Laravel structure; created 9 Eloquent models (User, VaultItem, Folder, Tag, Session, AuditLog, Passkey, ShareLink, Device) with relationships; created SETUP.md with installation instructions; ready for composer install when PHP/Composer available |
 | BUG-011 | Implement master password for local-only vault | 2026-03-20 | Created MasterPasswordSetupScreen/ViewModel for initial vault creation; created MasterPasswordUnlockScreen/ViewModel for unlocking; added deriveKey() method in CryptoManager for local-only mode (fixed salt); added setWrappedVaultKey/getWrappedVaultKey in TruvaltPreferences; updated navigation flow (ServerSetup→MasterPasswordSetup→Vault); updated SplashScreen to use UNLOCK_MASTER_PASSWORD; vault key now properly generated and stored on first launch in local-only mode |
 | BUG-010 | Fix "vault not unlocked" error when saving items | 2026-03-19 | Added getVaultKey() method in VaultRepositoryImpl to dynamically get key from AuthRepository; injected AuthRepository into VaultRepositoryImpl; updated LoginViewModel to set vault key after login; fixed toEntity() and toDomain() methods to use getVaultKey() |
 | BUG-009 | Update password generator to 128 chars & add camera for QR | 2026-03-19 | Updated password generator dialog length slider from 32 to 128 characters (matching main generator page); added camera scanning option using ZXing ScanContract; added CAMERA permission to manifest |

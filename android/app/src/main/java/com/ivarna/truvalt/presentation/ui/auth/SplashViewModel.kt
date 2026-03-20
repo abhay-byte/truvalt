@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
@@ -37,6 +38,10 @@ class SplashViewModel @Inject constructor(
 
     val isFirstLaunch: StateFlow<Boolean> = preferences.isFirstLaunch
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    
+    val hasMasterPassword: StateFlow<Boolean> = preferences.wrappedVaultKey
+        .map { it != null }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     
     fun isBiometricAvailable(): Boolean {
         val result = isBiometricEnabled.value && biometricHelper.canAuthenticate() == BiometricStatus.AVAILABLE

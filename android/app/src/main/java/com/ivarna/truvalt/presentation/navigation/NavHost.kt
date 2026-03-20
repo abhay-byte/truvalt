@@ -57,6 +57,7 @@ fun TruvaltNavHost(
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
     val isPinEnabled by viewModel.isPinEnabled.collectAsState()
     val isFirstLaunch by viewModel.isFirstLaunch.collectAsState()
+    val hasMasterPassword by viewModel.hasMasterPassword.collectAsState()
     
     // Check biometric availability dynamically
     val isBiometricAvailable = remember(isLocked) {
@@ -84,7 +85,8 @@ fun TruvaltNavHost(
                 isFirstLaunch = isFirstLaunch,
                 isLocked = isLocked,
                 isBiometricEnabled = isBiometricAvailable,
-                isPinEnabled = isPinEnabled
+                isPinEnabled = isPinEnabled,
+                hasMasterPassword = hasMasterPassword
             )
         }
 

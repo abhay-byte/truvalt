@@ -61,6 +61,8 @@ erDiagram
     USERS ||--o{ DEVICES : has
     USERS ||--o{ PASSKEYS : has
     USERS ||--o{ VAULT_ITEMS : owns
+    USERS ||--o{ FOLDERS : owns
+    USERS ||--o{ TAGS : owns
     USERS ||--o{ AUDIT_LOG : generates
     USERS ||--o{ SHARE_LINKS : creates
     VAULT_ITEMS ||--o{ VAULT_ITEM_TAGS : has
@@ -92,6 +94,7 @@ erDiagram
     
     FOLDERS {
         string id PK
+        string user_id FK
         string name
         string icon
         string parent_id FK
@@ -100,6 +103,7 @@ erDiagram
     
     TAGS {
         string id PK
+        string user_id FK
         string name
     }
     
