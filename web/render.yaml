@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: truvalt-api
+    runtime: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: truvalt-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: truvalt-redis
+          type: keyvalue
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: redis
+      - key: CACHE_DRIVER
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+
+  - type: keyvalue
+    name: truvalt-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow-all
+
+databases:
+  - name: truvalt-db
+    databaseName: truvalt
+    user: truvalt
+    plan: free
+    region: oregon

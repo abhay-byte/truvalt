@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\FolderController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
 
+// Health check
+Route::get('/health', fn() => response()->json(['status' => 'ok']));
+
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
