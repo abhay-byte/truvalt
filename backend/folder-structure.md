@@ -111,7 +111,7 @@ web/                           # Laravel 12 application root
 │       ├── layouts/            # Master layouts
 │       └── vendor/             # Vendor views
 ├── routes/                     # Routes
-│   ├── api.php                 # API routes (/api/v1/*)
+│   ├── api.php                 # API routes (/api/*)
 │   ├── web.php                 # Web routes
 │   ├── console.php             # Console routes
 │   └── channels.php            # Broadcasting channels

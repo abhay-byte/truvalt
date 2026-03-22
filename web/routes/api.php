@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Route;
 
 // Health check
 Route::get('/health', fn() => response()->json(['status' => 'ok']));
+Route::get('/keep-alive', fn() => response()->json([
+    'status' => 'ok',
+    'purpose' => 'keep-alive',
+    'timestamp' => now()->toIso8601String(),
+]));
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);

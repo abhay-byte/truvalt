@@ -6,6 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
+| 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
 | 2026-03-19 | 7 |
 | 2026-03-18 | 8 |
@@ -18,6 +19,8 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| CHORE-003 | Switch backend to managed external PostgreSQL | 2026-03-22 | Configured Laravel to use external `DB_URL` with `DB_SSLMODE=require`; updated ignored local `.env`; changed the Render Blueprint to expect a manually supplied secret `DB_URL` instead of provisioning Render Postgres; updated deployment/backend docs |
+| CHORE-002 | Harden Render deployment and add keep-alive endpoint | 2026-03-22 | Moved Render Blueprint to repository root; fixed Render env vars to match Laravel (`DB_URL`, `CACHE_STORE`, `QUEUE_CONNECTION=sync`); updated Docker/Nginx for port 10000 and asset builds; registered `routes/api.php` in `bootstrap/app.php`; added public `GET /api/keep-alive`; updated deployment/API/design docs |
 | TASK-002 | PostgreSQL schema migrations (all tables) | 2026-03-20 | Created 10 migration files: users, folders, tags, vault_items, vault_item_tags, sessions, audit_logs, passkeys, share_links, devices; added user_id FK to folders and tags; updated ER diagram |
 | TASK-001 | Initialize Laravel 12 project structure | 2026-03-20 | Created web/ directory with Laravel structure; created 9 Eloquent models (User, VaultItem, Folder, Tag, Session, AuditLog, Passkey, ShareLink, Device) with relationships; created SETUP.md with installation instructions; ready for composer install when PHP/Composer available |
 | BUG-011 | Implement master password for local-only vault | 2026-03-20 | Created MasterPasswordSetupScreen/ViewModel for initial vault creation; created MasterPasswordUnlockScreen/ViewModel for unlocking; added deriveKey() method in CryptoManager for local-only mode (fixed salt); added setWrappedVaultKey/getWrappedVaultKey in TruvaltPreferences; updated navigation flow (ServerSetup→MasterPasswordSetup→Vault); updated SplashScreen to use UNLOCK_MASTER_PASSWORD; vault key now properly generated and stored on first launch in local-only mode |

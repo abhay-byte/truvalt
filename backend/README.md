@@ -81,12 +81,9 @@ php artisan test
 | `APP_DEBUG` | Debug mode | true |
 | `APP_URL` | Application URL | http://localhost |
 | `DB_CONNECTION` | Database driver | pgsql |
-| `DB_HOST` | Database host | 127.0.0.1 |
-| `DB_PORT` | Database port | 5432 |
-| `DB_DATABASE` | Database name | truvalt |
-| `DB_USERNAME` | Database user | postgres |
-| `DB_PASSWORD` | Database password | |
-| `CACHE_DRIVER` | Cache driver | redis |
+| `DB_URL` | PostgreSQL connection URL | postgresql://user:password@host:5432/database |
+| `DB_SSLMODE` | PostgreSQL SSL mode | require |
+| `CACHE_STORE` | Cache driver | redis |
 | `QUEUE_CONNECTION` | Queue driver | redis |
 | `SESSION_DRIVER` | Session driver | redis |
 | `REDIS_HOST` | Redis host | 127.0.0.1 |

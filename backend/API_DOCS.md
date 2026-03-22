@@ -1,8 +1,31 @@
 # API Documentation
 
-Base URL: `https://[your-domain]/api/v1`
+Base URL: `https://[your-domain]/api`
 
 Authentication: `Authorization: Bearer {sanctum_token}` header on all authenticated routes.
+
+---
+
+## Utility Endpoints
+
+### GET /keep-alive
+
+Public keep-alive endpoint for external cron jobs and uptime pings.
+
+| Field | Value |
+|---|---|
+| Method | GET |
+| Path | `/api/keep-alive` |
+| Auth Required | No |
+
+**Success Response (200):**
+```json
+{
+  "status": "ok",
+  "purpose": "keep-alive",
+  "timestamp": "2026-03-22T12:00:00Z"
+}
+```
 
 ---
 
@@ -21,7 +44,7 @@ Register a new user account.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/auth/register` |
+| Path | `/api/auth/register` |
 | Auth Required | No |
 
 **Request Body:**
@@ -64,7 +87,7 @@ Login with email and auth key (derived from master password).
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/auth/login` |
+| Path | `/api/auth/login` |
 | Auth Required | No |
 
 **Request Body:**
@@ -109,7 +132,7 @@ Logout current session.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/auth/logout` |
+| Path | `/api/auth/logout` |
 | Auth Required | Yes |
 
 **Success Response (200):**
@@ -129,7 +152,7 @@ Initialize TOTP 2FA enrollment.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/auth/two-factor/setup` |
+| Path | `/api/auth/two-factor/setup` |
 | Auth Required | Yes |
 
 **Success Response (200):**
@@ -153,7 +176,7 @@ Verify TOTP code.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/auth/two-factor/verify` |
+| Path | `/api/auth/two-factor/verify` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -182,7 +205,7 @@ List all vault items for the authenticated user.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/vault/items` |
+| Path | `/api/vault/items` |
 | Auth Required | Yes |
 
 **Success Response (200):**
@@ -213,7 +236,7 @@ Create a new vault item.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/items` |
+| Path | `/api/vault/items` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -251,7 +274,7 @@ Get a single vault item.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/vault/items/{id}` |
+| Path | `/api/vault/items/{id}` |
 | Auth Required | Yes |
 
 **Success Response (200):**
@@ -281,7 +304,7 @@ Update a vault item.
 | Field | Value |
 |---|---|
 | Method | PUT |
-| Path | `/api/v1/vault/items/{id}` |
+| Path | `/api/vault/items/{id}` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -312,7 +335,7 @@ Delete a vault item (soft delete).
 | Field | Value |
 |---|---|
 | Method | DELETE |
-| Path | `/api/v1/vault/items/{id}` |
+| Path | `/api/vault/items/{id}` |
 | Auth Required | Yes |
 
 **Success Response (200):**
@@ -332,7 +355,7 @@ List all folders.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/vault/folders` |
+| Path | `/api/folders` |
 | Auth Required | Yes |
 
 ---
@@ -344,7 +367,7 @@ Create a folder.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/folders` |
+| Path | `/api/folders` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -365,7 +388,7 @@ Update a folder.
 | Field | Value |
 |---|---|
 | Method | PUT |
-| Path | `/api/v1/vault/folders/{id}` |
+| Path | `/api/folders/{id}` |
 | Auth Required | Yes |
 
 ---
@@ -377,7 +400,7 @@ Delete a folder.
 | Field | Value |
 |---|---|
 | Method | DELETE |
-| Path | `/api/v1/vault/folders/{id}` |
+| Path | `/api/folders/{id}` |
 | Auth Required | Yes |
 
 ---
@@ -389,7 +412,7 @@ List all tags.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/vault/tags` |
+| Path | `/api/tags` |
 | Auth Required | Yes |
 
 ---
@@ -401,7 +424,7 @@ Create a tag.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/tags` |
+| Path | `/api/tags` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -420,7 +443,7 @@ Delete a tag.
 | Field | Value |
 |---|---|
 | Method | DELETE |
-| Path | `/api/v1/vault/tags/{id}` |
+| Path | `/api/tags/{id}` |
 | Auth Required | Yes |
 
 ---
@@ -432,7 +455,7 @@ Delta sync with server.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/sync` |
+| Path | `/api/vault/sync` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -474,7 +497,7 @@ Export vault data.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/export` |
+| Path | `/api/vault/export` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -493,7 +516,7 @@ Import vault data.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/vault/import` |
+| Path | `/api/vault/import` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -515,7 +538,7 @@ Check passwords against Have I Been Pwned (k-anonymity).
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/breach/check` |
+| Path | `/api/breach/check` |
 | Auth Required | Yes |
 
 **Note:** The app sends only the first 5 characters of the SHA-1 hash of the password (k-anonymity).
@@ -545,7 +568,7 @@ Get audit log.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/audit/log` |
+| Path | `/api/audit/log` |
 | Auth Required | Yes |
 
 **Query Parameters:**
@@ -564,7 +587,7 @@ List active sessions.
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/sessions` |
+| Path | `/api/sessions` |
 | Auth Required | Yes |
 
 ---
@@ -576,7 +599,7 @@ Revoke a session.
 | Field | Value |
 |---|---|
 | Method | DELETE |
-| Path | `/api/v1/sessions/{id}` |
+| Path | `/api/sessions/{id}` |
 | Auth Required | Yes |
 
 ---
@@ -590,7 +613,7 @@ Create a share link.
 | Field | Value |
 |---|---|
 | Method | POST |
-| Path | `/api/v1/share-links` |
+| Path | `/api/share-links` |
 | Auth Required | Yes |
 
 **Request Body:**
@@ -611,7 +634,7 @@ View a share link (public, unauthenticated).
 | Field | Value |
 |---|---|
 | Method | GET |
-| Path | `/api/v1/share-links/{token}` |
+| Path | `/api/share-links/{token}` |
 | Auth Required | No |
 
 **Success Response (200):**

@@ -121,7 +121,7 @@ web/
 │   ├── css/                   # Tailwind
 │   └── js/                    # Alpine.js components
 ├── routes/
-│   ├── api.php                # All /api/v1/* routes
+│   ├── api.php                # All /api/* routes
 │   └── web.php                # Blade web vault routes
 └── tests/
     ├── Feature/               # Pest feature tests
@@ -178,9 +178,16 @@ Same structure as above, plus:
 
 ## 5. API Design
 
-Base URL: `https://[your-domain]/api/v1`
+Base URL: `https://[your-domain]/api`
 
-### 5.1 Authentication Endpoints
+### 5.1 Utility Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| GET | /health | Render health check endpoint |
+| GET | /keep-alive | Public cron/uplink keep-alive endpoint |
+
+### 5.2 Authentication Endpoints
 
 | Method | Path | Description |
 |---|---|---|
@@ -192,7 +199,7 @@ Base URL: `https://[your-domain]/api/v1`
 | POST | /auth/passkey/register | Start WebAuthn registration |
 | POST | /auth/passkey/assert | Start WebAuthn login |
 
-### 5.2 Vault Endpoints
+### 5.3 Vault Endpoints
 
 | Method | Path | Description |
 |---|---|---|
@@ -210,20 +217,20 @@ Base URL: `https://[your-domain]/api/v1`
 | DELETE | /vault/tags/{id} | Delete tag |
 | POST | /vault/sync | Delta sync with server timestamp |
 
-### 5.3 Import/Export Endpoints
+### 5.4 Import/Export Endpoints
 
 | Method | Path | Description |
 |---|---|---|
 | POST | /vault/export | Export vault (encrypted/unencrypted) |
 | POST | /vault/import | Import vault |
 
-### 5.4 Breach Check Endpoints
+### 5.5 Breach Check Endpoints
 
 | Method | Path | Description |
 |---|---|---|
 | GET | /breach/check | Check passwords against HIBP |
 
-### 5.5 Audit & Sessions Endpoints
+### 5.6 Audit & Sessions Endpoints
 
 | Method | Path | Description |
 |---|---|---|
@@ -231,7 +238,7 @@ Base URL: `https://[your-domain]/api/v1`
 | GET | /sessions | List active sessions |
 | DELETE | /sessions/{id} | Revoke session |
 
-### 5.6 Sharing Endpoints
+### 5.7 Sharing Endpoints
 
 | Method | Path | Description |
 |---|---|---|

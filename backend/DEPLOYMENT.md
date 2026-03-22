@@ -1,5 +1,17 @@
 # Deployment Guide
 
+## Render Blueprint
+
+The repository now includes a Render Blueprint at `/render.yaml` for the Laravel API in `/web`.
+
+It provisions:
+
+- A Docker-based web service for the Laravel API
+- A Render Key Value instance for sessions and cache
+- An external managed PostgreSQL database supplied via `DB_URL`
+
+The Blueprint is configured for this monorepo layout, uses `/api/health` for health checks, deploys the backend from the `web/` subdirectory, and expects the production database URL to be provided as a secret environment variable.
+
 ## Recommended Hosts
 
 - DigitalOcean
@@ -281,7 +293,7 @@ DB_DATABASE=truvalt
 DB_USERNAME=truvalt
 DB_PASSWORD=your_secure_password
 
-CACHE_DRIVER=redis
+CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 SESSION_DRIVER=redis
 REDIS_HOST=redis

@@ -588,19 +588,20 @@ flowchart TB
     subgraph Clients
         Android["Android Device"]
         Browser["Web Browser"]
+        Cron["External Cron / Uptime Ping"]
     end
     
-    subgraph Cloud["Cloud/Server"]
-        VPS["Self-Hosted VPS"]
+    subgraph Cloud["Render"]
+        RenderWeb["truvalt-api Web Service"]
         
         subgraph Docker["Docker Container"]
             Nginx["Nginx"]
             PHP["PHP-FPM"]
             Laravel["Laravel App"]
-            Redis["Redis"]
         end
         
-        DB["PostgreSQL 16"]
+        KV["Render Key Value"]
+        DB["Render PostgreSQL"]
     end
     
     subgraph ExternalServices["External Services"]
@@ -609,12 +610,13 @@ flowchart TB
         FDroid["F-Droid"]
     end
     
-    Android -->|HTTPS| VPS
-    Browser -->|HTTPS| VPS
+    Android -->|HTTPS| RenderWeb
+    Browser -->|HTTPS| RenderWeb
+    Cron -->|GET /api/keep-alive| RenderWeb
     
     Nginx --> PHP
     PHP --> Laravel
-    Laravel --> Redis
+    Laravel --> KV
     Laravel --> DB
     
     Laravel --> HIBP

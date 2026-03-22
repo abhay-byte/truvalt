@@ -6,6 +6,43 @@
 
 ---
 
+## Utility Endpoints
+
+### Health Check
+
+**GET** `/health`
+
+Basic readiness probe for Render and uptime checks.
+
+**Response:** `200 OK`
+```json
+{
+  "status": "ok"
+}
+```
+
+### Keep-Alive
+
+**GET** `/keep-alive`
+
+Public keep-alive route for external cron jobs and uptime pings.
+
+**Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "purpose": "keep-alive",
+  "timestamp": "2026-03-22T12:00:00Z"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET http://localhost:8000/api/keep-alive
+```
+
+---
+
 ## Authentication
 
 ### Register User
