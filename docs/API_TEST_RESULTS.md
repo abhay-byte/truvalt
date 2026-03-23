@@ -2,305 +2,144 @@
 
 ## Test Execution Summary
 
-**Date:** 2026-03-20  
-**Base URL:** http://localhost:8000/api  
-**Total Endpoints:** 22
+**Date:** 2026-03-23  
+**Base URL:** http://127.0.0.1:8000/api  
+**Implemented Route Coverage:** 21 API routes  
+**Additional Auth Check:** 1 unauthenticated verification (`GET /api/vault/items` → `401`)  
+**Database:** External PostgreSQL over SSL
 
 ---
 
-## Test Cases
+## Result
 
-### ✅ Authentication Endpoints (4/4)
+**Status:** ✅ Current implemented backend routes verified
 
-1. **POST /api/register** - Create new user
-   - Status: `201 Created`
-   - Returns: user object + auth token
-   - Validates: email uniqueness, required fields
-
-2. **POST /api/login** - Authenticate user
-   - Status: `200 OK`
-   - Returns: user object + auth token
-   - Validates: email + auth_key_hash match
-
-3. **GET /api/me** - Get current user
-   - Status: `200 OK`
-   - Requires: Bearer token
-   - Returns: authenticated user data
-
-4. **POST /api/logout** - Revoke token
-   - Status: `200 OK`
-   - Requires: Bearer token
-   - Invalidates: current access token
+- Authenticated route coverage passed end-to-end with the live Laravel server
+- Final unauthenticated retest passed after fixing Laravel guest redirect handling for API routes
+- Docs were updated to match the verified route surface, payload handling, and security behavior
 
 ---
 
-### ✅ Vault Item Endpoints (8/8)
+## Route Coverage
 
-5. **GET /api/vault/items** - List all items
-   - Status: `200 OK`
-   - Filters: `type`, `folder_id`, `updated_after`
-   - Returns: array of vault items (excluding deleted)
+### ✅ Utility Routes (2/2)
 
-6. **POST /api/vault/items** - Create item
-   - Status: `201 Created`
-   - Validates: type, name, encrypted_data
-   - Generates: UUID, timestamps
+1. `GET /api/health` → `200 OK`
+2. `GET /api/keep-alive` → `200 OK`
 
-7. **GET /api/vault/items/{id}** - Get single item
-   - Status: `200 OK`
-   - Validates: user ownership
-   - Returns: single vault item
+### ✅ Authentication Routes (4/4)
 
-8. **PUT /api/vault/items/{id}** - Update item
-   - Status: `200 OK`
-   - Updates: name, encrypted_data, folder_id, favorite
-   - Updates: timestamp
+3. `POST /api/register` → `201 Created`
+4. `POST /api/login` → `200 OK`
+5. `GET /api/me` → `200 OK`
+6. `POST /api/logout` → `200 OK`
 
-9. **DELETE /api/vault/items/{id}** - Soft delete
-   - Status: `200 OK`
-   - Sets: deleted_at timestamp
-   - Keeps: data in database
+### ✅ Vault Routes (8/8)
 
-10. **GET /api/vault/trash** - List deleted items
-    - Status: `200 OK`
-    - Filters: deleted_at IS NOT NULL
-    - Returns: soft-deleted items
+7. `GET /api/vault/items` → `200 OK`
+8. `POST /api/vault/items` → `201 Created`
+9. `GET /api/vault/items/{id}` → `200 OK`
+10. `PUT /api/vault/items/{id}` → `200 OK`
+11. `DELETE /api/vault/items/{id}` → `200 OK`
+12. `GET /api/vault/trash` → `200 OK`
+13. `POST /api/vault/items/{id}/restore` → `200 OK`
+14. `POST /api/vault/sync` → `200 OK`
 
-11. **POST /api/vault/items/{id}/restore** - Restore item
-    - Status: `200 OK`
-    - Clears: deleted_at
-    - Updates: updated_at timestamp
+### ✅ Folder Routes (4/4)
 
-12. **POST /api/vault/sync** - Batch sync
-    - Status: `200 OK`
-    - Handles: multiple items
-    - Detects: conflicts (last-write-wins)
-    - Returns: synced items + conflicts
+15. `GET /api/folders` → `200 OK`
+16. `POST /api/folders` → `201 Created`
+17. `PUT /api/folders/{id}` → `200 OK`
+18. `DELETE /api/folders/{id}` → `200 OK`
 
----
+### ✅ Tag Routes (3/3)
 
-### ✅ Folder Endpoints (4/4)
+19. `GET /api/tags` → `200 OK`
+20. `POST /api/tags` → `201 Created`
+21. `DELETE /api/tags/{id}` → `200 OK`
 
-13. **GET /api/folders** - List folders
-    - Status: `200 OK`
-    - Returns: all user folders
-    - Ordered: by name
+### ✅ Auth Failure Handling
 
-14. **POST /api/folders** - Create folder
-    - Status: `201 Created`
-    - Validates: name required
-    - Supports: hierarchical (parent_id)
-
-15. **PUT /api/folders/{id}** - Update folder
-    - Status: `200 OK`
-    - Updates: name, icon, parent_id
-    - Updates: timestamp
-
-16. **DELETE /api/folders/{id}** - Delete folder
-    - Status: `200 OK`
-    - Cascades: to child folders
-    - Sets: folder_id NULL on items
+22. `GET /api/vault/items` without a bearer token → `401 Unauthorized`
 
 ---
 
-### ✅ Tag Endpoints (3/3)
+## Scenarios Verified
 
-17. **GET /api/tags** - List tags
-    - Status: `200 OK`
-    - Returns: all user tags
-    - Ordered: by name
+### Scenario 1: Full User Flow
 
-18. **POST /api/tags** - Create tag
-    - Status: `201 Created`
-    - Validates: name required
-    - Enforces: unique per user
+1. Register a new user
+2. Login and obtain a bearer token
+3. Create and list folders
+4. Create and list tags
+5. Create, read, update, filter, soft-delete, trash-list, and restore a vault item
+6. Logout
 
-19. **DELETE /api/tags/{id}** - Delete tag
-    - Status: `200 OK`
-    - Removes: tag associations
-
----
-
-## Test Scenarios
-
-### Scenario 1: Complete User Flow
-```
-1. Register → Get token
-2. Create folder "Work"
-3. Create tag "important"
-4. Create vault item in folder
-5. Update item (mark favorite)
-6. List items (verify)
-7. Delete item (soft delete)
-8. View trash
-9. Restore item
-10. Logout
-```
-**Result:** ✅ All operations successful
+**Result:** ✅ Passed
 
 ### Scenario 2: Delta Sync
-```
-1. Create 3 items at T1
-2. Update 1 item at T2
-3. Query with updated_after=T1
-4. Verify only 1 item returned
-```
-**Result:** ✅ Delta sync working
 
-### Scenario 3: Batch Sync with Conflicts
-```
-1. Create item on server (T1)
-2. Update item on server (T2)
-3. Sync older version (T1)
-4. Verify conflict detected
-5. Server version preserved
-```
-**Result:** ✅ Conflict detection working
+1. Capture a timestamp
+2. Update a vault item after that timestamp
+3. Query `GET /api/vault/items?updated_after=...`
 
-### Scenario 4: Filtering
-```
-1. Create items of different types
-2. Filter by type=login
-3. Filter by folder_id
-4. Verify correct filtering
-```
-**Result:** ✅ All filters working
+**Result:** ✅ Passed
 
-### Scenario 5: Authorization
-```
-1. Attempt access without token
-2. Verify 401 Unauthorized
-3. Attempt access to other user's data
-4. Verify 404 Not Found
-```
-**Result:** ✅ Authorization enforced
+### Scenario 3: Sync Conflict Detection
+
+1. Create a vault item through `POST /api/vault/sync`
+2. Update that same item through `PUT /api/vault/items/{id}`
+3. Re-submit an older copy through `POST /api/vault/sync`
+
+**Result:** ✅ Passed, server version preserved in `conflicts`
+
+### Scenario 4: Authorization
+
+1. Access a protected endpoint without a token
+2. Verify the API returns JSON `401` instead of redirecting
+
+**Result:** ✅ Passed
 
 ---
 
-## Performance Metrics
+## Backend Fixes Validated During Testing
 
-| Endpoint | Avg Response Time |
-|----------|-------------------|
-| POST /register | ~150ms |
-| POST /login | ~120ms |
-| GET /vault/items | ~80ms |
-| POST /vault/items | ~100ms |
-| PUT /vault/items/{id} | ~90ms |
-| POST /vault/sync | ~200ms |
+- Sanctum token creation now works with UUID users because `personal_access_tokens` uses `uuidMorphs()`
+- Auth key material is stored as an Argon2id hash and verified on login
+- `encrypted_data` is returned as base64 in JSON responses even when PostgreSQL returns `bytea` streams
+- Sync now preserves client-provided item UUIDs so follow-up CRUD operations target the correct item
+- API auth middleware now returns JSON `401` for unauthenticated requests
+- Folder ownership checks prevent cross-user `folder_id` and `parent_id` references
 
 ---
 
-## Validation Tests
+## Performance Observations
 
-### ✅ Required Fields
-- Email required on register
-- Auth key hash required
-- Vault item type required
-- Vault item name required
-- Encrypted data required
+These timings came from the live run against the current external PostgreSQL setup and should be treated as environment-specific, not product targets.
 
-### ✅ Data Types
-- UUIDs validated
-- Timestamps as integers
-- Boolean fields (favorite)
-- Base64 encoded encrypted data
+| Endpoint | Observed Range |
+|---|---|
+| `GET /api/health` | ~0.5s |
+| `POST /api/register` | ~8-9s |
+| `POST /api/login` | ~8-9s |
+| `GET /api/vault/items` | ~10-12s |
+| `POST /api/vault/items` | ~11-12s |
+| `PUT /api/vault/items/{id}` | ~10-12s |
+| `POST /api/vault/sync` | ~10-13s |
 
-### ✅ Relationships
-- Folder foreign key validated
-- User ownership enforced
-- Cascade deletes working
-
----
-
-## Security Tests
-
-### ✅ Authentication
-- Unauthenticated requests rejected (401)
-- Invalid tokens rejected
-- Token required for all protected routes
-
-### ✅ Authorization
-- Users can only access own data
-- Cross-user access blocked
-- Proper 404 for unauthorized access
-
-### ✅ Data Integrity
-- Encrypted data stored as binary
-- No server-side decryption
-- Zero-knowledge architecture maintained
-
----
-
-## Edge Cases Tested
-
-1. **Empty Results**
-   - GET /vault/items with no items → `[]`
-   - GET /vault/trash with no deleted items → `[]`
-
-2. **Invalid UUIDs**
-   - GET /vault/items/{invalid} → `404 Not Found`
-
-3. **Duplicate Email**
-   - POST /register with existing email → `422 Validation Error`
-
-4. **Missing Required Fields**
-   - POST /vault/items without name → `422 Validation Error`
-
-5. **Soft Delete Behavior**
-   - Deleted items excluded from main list
-   - Deleted items appear in trash
-   - Restore clears deleted_at
-
-6. **Hierarchical Folders**
-   - Parent-child relationships maintained
-   - Cascade delete works correctly
+The external database path is currently the dominant source of latency.
 
 ---
 
 ## Known Limitations
 
-1. **Pagination** - Not implemented (returns all items)
-2. **Rate Limiting** - Not configured
-3. **2FA** - Endpoints exist but not implemented
-4. **WebAuthn** - Passkey model exists but no endpoints
-5. **Audit Logs** - Model exists but not populated
-6. **Share Links** - Model exists but no endpoints
-
----
-
-## Recommendations
-
-1. Add pagination for large datasets
-2. Implement rate limiting (Laravel throttle)
-3. Add 2FA endpoints
-4. Implement audit logging middleware
-5. Add WebAuthn/passkey endpoints
-6. Add share link generation endpoints
-7. Add API versioning (v1, v2)
-8. Add request/response logging
-9. Add API rate limit headers
-10. Implement soft delete cleanup job
+1. Implemented API surface is still limited to auth, vault items, folders, tags, health, and keep-alive
+2. TOTP, passkey, audit log, sessions, import/export, breach, and share-link endpoints are documented in product planning but are not implemented in the current backend
+3. External database latency is high in the current development environment
+4. Pagination is not implemented; list endpoints currently return full result sets
 
 ---
 
 ## Conclusion
 
-**Status:** ✅ All core endpoints functional
-
-**Coverage:**
-- Authentication: 100%
-- Vault Items: 100%
-- Folders: 100%
-- Tags: 100%
-
-**Ready for:**
-- Android app integration
-- Web app integration
-- Production deployment (with recommendations)
-
-**Next Steps:**
-1. Implement remaining features (2FA, audit logs)
-2. Add comprehensive test suite (Pest/PHPUnit)
-3. Set up CI/CD pipeline
-4. Configure production environment
-5. Add monitoring and logging
+The currently implemented Laravel API is now functionally verified against the live server and external PostgreSQL backend. The remaining work is feature expansion and performance improvement, not basic route correctness.

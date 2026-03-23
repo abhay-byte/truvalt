@@ -225,6 +225,7 @@ DB::connection()->getPdo();
 - Set `DB_URL` manually in the Render Dashboard for `truvalt-api`
 - Keep the database credential out of `render.yaml`
 - Use `DB_SSLMODE=require` for managed PostgreSQL providers that enforce SSL
+- Ensure the managed PostgreSQL endpoint is reachable over IPv4 from the deployment/runtime environment; an IPv6-only hostname can stall local verification and Render-side connectivity checks
 
 ### Security
 

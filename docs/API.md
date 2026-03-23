@@ -1,8 +1,10 @@
 # Truvalt API Documentation
 
-**Base URL:** `http://localhost:8000/api`
+**Base URL:** `http://127.0.0.1:8000/api`
 
 **Authentication:** Bearer Token (Sanctum)
+
+**Verified Against Live Backend:** `2026-03-23`
 
 ---
 
@@ -55,9 +57,11 @@ Create a new user account.
 ```json
 {
   "email": "user@example.com",
-  "auth_key_hash": "argon2id_hash_of_derived_key"
+  "auth_key_hash": "client_derived_auth_key_material"
 }
 ```
+
+The server hashes the received `auth_key_hash` value with Argon2id before storing it.
 
 **Response:** `201 Created`
 ```json
@@ -65,9 +69,6 @@ Create a new user account.
   "user": {
     "id": "uuid",
     "email": "user@example.com",
-    "auth_key_hash": "argon2id_hash_of_derived_key",
-    "two_factor_secret": null,
-    "two_factor_confirmed_at": null,
     "created_at": "2026-03-20T11:00:00.000000Z",
     "updated_at": "2026-03-20T11:00:00.000000Z"
   },
@@ -94,9 +95,11 @@ Authenticate and receive access token.
 ```json
 {
   "email": "user@example.com",
-  "auth_key_hash": "argon2id_hash_of_derived_key"
+  "auth_key_hash": "client_derived_auth_key_material"
 }
 ```
+
+The server verifies the supplied value against the stored Argon2id hash and returns a new Sanctum token on success.
 
 **Response:** `200 OK`
 ```json
@@ -240,6 +243,8 @@ Create a new vault item.
   "favorite": false
 }
 ```
+
+`folder_id`, when provided, must belong to the authenticated user.
 
 **Response:** `201 Created`
 ```json
@@ -451,6 +456,8 @@ Sync multiple vault items with conflict detection (last-write-wins).
   ]
 }
 ```
+
+Client-provided item UUIDs are preserved during sync so later CRUD operations can target the same IDs.
 
 **Response:** `200 OK`
 ```json
@@ -757,13 +764,22 @@ The test script will:
 6. Test soft delete and restore
 7. Test batch sync with conflicts
 8. Clean up and logout
+9. Verify unauthenticated requests return JSON `401`
+
+Latest verified run:
+- Date: `2026-03-23`
+- Coverage: all 21 implemented API routes plus the unauthenticated `GET /api/vault/items` case
+- Environment: Laravel 12 local server on `127.0.0.1:8000` backed by external PostgreSQL over SSL
 
 ---
 
 ## Security Notes
 
 - All vault item data (`encrypted_data`) must be base64-encoded encrypted blobs
+- The API stores `encrypted_data` as binary in PostgreSQL and returns it as base64 in JSON responses
 - Server never decrypts vault data (zero-knowledge architecture)
-- `auth_key_hash` is derived using Argon2id on the client
+- The server stores only an Argon2id hash of the submitted auth key material
 - All endpoints (except register/login) require Bearer token authentication
 - Tokens are managed by Laravel Sanctum
+- Unauthenticated API requests return JSON `401` instead of redirecting to a web login page
+- Folder and parent-folder references are validated against the authenticated user to prevent cross-user linking

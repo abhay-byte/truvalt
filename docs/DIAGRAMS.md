@@ -378,21 +378,13 @@ sequenceDiagram
     CryptoManager-->>LoginViewModel: authKey, masterKey
     
     LoginViewModel->>AuthRepository: login(email, authKey)
-    AuthRepository->>Retrofit: POST /auth/login
+    AuthRepository->>Retrofit: POST /login
     Retrofit->>LaravelAPI: HTTPS Request
-    LaravelAPI->>Database: Verify auth key hash
+    LaravelAPI->>Database: Verify Argon2id auth key hash
     Database-->>LaravelAPI: User record
-    LaravelAPI-->>Retrofit: {token, requires2FA}
+    LaravelAPI-->>Retrofit: {token, user}
     Retrofit-->>AuthRepository: Response
     AuthRepository-->>LoginViewModel: AuthResult
-    
-    alt requires 2FA
-        LoginViewModel->>LoginScreen: Navigate to 2FA
-        User->>LoginScreen: Enter TOTP code
-        LoginScreen->>LoginViewModel: verify2FA(code)
-        LoginViewModel->>AuthRepository: verify2FA(token, code)
-        AuthRepository-->>LoginViewModel: Success
-    end
     
     LoginViewModel->>LoginScreen: Navigate to VaultHome
     LoginViewModel->>CryptoManager: storeMasterKey(masterKey)

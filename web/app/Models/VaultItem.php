@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ class VaultItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id',
         'user_id',
         'type',
         'name',
@@ -44,6 +46,23 @@ class VaultItem extends Model
     public function tags()
     {
         return $this->belongsToMany(Tag::class, 'vault_item_tags', 'item_id', 'tag_id');
+    }
+
+    protected function encryptedData(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null) {
+                    return null;
+                }
+
+                if (is_resource($value)) {
+                    $value = stream_get_contents($value);
+                }
+
+                return $value === false ? null : base64_encode($value);
+            },
+        );
     }
 
     public function scopeNotDeleted($query)

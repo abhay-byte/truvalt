@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -21,7 +20,7 @@ class AuthController extends Controller
         $user = User::create([
             'id' => Str::uuid(),
             'email' => $request->email,
-            'auth_key_hash' => $request->auth_key_hash,
+            'auth_key_hash' => password_hash($request->auth_key_hash, PASSWORD_ARGON2ID),
         ]);
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -41,7 +40,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || $user->auth_key_hash !== $request->auth_key_hash) {
+        if (!$user || !password_verify($request->auth_key_hash, $user->auth_key_hash)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);

@@ -6,6 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
+| 2026-03-23 | 4 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
 | 2026-03-19 | 7 |
@@ -19,6 +20,10 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| CHORE-004 | Switch backend to an IPv4-reachable external PostgreSQL instance and complete live API verification/docs sync | 2026-03-23 | Repointed Laravel to the new external PostgreSQL connection, verified DNS/TCP/PDO connectivity, rebuilt and seeded the schema, completed authenticated API regression coverage, fixed the unauthenticated JSON `401` response path, and synchronized `/docs` to the verified backend behavior |
+| FIX-007 | Align Sanctum personal access tokens with UUID users | 2026-03-23 | Updated the `personal_access_tokens` migration from `morphs()` to `uuidMorphs()` and rebuilt the external PostgreSQL schema so API token creation works with UUID-backed users |
+| SEC-001 | Harden backend auth key storage and vault ownership validation | 2026-03-23 | Server now stores Argon2id-hashed auth key material, verifies it on login, validates `folder_id` / `parent_id` ownership, and rejects invalid base64 payloads for encrypted vault data |
+| TEST-001 | Refresh Laravel seeding and API regression tooling for external PostgreSQL | 2026-03-23 | Reworked the database seeder and user factory for the actual schema, removed the `jq` dependency from the API script, and verified the implemented route set including health, keep-alive, auth, vault CRUD/filtering/trash/restore/sync, folders, tags, logout, and unauthenticated `401` handling |
 | CHORE-003 | Switch backend to managed external PostgreSQL | 2026-03-22 | Configured Laravel to use external `DB_URL` with `DB_SSLMODE=require`; updated ignored local `.env`; changed the Render Blueprint to expect a manually supplied secret `DB_URL` instead of provisioning Render Postgres; updated deployment/backend docs |
 | CHORE-002 | Harden Render deployment and add keep-alive endpoint | 2026-03-22 | Moved Render Blueprint to repository root; fixed Render env vars to match Laravel (`DB_URL`, `CACHE_STORE`, `QUEUE_CONNECTION=sync`); updated Docker/Nginx for port 10000 and asset builds; registered `routes/api.php` in `bootstrap/app.php`; added public `GET /api/keep-alive`; updated deployment/API/design docs |
 | TASK-002 | PostgreSQL schema migrations (all tables) | 2026-03-20 | Created 10 migration files: users, folders, tags, vault_items, vault_item_tags, sessions, audit_logs, passkeys, share_links, devices; added user_id FK to folders and tags; updated ER diagram |

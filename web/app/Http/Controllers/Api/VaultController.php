@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Folder;
 use App\Models\VaultItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class VaultController extends Controller
 {
@@ -36,8 +38,8 @@ class VaultController extends Controller
         $request->validate([
             'type' => 'required|string',
             'name' => 'required|string',
-            'encrypted_data' => 'required',
-            'folder_id' => 'nullable|uuid|exists:folders,id',
+            'encrypted_data' => 'required|string',
+            'folder_id' => 'nullable|uuid',
             'favorite' => 'boolean',
         ]);
 
@@ -46,8 +48,8 @@ class VaultController extends Controller
             'user_id' => $request->user()->id,
             'type' => $request->type,
             'name' => $request->name,
-            'folder_id' => $request->folder_id,
-            'encrypted_data' => base64_decode($request->encrypted_data),
+            'folder_id' => $this->resolveOwnedFolderId($request, $request->folder_id),
+            'encrypted_data' => $this->decodeEncryptedData($request->encrypted_data),
             'favorite' => $request->favorite ?? false,
             'created_at' => now()->timestamp,
             'updated_at' => now()->timestamp,
@@ -75,8 +77,12 @@ class VaultController extends Controller
 
         $item->update([
             'name' => $request->name ?? $item->name,
-            'encrypted_data' => $request->encrypted_data ? base64_decode($request->encrypted_data) : $item->encrypted_data,
-            'folder_id' => $request->folder_id ?? $item->folder_id,
+            'encrypted_data' => $request->filled('encrypted_data')
+                ? $this->decodeEncryptedData($request->encrypted_data)
+                : $item->getRawOriginal('encrypted_data'),
+            'folder_id' => $request->has('folder_id')
+                ? $this->resolveOwnedFolderId($request, $request->folder_id)
+                : $item->folder_id,
             'favorite' => $request->favorite ?? $item->favorite,
             'updated_at' => now()->timestamp,
         ]);
@@ -145,8 +151,8 @@ class VaultController extends Controller
                     [
                         'type' => $itemData['type'],
                         'name' => $itemData['name'],
-                        'encrypted_data' => base64_decode($itemData['encrypted_data']),
-                        'folder_id' => $itemData['folder_id'] ?? null,
+                        'encrypted_data' => $this->decodeEncryptedData($itemData['encrypted_data']),
+                        'folder_id' => $this->resolveOwnedFolderId($request, $itemData['folder_id'] ?? null),
                         'favorite' => $itemData['favorite'] ?? false,
                         'created_at' => $itemData['created_at'] ?? now()->timestamp,
                         'updated_at' => $itemData['updated_at'],
@@ -161,5 +167,37 @@ class VaultController extends Controller
             'synced' => $synced,
             'conflicts' => $conflicts,
         ]);
+    }
+
+    private function decodeEncryptedData(string $encoded): string
+    {
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false) {
+            throw ValidationException::withMessages([
+                'encrypted_data' => ['The encrypted_data field must be valid base64.'],
+            ]);
+        }
+
+        return $decoded;
+    }
+
+    private function resolveOwnedFolderId(Request $request, ?string $folderId): ?string
+    {
+        if ($folderId === null) {
+            return null;
+        }
+
+        $ownsFolder = Folder::where('id', $folderId)
+            ->where('user_id', $request->user()->id)
+            ->exists();
+
+        if (!$ownsFolder) {
+            throw ValidationException::withMessages([
+                'folder_id' => ['The selected folder is invalid.'],
+            ]);
+        }
+
+        return $folderId;
     }
 }

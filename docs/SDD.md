@@ -191,13 +191,10 @@ Base URL: `https://[your-domain]/api`
 
 | Method | Path | Description |
 |---|---|---|
-| POST | /auth/register | Register with email + master password |
-| POST | /auth/login | Login with email + auth key |
-| POST | /auth/logout | Logout current session |
-| POST | /auth/two-factor/verify | Verify TOTP code |
-| POST | /auth/two-factor/setup | Initialize 2FA enrollment |
-| POST | /auth/passkey/register | Start WebAuthn registration |
-| POST | /auth/passkey/assert | Start WebAuthn login |
+| POST | /register | Register with email + client-derived auth key material |
+| POST | /login | Login with email + client-derived auth key material |
+| POST | /logout | Logout current session |
+| GET | /me | Get current authenticated user |
 
 ### 5.3 Vault Endpoints
 
@@ -208,40 +205,27 @@ Base URL: `https://[your-domain]/api`
 | GET | /vault/items/{id} | Get vault item |
 | PUT | /vault/items/{id} | Update vault item |
 | DELETE | /vault/items/{id} | Delete vault item |
-| GET | /vault/folders | List folders |
-| POST | /vault/folders | Create folder |
-| PUT | /vault/folders/{id} | Update folder |
-| DELETE | /vault/folders/{id} | Delete folder |
-| GET | /vault/tags | List tags |
-| POST | /vault/tags | Create tag |
-| DELETE | /vault/tags/{id} | Delete tag |
-| POST | /vault/sync | Delta sync with server timestamp |
+| GET | /vault/trash | List soft-deleted vault items |
+| POST | /vault/items/{id}/restore | Restore a soft-deleted vault item |
+| POST | /vault/sync | Batch sync with client-supplied UUIDs and conflict detection |
+| GET | /folders | List folders |
+| POST | /folders | Create folder |
+| PUT | /folders/{id} | Update folder |
+| DELETE | /folders/{id} | Delete folder |
+| GET | /tags | List tags |
+| POST | /tags | Create tag |
+| DELETE | /tags/{id} | Delete tag |
 
-### 5.4 Import/Export Endpoints
+### 5.4 Planned Endpoints (Not Yet Implemented)
 
 | Method | Path | Description |
 |---|---|---|
 | POST | /vault/export | Export vault (encrypted/unencrypted) |
 | POST | /vault/import | Import vault |
-
-### 5.5 Breach Check Endpoints
-
-| Method | Path | Description |
-|---|---|---|
 | GET | /breach/check | Check passwords against HIBP |
-
-### 5.6 Audit & Sessions Endpoints
-
-| Method | Path | Description |
-|---|---|---|
 | GET | /audit/log | Get audit log |
 | GET | /sessions | List active sessions |
 | DELETE | /sessions/{id} | Revoke session |
-
-### 5.7 Sharing Endpoints
-
-| Method | Path | Description |
-|---|---|---|
 | POST | /share-links | Create share link |
 | GET | /share-links/{token} | View share link (public) |
 
@@ -308,9 +292,12 @@ Master Password + Email
 ## 9. Security Considerations
 
 - Master password never transmitted, never stored — not even in memory beyond unlock flow
+- Client-submitted auth key material is stored server-side only as an Argon2id hash and verified on login
 - Auth key rotated on password change (re-encrypts entire vault)
 - Android: vault key stored in Android Keystore (hardware-backed if available), unlocked by biometric
 - All API routes require Sanctum bearer token (no cookies on API routes)
+- API auth failures return JSON `401` responses instead of web redirects
+- Folder and parent-folder references are validated against the authenticated user before persistence
 - CSRF protection on all web vault form submissions
 - Content Security Policy headers on all web routes
 - Rate limiting: 10 login attempts / 15 min per IP; 3 2FA attempts then lockout
