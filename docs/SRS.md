@@ -4,177 +4,142 @@
 
 ### 1.1 Purpose
 
-This document defines the complete software requirements for truvalt, a cross-platform password manager with Android and web applications.
+This document defines the current product requirements for Truvalt across Android, web, and the Laravel backend.
 
 ### 1.2 Scope
 
-truvalt is a password manager supporting:
-- Native Android app (Kotlin + Jetpack Compose)
-- Web application (Laravel 12 + Blade)
-- Self-hosted backend with PostgreSQL
-- Local-only offline mode
-- End-to-end encryption with zero-knowledge architecture
+Truvalt provides:
+- Native Android app
+- Laravel-based web/API backend
+- Local-only mode
+- Client-side encrypted vault storage
+- Firebase-backed account authentication
+- Firestore-backed cloud vault metadata storage
 
-### 1.3 Definitions, Acronyms, and Abbreviations
+### 1.3 Definitions
 
 | Term | Definition |
 |---|---|
-| KDF | Key Derivation Function |
 | Argon2id | Memory-hard password hashing algorithm |
-| AES-256-GCM | Advanced Encryption Standard with Galois/Counter Mode |
-| TOTP | Time-based One-Time Password (RFC 6238) |
-| WebAuthn | Web Authentication API (FIDO2) |
-| HIBP | Have I Been Pwned |
-| Room | Android local database |
-| Sanctum | Laravel API authentication |
+| AES-256-GCM | Symmetric authenticated encryption used for vault payloads |
+| Firebase Auth | Account identity provider for email/password and Google sign-in |
+| Firestore | Document database used for backend vault/profile persistence |
+| ID Token | Firebase bearer token sent to protected Laravel API routes |
 
 ---
 
 ## 2. Functional Requirements
 
-### 2.1 Authentication Module (AUTH)
+### 2.1 Authentication
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-AUTH-01 | User registers with email + master password. Master password is NEVER sent to server; only a derived authentication key is used. | Critical |
-| FR-AUTH-02 | Login with email + auth key. | Critical |
-| FR-AUTH-03 | TOTP 2FA via authenticator app (RFC 6238). | Critical |
-| FR-AUTH-04 | Passkey login (WebAuthn FIDO2) on web and Android (Credential Manager API). | High |
-| FR-AUTH-05 | Biometric unlock (Android — unlocks local vault key from Android Keystore). | Critical |
-| FR-AUTH-06 | Session timeout + auto-lock (configurable). | Critical |
-| FR-AUTH-07 | Emergency access (trusted contact can request access after configurable delay). | Medium |
+| FR-AUTH-01 | Users can register backend accounts with Firebase email/password credentials. | Critical |
+| FR-AUTH-02 | Users can sign in to the backend with Firebase email/password credentials. | Critical |
+| FR-AUTH-03 | Users can sign in to the backend with Google through Firebase Authentication. | Critical |
+| FR-AUTH-04 | Protected Laravel API routes must verify Firebase ID tokens server-side. | Critical |
+| FR-AUTH-05 | The backend may store optional client-derived vault-auth material only as an Argon2id hash. | High |
+| FR-AUTH-06 | Biometric unlock remains an Android-local capability. | Critical |
+| FR-AUTH-07 | Auto-lock and session timeout remain configurable on Android. | Critical |
 
-### 2.2 Vault Module (VAULT)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-VAULT-01 | Create, read, update, delete (CRUD) vault items. | Critical |
-| FR-VAULT-02 | Vault item types: Login (URL, username, password, TOTP seed), Passkey, Passphrase, Secure Note, Security/Recovery Code, Credit Card, Identity, Custom. | Critical |
-| FR-VAULT-03 | Organize items into folders and apply multiple tags. | High |
-| FR-VAULT-04 | Mark items as Favorite. | Medium |
-| FR-VAULT-05 | Secure clipboard — copy field to clipboard, auto-clear after configurable timeout (default 30s). | Critical |
-| FR-VAULT-06 | Inline TOTP code generation from stored seeds (shows live countdown). | High |
-
-### 2.3 Generator Module (GEN)
+### 2.2 Vault
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-GEN-01 | Generate strong random passwords (configurable length, charset: uppercase, lowercase, digits, symbols, exclude ambiguous). | Critical |
-| FR-GEN-02 | Generate passphrases (configurable word count, separator, capitalize, append number — uses EFF large wordlist). | High |
-| FR-GEN-03 | Password strength meter (zxcvbn algorithm). | High |
+| FR-VAULT-01 | Backend supports CRUD for encrypted vault items. | Critical |
+| FR-VAULT-02 | Backend supports folders and tags per authenticated user. | High |
+| FR-VAULT-03 | Backend supports favorites and trash/restore state for vault items. | High |
+| FR-VAULT-04 | Backend stores encrypted item payloads as opaque base64-encoded blobs. | Critical |
 
-### 2.4 Sync Module (SYNC)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-SYNC-01 | Full vault encrypted sync to self-hosted Laravel backend. | Critical |
-| FR-SYNC-02 | Local-only mode — no network calls, all data stored in Room DB only. | High |
-| FR-SYNC-03 | Conflict resolution strategy: last-write-wins with per-field timestamps. | High |
-
-### 2.5 Crypto Module (CRYPTO)
+### 2.3 Sync
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-CRYPTO-01 | Vault encryption: AES-256-GCM. Every item encrypted individually client-side. | Critical |
-| FR-CRYPTO-02 | Key derivation: Argon2id (memory: 64MB, iterations: 3, parallelism: 4) from master password + email salt. | Critical |
-| FR-CRYPTO-03 | The server never receives the master password or the vault encryption key. Zero-knowledge architecture. | Critical |
-| FR-CRYPTO-04 | Encrypted export blob uses the same AES-256-GCM key with a separate export IV. | High |
+| FR-SYNC-01 | Cloud sync uses the Laravel API with Firestore-backed persistence. | Critical |
+| FR-SYNC-02 | Client item UUIDs must be preserved during sync. | Critical |
+| FR-SYNC-03 | Conflict handling is last-write-wins based on `updated_at`. | High |
+| FR-SYNC-04 | Local-only mode must remain available when no backend is configured. | High |
 
-### 2.6 Import/Export Module (IMPORT)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-IMPORT-01 | Import from: Bitwarden JSON, 1Password 1PUX, LastPass CSV, KeePass XML, Chrome CSV, Firefox CSV, generic CSV. | High |
-| FR-IMPORT-02 | Export to: truvalt encrypted `.truvalt` (AES-256-GCM JSON), unencrypted JSON, unencrypted CSV. | Critical |
-
-### 2.7 Breach Module (BREACH)
+### 2.4 Crypto
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-BREACH-01 | Check passwords against HaveIBeenPwned k-Anonymity API (sends only first 5 chars of SHA-1 hash — privacy-preserving). | High |
-| FR-BREACH-02 | Vault health dashboard: weak passwords, reused passwords, old passwords (>180 days), breached passwords. | High |
-
-### 2.8 Share Module (SHARE)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-SHARE-01 | Generate an encrypted time-limited share link for a single vault item (AES key in URL fragment — never sent to server). | Medium |
-
-### 2.9 Audit Module (AUDIT)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-AUDIT-01 | Full audit log: every login, item access, item change, export, share event logged server-side. | High |
-| FR-AUDIT-02 | Active session management — list and revoke sessions (Android + web). | High |
-
-### 2.10 Settings Module (SETTINGS)
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-SETTINGS-01 | User preferences: theme (dark/light/AMOLED), clipboard timeout, auto-lock timeout | High |
+| FR-CRYPTO-01 | Vault items are encrypted client-side using AES-256-GCM. | Critical |
+| FR-CRYPTO-02 | Vault key derivation uses Argon2id on the client. | Critical |
+| FR-CRYPTO-03 | The Laravel backend must never decrypt vault contents. | Critical |
+| FR-CRYPTO-04 | The backend must reject invalid encrypted payload encodings. | High |
 
 ---
 
 ## 3. Non-Functional Requirements
 
-### 3.1 Performance
-
-| Requirement | Target |
-|---|---|
-| Vault unlock time | < 500ms on mid-range Android (Argon2id pre-computed at login, key cached in-memory) |
-| Cold start time | < 2 seconds |
-| Sync time | < 5 seconds for 1000 items |
-
-### 3.2 Security
+### 3.1 Security
 
 | Requirement | Description |
 |---|---|
-| Zero-knowledge | Server stores only encrypted blobs, auth key hash, and metadata |
-| HTTPS only | TLS 1.2+ |
-| OWASP compliance | Web vault follows OWASP Top 10 |
-| Android Keystore | Used for biometric-protected key storage |
-| Key derivation | Argon2id with specified parameters |
+| HTTPS only | All backend traffic must use TLS in deployed environments |
+| Token verification | Laravel must verify Firebase ID tokens before any protected Firestore access |
+| Zero-knowledge vault storage | Server stores encrypted blobs and metadata only |
+| Hashing | Optional stored vault-auth material must use Argon2id |
+| Authorization isolation | Folder/tag/item access must be scoped to the authenticated Firebase UID |
+
+Clarification:
+- The vault encryption key and decrypted vault contents are never sent to the backend.
+- Firebase email/password credentials are handled by Firebase Authentication, not by Laravel.
+
+### 3.2 Performance
+
+| Requirement | Target |
+|---|---|
+| Public health response | Fast enough for uptime probes |
+| API validation overhead | Minimal compared with remote auth/storage latency |
+| Sync path | Suitable for incremental item-based sync, with pagination still pending |
 
 ### 3.3 Reliability
 
 | Requirement | Target |
 |---|---|
-| Unit test coverage | ≥ 80% for crypto, generator, and sync modules |
-| Offline support | Full functionality in local-only mode |
+| Automated backend verification | PHPUnit feature coverage for route/middleware behavior |
+| Offline support | Android remains usable in local-only mode |
 
 ---
 
-## 4. User Interface Requirements
+## 4. Interface Requirements
 
-### 4.1 Android
+### 4.1 Backend API
 
-- Material Design 3 (Material You)
-- Min SDK: API 26 (Android 8.0)
-- Target SDK: API 36
-- Dynamic color support on Android 12+
+- REST API served from `/api`
+- Public auth endpoints:
+  - `POST /register`
+  - `POST /login`
+  - `POST /login/google`
+- Protected routes require `Authorization: Bearer <firebase_id_token>`
 
-### 4.2 Web
+### 4.2 Android
 
-- Laravel 12 Blade templates
-- Tailwind CSS
-- Alpine.js for interactivity
+- Android currently remains local-first
+- Backend cloud sync integration is in progress
 
 ---
 
 ## 5. Data Requirements
 
-### 5.1 Local Storage (Android - Room)
+### 5.1 Local Android Data
 
-- Encrypted with SQLCipher
-- Full sync with server when online
+- Room database for local/offline vault data
 
-### 5.2 Server Storage (PostgreSQL)
+### 5.2 Backend Data
 
-- Encrypted blobs only (zero-knowledge)
-- User metadata, auth key hash, audit logs
+- Firestore user profile documents
+- Firestore vault item, folder, and tag documents
+- No SQL database is required in the normal backend request path
 
 ---
 
 ## 6. Acceptance Criteria
 
-All functional requirements must pass their respective test cases. Non-functional requirements (performance, security) must meet the specified targets.
+The current backend pivot is acceptable when:
+- Laravel public routes boot without Firebase-only failures
+- Protected routes return JSON `401` without a bearer token
+- Firebase-backed auth routes and protected routes pass automated feature tests
+- Firestore-backed controllers enforce ownership and payload validation rules

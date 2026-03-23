@@ -4,8 +4,11 @@ set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8000/api}"
 RUN_ID="$(date +%s)-$$"
-EMAIL="api-test-${RUN_ID}@example.com"
-AUTH_HASH="test_auth_key_hash_${RUN_ID}"
+
+TEST_EMAIL="${TEST_EMAIL:-api-test-${RUN_ID}@example.com}"
+TEST_PASSWORD="${TEST_PASSWORD:-}"
+TEST_AUTH_KEY_HASH="${TEST_AUTH_KEY_HASH:-vault_auth_${RUN_ID}}"
+GOOGLE_ID_TOKEN="${GOOGLE_ID_TOKEN:-}"
 
 TOKEN=""
 FOLDER_ID=""
@@ -105,7 +108,7 @@ json_get() {
   ' "$path"
 }
 
-echo "=== Truvalt API Tests ==="
+echo "=== Truvalt Firebase API Tests ==="
 echo "Base URL: $BASE_URL"
 echo "Run ID: $RUN_ID"
 echo
@@ -120,13 +123,23 @@ assert_status "200" "GET /keep-alive"
 print_body
 echo
 
-request POST "/register" "{\"email\":\"$EMAIL\",\"auth_key_hash\":\"$AUTH_HASH\"}"
+request GET "/vault/items"
+assert_status "401" "GET /vault/items without auth"
+print_body
+echo
+
+if [[ -z "$TEST_PASSWORD" ]]; then
+  echo "[SKIP] Live Firebase auth flow tests require TEST_PASSWORD and a configured Firebase project."
+  exit 0
+fi
+
+request POST "/register" "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\",\"auth_key_hash\":\"$TEST_AUTH_KEY_HASH\"}"
 assert_status "201" "POST /register"
 print_body
 TOKEN="$(json_get "token")"
 echo
 
-request POST "/login" "{\"email\":\"$EMAIL\",\"auth_key_hash\":\"$AUTH_HASH\"}"
+request POST "/login" "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\",\"auth_key_hash\":\"$TEST_AUTH_KEY_HASH\"}"
 assert_status "200" "POST /login"
 print_body
 TOKEN="$(json_get "token")"
@@ -233,7 +246,6 @@ print_body
 echo
 
 sleep 1
-SERVER_WIN_TS="$(date +%s)"
 SERVER_WIN_BLOB="$(printf 'server_wins_blob_%s' "$RUN_ID" | base64 -w 0)"
 request PUT "/vault/items/$SYNC_ITEM_ID" "{\"name\":\"Twitter Server Updated\",\"encrypted_data\":\"$SERVER_WIN_BLOB\",\"favorite\":true}"
 assert_status "200" "PUT /vault/items/{id} conflict setup"
@@ -256,6 +268,13 @@ assert_status "200" "DELETE /folders/{id}"
 print_body
 echo
 
+if [[ -n "$GOOGLE_ID_TOKEN" ]]; then
+  request POST "/login/google" "{\"id_token\":\"$GOOGLE_ID_TOKEN\"}"
+  assert_status "200" "POST /login/google"
+  print_body
+  echo
+fi
+
 request POST "/logout"
 assert_status "200" "POST /logout"
 print_body
@@ -263,7 +282,7 @@ echo
 
 TOKEN=""
 request GET "/vault/items"
-assert_status "401" "GET /vault/items without auth"
+assert_status "401" "GET /vault/items after logout without auth header"
 print_body
 echo
 

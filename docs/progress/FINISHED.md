@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-23 | 4 |
+| 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
 | 2026-03-19 | 7 |
@@ -20,6 +20,10 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| FEAT-003 | Integrate Android cloud mode with the Firebase-backed Laravel API foundation | 2026-03-23 | Added Android Retrofit DTO/service/factory layers, persisted backend Firebase session tokens in DataStore, wired register/login to the Laravel backend in cloud mode, wired sync for folders/tags/vault items, and verified the app still builds successfully with `assembleDebug` |
+| CHORE-005 | Add Render build/run scripts and refresh Android auth-entry workflow docs | 2026-03-23 | Added `web/render-build.sh` and `web/render-run.sh`, documented the exact Render Firebase/file-runtime variables and Docker flow, updated the server setup UX to explicitly branch to sign-up vs login, and copied the latest debug APK to `/sdcard/Download/Truvalt-20260323-1253.apk` |
+| TEST-002 | Complete live Firebase + Firestore backend regression verification | 2026-03-23 | Wired the real Truvalt Firebase service-account credentials into Laravel, completed live email/password auth testing, verified Firestore-backed folders/tags/vault CRUD plus sync conflict handling, and confirmed logout revocation plus unauthenticated JSON `401` responses |
+| FEAT-002 | Pivot Laravel backend auth/storage to Firebase Authentication and Cloud Firestore | 2026-03-23 | Replaced Sanctum-protected route middleware with Firebase ID token verification, added email/password and Google sign-in endpoints, moved vault/folder/tag/user persistence to Firestore via REST, refreshed the API test script and PHPUnit coverage, and updated deployment/design/API docs for the new backend model |
 | CHORE-004 | Switch backend to an IPv4-reachable external PostgreSQL instance and complete live API verification/docs sync | 2026-03-23 | Repointed Laravel to the new external PostgreSQL connection, verified DNS/TCP/PDO connectivity, rebuilt and seeded the schema, completed authenticated API regression coverage, fixed the unauthenticated JSON `401` response path, and synchronized `/docs` to the verified backend behavior |
 | FIX-007 | Align Sanctum personal access tokens with UUID users | 2026-03-23 | Updated the `personal_access_tokens` migration from `morphs()` to `uuidMorphs()` and rebuilt the external PostgreSQL schema so API token creation works with UUID-backed users |
 | SEC-001 | Harden backend auth key storage and vault ownership validation | 2026-03-23 | Server now stores Argon2id-hashed auth key material, verifies it on login, validates `folder_id` / `parent_id` ownership, and rejects invalid base64 payloads for encrypted vault data |

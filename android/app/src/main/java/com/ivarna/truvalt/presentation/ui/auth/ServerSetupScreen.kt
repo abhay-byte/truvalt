@@ -37,6 +37,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 
+private enum class CloudAuthDestination {
+    LOGIN,
+    REGISTER
+}
+
 @Composable
 fun ServerSetupScreen(
     onNavigateToLogin: () -> Unit,
@@ -49,13 +54,17 @@ fun ServerSetupScreen(
 
     var serverUrl by remember { mutableStateOf("") }
     var useLocalOnly by remember { mutableStateOf(false) }
+    var cloudAuthDestination by remember { mutableStateOf(CloudAuthDestination.REGISTER) }
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
             if (useLocalOnly) {
                 onNavigateToVault()
             } else {
-                onNavigateToLogin()
+                when (cloudAuthDestination) {
+                    CloudAuthDestination.LOGIN -> onNavigateToLogin()
+                    CloudAuthDestination.REGISTER -> onNavigateToRegister()
+                }
             }
         }
     }
@@ -138,6 +147,48 @@ fun ServerSetupScreen(
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
+
+                    if (!useLocalOnly) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Next step after saving",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = { cloudAuthDestination = CloudAuthDestination.REGISTER },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Sign Up")
+                            }
+
+                            Button(
+                                onClick = { cloudAuthDestination = CloudAuthDestination.LOGIN },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Login")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = if (cloudAuthDestination == CloudAuthDestination.REGISTER) {
+                                "New device or new user: create an account after saving."
+                            } else {
+                                "Existing account: go straight to login after saving."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
@@ -150,15 +201,29 @@ fun ServerSetupScreen(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Text(
-                    text = if (useLocalOnly) "Continue" else "Save & Continue",
+                    text = if (useLocalOnly) {
+                        "Continue"
+                    } else if (cloudAuthDestination == CloudAuthDestination.REGISTER) {
+                        "Save & Sign Up"
+                    } else {
+                        "Save & Login"
+                    },
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(onClick = onNavigateToLogin) {
-                Text("Already have an account? Login")
+            if (!useLocalOnly) {
+                TextButton(onClick = onNavigateToRegister) {
+                    Text("Need a new account? Sign Up")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextButton(onClick = onNavigateToLogin) {
+                    Text("Already have an account? Login")
+                }
             }
         }
     }

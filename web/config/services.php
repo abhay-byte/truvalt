@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'credentials_json' => env('FIREBASE_CREDENTIALS_JSON'),
+        'web_api_key' => env('FIREBASE_WEB_API_KEY'),
+        'auth_redirect_uri' => env('FIREBASE_AUTH_REDIRECT_URI', 'http://localhost'),
+        'firestore_database' => env('FIRESTORE_DATABASE', '(default)'),
+        'check_revoked_tokens' => env('FIREBASE_CHECK_REVOKED_TOKENS', true),
+    ],
+
 ];

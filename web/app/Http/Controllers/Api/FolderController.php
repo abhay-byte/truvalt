@@ -3,72 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Folder;
+use App\Services\Firebase\TruvaltFirestoreRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class FolderController extends Controller
 {
+    public function __construct(
+        private readonly TruvaltFirestoreRepository $repository,
+    ) {
+    }
+
     public function index(Request $request)
     {
-        $folders = Folder::where('user_id', $request->user()->id)
-            ->orderBy('name')
-            ->get();
+        $folders = $this->repository->listFolders((string) $request->user()->id);
+        usort($folders, fn (array $left, array $right) => strcmp($left['name'], $right['name']));
 
         return response()->json($folders);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'id' => 'nullable|string',
             'name' => 'required|string',
             'icon' => 'nullable|string',
-            'parent_id' => 'nullable|uuid',
+            'parent_id' => 'nullable|string',
         ]);
 
-        $folder = Folder::create([
-            'id' => Str::uuid(),
-            'user_id' => $request->user()->id,
-            'name' => $request->name,
-            'icon' => $request->icon,
-            'parent_id' => $this->resolveOwnedParentId($request, $request->parent_id),
-            'updated_at' => now()->timestamp,
+        $folder = $this->repository->saveFolder((string) $request->user()->id, [
+            'id' => $validated['id'] ?? null,
+            'name' => $validated['name'],
+            'icon' => $validated['icon'] ?? null,
+            'parent_id' => $this->resolveOwnedParentId((string) $request->user()->id, $validated['parent_id'] ?? null),
         ]);
 
         return response()->json($folder, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
-        $folder = Folder::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $folder = $this->repository->getFolder((string) $request->user()->id, $id);
 
-        $folder->update([
-            'name' => $request->name ?? $folder->name,
-            'icon' => $request->icon ?? $folder->icon,
-            'parent_id' => $request->has('parent_id')
-                ? $this->resolveOwnedParentId($request, $request->parent_id, $folder->id)
-                : $folder->parent_id,
-            'updated_at' => now()->timestamp,
+        if ($folder === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string',
+            'icon' => 'nullable|string',
+            'parent_id' => 'nullable|string',
         ]);
 
-        return response()->json($folder);
+        $updated = $this->repository->saveFolder((string) $request->user()->id, [
+            'id' => $id,
+            'name' => $validated['name'] ?? $folder['name'],
+            'icon' => array_key_exists('icon', $validated) ? $validated['icon'] : $folder['icon'],
+            'parent_id' => array_key_exists('parent_id', $validated)
+                ? $this->resolveOwnedParentId((string) $request->user()->id, $validated['parent_id'], $id)
+                : $folder['parent_id'],
+        ]);
+
+        return response()->json($updated);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id)
     {
-        $folder = Folder::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $folder = $this->repository->getFolder((string) $request->user()->id, $id);
 
-        $folder->delete();
+        if ($folder === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $this->repository->deleteFolder((string) $request->user()->id, $id);
 
         return response()->json(['message' => 'Folder deleted']);
     }
 
-    private function resolveOwnedParentId(Request $request, ?string $parentId, ?string $folderId = null): ?string
+    private function resolveOwnedParentId(string $uid, ?string $parentId, ?string $folderId = null): ?string
     {
         if ($parentId === null) {
             return null;
@@ -80,11 +92,7 @@ class FolderController extends Controller
             ]);
         }
 
-        $ownsParent = Folder::where('id', $parentId)
-            ->where('user_id', $request->user()->id)
-            ->exists();
-
-        if (!$ownsParent) {
+        if ($this->repository->getFolder($uid, $parentId) === null) {
             throw ValidationException::withMessages([
                 'parent_id' => ['The selected parent folder is invalid.'],
             ]);

@@ -70,10 +70,10 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `server_setup` |
-| **Purpose** | Configure self-hosted backend URL |
-| **UI Elements** | TextField (URL), Save button, Test Connection button, "Use local only" checkbox |
-| **Validation** | URL must be valid format, connection test must succeed |
-| **Navigation** | Exit → Login or Register |
+| **Purpose** | Configure backend URL, choose cloud mode vs local-only mode, and choose whether to continue to login or sign-up |
+| **UI Elements** | TextField (URL), "Use local only" checkbox, Sign Up/Login destination chooser, Save button |
+| **Validation** | URL required unless local-only mode is selected |
+| **Navigation** | Exit → Register, Login, or local vault setup |
 
 ---
 
@@ -82,10 +82,10 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `register` |
-| **Purpose** | Create new account with email + master password |
-| **UI Elements** | Email field, Master password field (with visibility toggle), Password hint field, Register button |
-| **Validation** | Email format, password strength meter (zxcvbn), hint optional |
-| **Navigation** | Exit → TwoFactorSetup or VaultHome |
+| **Purpose** | Create new Firebase-backed cloud account with email + master password |
+| **UI Elements** | Email field, Master password field (with visibility toggle), Confirm password field, Create Vault button, Login link, Offline mode link |
+| **Validation** | Email format, password confirmation must match, minimum password length 8 |
+| **Navigation** | Exit → VaultHome or Login |
 
 ---
 
@@ -94,10 +94,10 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `login` |
-| **Purpose** | Authenticate with email + master password |
-| **UI Elements** | Email field, Master password field, Login button, Forgot password link |
+| **Purpose** | Authenticate against the Firebase-backed Laravel backend with email + master password |
+| **UI Elements** | Email field, Master password field, Login button, Register link, Offline mode link |
 | **Validation** | Email format, password not empty |
-| **Navigation** | Exit → TwoFAVerify or BiometricUnlock or VaultHome |
+| **Navigation** | Exit → Register or VaultHome |
 
 ---
 

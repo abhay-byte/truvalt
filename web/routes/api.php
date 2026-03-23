@@ -17,9 +17,10 @@ Route::get('/keep-alive', fn() => response()->json([
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login/google', [AuthController::class, 'google']);
 
 // Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('firebase.auth')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);

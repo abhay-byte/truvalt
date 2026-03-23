@@ -3,164 +3,193 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Folder;
-use App\Models\VaultItem;
+use App\Services\Firebase\TruvaltFirestoreRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class VaultController extends Controller
 {
+    public function __construct(
+        private readonly TruvaltFirestoreRepository $repository,
+    ) {
+    }
+
     public function index(Request $request)
     {
-        $query = VaultItem::where('user_id', $request->user()->id)
-            ->whereNull('deleted_at');
+        $items = array_filter(
+            $this->repository->listVaultItems((string) $request->user()->id),
+            fn (array $item) => $item['deleted_at'] === null
+        );
 
-        if ($request->has('updated_after')) {
-            $query->where('updated_at', '>', $request->updated_after);
+        if ($request->filled('updated_after')) {
+            $updatedAfter = (int) $request->query('updated_after');
+            $items = array_filter($items, fn (array $item) => $item['updated_at'] > $updatedAfter);
         }
 
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
+        if ($request->filled('type')) {
+            $type = (string) $request->query('type');
+            $items = array_filter($items, fn (array $item) => $item['type'] === $type);
         }
 
-        if ($request->has('folder_id')) {
-            $query->where('folder_id', $request->folder_id);
+        if ($request->filled('folder_id')) {
+            $folderId = (string) $request->query('folder_id');
+            $items = array_filter($items, fn (array $item) => $item['folder_id'] === $folderId);
         }
 
-        $items = $query->orderBy('updated_at', 'desc')->get();
+        usort($items, fn (array $left, array $right) => $right['updated_at'] <=> $left['updated_at']);
 
-        return response()->json($items);
+        return response()->json(array_values($items));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'type' => 'required|string',
             'name' => 'required|string',
             'encrypted_data' => 'required|string',
-            'folder_id' => 'nullable|uuid',
+            'folder_id' => 'nullable|string',
             'favorite' => 'boolean',
         ]);
 
-        $item = VaultItem::create([
-            'id' => Str::uuid(),
-            'user_id' => $request->user()->id,
-            'type' => $request->type,
-            'name' => $request->name,
-            'folder_id' => $this->resolveOwnedFolderId($request, $request->folder_id),
-            'encrypted_data' => $this->decodeEncryptedData($request->encrypted_data),
-            'favorite' => $request->favorite ?? false,
-            'created_at' => now()->timestamp,
-            'updated_at' => now()->timestamp,
+        $item = $this->repository->saveVaultItem((string) $request->user()->id, [
+            'type' => $validated['type'],
+            'name' => $validated['name'],
+            'folder_id' => $this->resolveOwnedFolderId((string) $request->user()->id, $validated['folder_id'] ?? null),
+            'encrypted_data' => $this->normalizeEncryptedData($validated['encrypted_data']),
+            'favorite' => $validated['favorite'] ?? false,
         ]);
 
         return response()->json($item, 201);
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, string $id)
     {
-        $item = VaultItem::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->firstOrFail();
+        $item = $this->activeItem((string) $request->user()->id, $id);
+
+        if ($item === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
 
         return response()->json($item);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
-        $item = VaultItem::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->firstOrFail();
+        $item = $this->activeItem((string) $request->user()->id, $id);
 
-        $item->update([
-            'name' => $request->name ?? $item->name,
-            'encrypted_data' => $request->filled('encrypted_data')
-                ? $this->decodeEncryptedData($request->encrypted_data)
-                : $item->getRawOriginal('encrypted_data'),
-            'folder_id' => $request->has('folder_id')
-                ? $this->resolveOwnedFolderId($request, $request->folder_id)
-                : $item->folder_id,
-            'favorite' => $request->favorite ?? $item->favorite,
-            'updated_at' => now()->timestamp,
+        if ($item === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string',
+            'encrypted_data' => 'nullable|string',
+            'folder_id' => 'nullable|string',
+            'favorite' => 'nullable|boolean',
         ]);
 
-        return response()->json($item);
+        $updated = $this->repository->saveVaultItem((string) $request->user()->id, [
+            'id' => $id,
+            'type' => $item['type'],
+            'name' => $validated['name'] ?? $item['name'],
+            'folder_id' => array_key_exists('folder_id', $validated)
+                ? $this->resolveOwnedFolderId((string) $request->user()->id, $validated['folder_id'])
+                : $item['folder_id'],
+            'encrypted_data' => array_key_exists('encrypted_data', $validated)
+                ? $this->normalizeEncryptedData((string) $validated['encrypted_data'])
+                : $item['encrypted_data'],
+            'favorite' => $validated['favorite'] ?? $item['favorite'],
+            'created_at' => $item['created_at'],
+            'deleted_at' => $item['deleted_at'],
+        ]);
+
+        return response()->json($updated);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id)
     {
-        $item = VaultItem::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->whereNull('deleted_at')
-            ->firstOrFail();
+        $item = $this->activeItem((string) $request->user()->id, $id);
 
-        $item->update(['deleted_at' => now()->timestamp]);
+        if ($item === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $this->repository->saveVaultItem((string) $request->user()->id, [
+            'id' => $id,
+            'deleted_at' => now()->timestamp,
+            'updated_at' => now()->timestamp,
+        ]);
 
         return response()->json(['message' => 'Item moved to trash']);
     }
 
     public function trash(Request $request)
     {
-        $items = VaultItem::where('user_id', $request->user()->id)
-            ->whereNotNull('deleted_at')
-            ->orderBy('deleted_at', 'desc')
-            ->get();
+        $items = array_filter(
+            $this->repository->listVaultItems((string) $request->user()->id),
+            fn (array $item) => $item['deleted_at'] !== null
+        );
 
-        return response()->json($items);
+        usort($items, fn (array $left, array $right) => $right['deleted_at'] <=> $left['deleted_at']);
+
+        return response()->json(array_values($items));
     }
 
-    public function restore(Request $request, $id)
+    public function restore(Request $request, string $id)
     {
-        $item = VaultItem::where('user_id', $request->user()->id)
-            ->where('id', $id)
-            ->whereNotNull('deleted_at')
-            ->firstOrFail();
+        $item = $this->repository->getVaultItem((string) $request->user()->id, $id);
 
-        $item->update(['deleted_at' => null, 'updated_at' => now()->timestamp]);
+        if ($item === null || $item['deleted_at'] === null) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
 
-        return response()->json($item);
+        $restored = $this->repository->saveVaultItem((string) $request->user()->id, [
+            'id' => $id,
+            'deleted_at' => null,
+            'updated_at' => now()->timestamp,
+        ]);
+
+        return response()->json($restored);
     }
 
     public function sync(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'items' => 'required|array',
-            'items.*.id' => 'required|uuid',
+            'items.*.id' => 'required|string',
             'items.*.type' => 'required|string',
             'items.*.name' => 'required|string',
-            'items.*.encrypted_data' => 'required',
+            'items.*.encrypted_data' => 'required|string',
             'items.*.updated_at' => 'required|integer',
+            'items.*.created_at' => 'nullable|integer',
+            'items.*.folder_id' => 'nullable|string',
+            'items.*.favorite' => 'nullable|boolean',
+            'items.*.deleted_at' => 'nullable|integer',
         ]);
 
+        $uid = (string) $request->user()->id;
         $synced = [];
         $conflicts = [];
 
-        foreach ($request->items as $itemData) {
-            $existing = VaultItem::where('user_id', $request->user()->id)
-                ->where('id', $itemData['id'])
-                ->first();
+        foreach ($validated['items'] as $itemData) {
+            $existing = $this->repository->getVaultItem($uid, $itemData['id']);
 
-            if ($existing && $existing->updated_at > $itemData['updated_at']) {
+            if ($existing !== null && $existing['updated_at'] > $itemData['updated_at']) {
                 $conflicts[] = $existing;
-            } else {
-                $item = VaultItem::updateOrCreate(
-                    ['id' => $itemData['id'], 'user_id' => $request->user()->id],
-                    [
-                        'type' => $itemData['type'],
-                        'name' => $itemData['name'],
-                        'encrypted_data' => $this->decodeEncryptedData($itemData['encrypted_data']),
-                        'folder_id' => $this->resolveOwnedFolderId($request, $itemData['folder_id'] ?? null),
-                        'favorite' => $itemData['favorite'] ?? false,
-                        'created_at' => $itemData['created_at'] ?? now()->timestamp,
-                        'updated_at' => $itemData['updated_at'],
-                        'deleted_at' => $itemData['deleted_at'] ?? null,
-                    ]
-                );
-                $synced[] = $item;
+                continue;
             }
+
+            $synced[] = $this->repository->saveVaultItem($uid, [
+                'id' => $itemData['id'],
+                'type' => $itemData['type'],
+                'name' => $itemData['name'],
+                'encrypted_data' => $this->normalizeEncryptedData($itemData['encrypted_data']),
+                'folder_id' => $this->resolveOwnedFolderId($uid, $itemData['folder_id'] ?? null),
+                'favorite' => $itemData['favorite'] ?? false,
+                'created_at' => $itemData['created_at'] ?? now()->timestamp,
+                'updated_at' => $itemData['updated_at'],
+                'deleted_at' => $itemData['deleted_at'] ?? null,
+            ]);
         }
 
         return response()->json([
@@ -169,7 +198,18 @@ class VaultController extends Controller
         ]);
     }
 
-    private function decodeEncryptedData(string $encoded): string
+    private function activeItem(string $uid, string $itemId): ?array
+    {
+        $item = $this->repository->getVaultItem($uid, $itemId);
+
+        if ($item === null || $item['deleted_at'] !== null) {
+            return null;
+        }
+
+        return $item;
+    }
+
+    private function normalizeEncryptedData(string $encoded): string
     {
         $decoded = base64_decode($encoded, true);
 
@@ -179,20 +219,16 @@ class VaultController extends Controller
             ]);
         }
 
-        return $decoded;
+        return base64_encode($decoded);
     }
 
-    private function resolveOwnedFolderId(Request $request, ?string $folderId): ?string
+    private function resolveOwnedFolderId(string $uid, ?string $folderId): ?string
     {
         if ($folderId === null) {
             return null;
         }
 
-        $ownsFolder = Folder::where('id', $folderId)
-            ->where('user_id', $request->user()->id)
-            ->exists();
-
-        if (!$ownsFolder) {
+        if ($this->repository->getFolder($uid, $folderId) === null) {
             throw ValidationException::withMessages([
                 'folder_id' => ['The selected folder is invalid.'],
             ]);

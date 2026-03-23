@@ -3,66 +3,99 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\Firebase\FirebaseAuthService;
+use App\Services\Firebase\FirebaseRequestException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly FirebaseAuthService $authService,
+    ) {
+    }
+
     public function register(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|unique:users',
-            'auth_key_hash' => 'required|string',
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
+            'auth_key_hash' => 'nullable|string',
         ]);
 
-        $user = User::create([
-            'id' => Str::uuid(),
-            'email' => $request->email,
-            'auth_key_hash' => password_hash($request->auth_key_hash, PASSWORD_ARGON2ID),
-        ]);
-
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+        try {
+            return response()->json(
+                $this->authService->registerWithEmailPassword(
+                    $validated['email'],
+                    $validated['password'],
+                    $validated['auth_key_hash'] ?? null,
+                ),
+                201,
+            );
+        } catch (FirebaseRequestException $exception) {
+            throw ValidationException::withMessages([
+                'email' => [$exception->getMessage()],
+            ]);
+        }
     }
 
     public function login(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'email' => 'required|email',
-            'auth_key_hash' => 'required|string',
+            'password' => 'required|string|min:6',
+            'auth_key_hash' => 'nullable|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !password_verify($request->auth_key_hash, $user->auth_key_hash)) {
+        try {
+            return response()->json(
+                $this->authService->loginWithEmailPassword(
+                    $validated['email'],
+                    $validated['password'],
+                    $validated['auth_key_hash'] ?? null,
+                )
+            );
+        } catch (FirebaseRequestException $exception) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => [$exception->getMessage()],
             ]);
         }
+    }
 
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
+    public function google(Request $request)
+    {
+        $validated = $request->validate([
+            'id_token' => 'required|string',
+            'auth_key_hash' => 'nullable|string',
         ]);
+
+        try {
+            return response()->json(
+                $this->authService->loginWithGoogleIdToken(
+                    $validated['id_token'],
+                    $validated['auth_key_hash'] ?? null,
+                )
+            );
+        } catch (FirebaseRequestException $exception) {
+            throw ValidationException::withMessages([
+                'id_token' => [$exception->getMessage()],
+            ]);
+        }
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout((string) $request->user()->id);
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json([
+            'message' => 'Logged out successfully. Firebase refresh tokens for this account were revoked.',
+        ]);
     }
 
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json(
+            $this->authService->currentUserProfile((string) $request->user()->id)
+        );
     }
 }

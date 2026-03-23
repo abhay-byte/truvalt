@@ -1,785 +1,459 @@
 # Truvalt API Documentation
 
-**Base URL:** `http://127.0.0.1:8000/api`
+**Base URL:** `http://127.0.0.1:8000/api`  
+**Backend Auth:** Firebase Authentication  
+**Protected Route Auth:** `Authorization: Bearer <firebase_id_token>`  
+**Primary Backend Storage:** Cloud Firestore  
+**Last Updated:** `2026-03-23`
 
-**Authentication:** Bearer Token (Sanctum)
-
-**Verified Against Live Backend:** `2026-03-23`
+**Live Backend Verification:** Email/password + Firestore paths verified against the real `truvalt` Firebase project on `2026-03-23`. `POST /login/google` remains pending a live Google ID token.
 
 ---
 
-## Utility Endpoints
+## Overview
 
-### Health Check
+The Laravel backend now uses Firebase for account/session identity and Firestore for backend vault metadata and encrypted blobs.
 
-**GET** `/health`
+- Public utility routes do not require Firebase configuration.
+- Public auth routes require a configured Firebase project plus:
+  - `FIREBASE_PROJECT_ID`
+  - `FIREBASE_CREDENTIALS` or `FIREBASE_CREDENTIALS_JSON`
+  - `FIREBASE_WEB_API_KEY`
+- Protected routes verify Firebase ID tokens server-side before touching Firestore.
+- `encrypted_data` is still expected as base64-encoded encrypted client data.
+- The backend stores encrypted blobs only; it does not decrypt vault payloads.
+- The Android app now stores the returned Firebase `token`, optional `refresh_token`, and backend `user.id` locally for cloud-mode requests and sync.
 
-Basic readiness probe for Render and uptime checks.
+---
 
-**Response:** `200 OK`
+## Public Utility Endpoints
+
+### `GET /health`
+
+Simple readiness probe.
+
+**Response**
 ```json
 {
   "status": "ok"
 }
 ```
 
-### Keep-Alive
+### `GET /keep-alive`
 
-**GET** `/keep-alive`
+Public route for uptime pings.
 
-Public keep-alive route for external cron jobs and uptime pings.
-
-**Response:** `200 OK`
+**Response**
 ```json
 {
   "status": "ok",
   "purpose": "keep-alive",
-  "timestamp": "2026-03-22T12:00:00Z"
+  "timestamp": "2026-03-23T10:21:31+00:00"
 }
-```
-
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/keep-alive
 ```
 
 ---
 
 ## Authentication
 
-### Register User
+### `POST /register`
 
-**POST** `/register`
+Create a Firebase email/password account and bootstrap the Truvalt Firestore profile.
 
-Create a new user account.
-
-**Request Body:**
+**Request**
 ```json
 {
   "email": "user@example.com",
-  "auth_key_hash": "client_derived_auth_key_material"
+  "password": "secret12",
+  "auth_key_hash": "optional_client_derived_vault_auth_material"
 }
 ```
 
-The server hashes the received `auth_key_hash` value with Argon2id before storing it.
+Notes:
+- `password` is handled by Firebase Authentication.
+- `auth_key_hash` is optional metadata. When supplied, the backend stores only an Argon2id hash of that value in the Firestore user profile.
 
-**Response:** `201 Created`
+**Response**
 ```json
 {
   "user": {
-    "id": "uuid",
+    "id": "firebase_uid",
     "email": "user@example.com",
-    "created_at": "2026-03-20T11:00:00.000000Z",
-    "updated_at": "2026-03-20T11:00:00.000000Z"
+    "providers": ["password"],
+    "auth_key_hash_configured": true,
+    "created_at": 1774260000,
+    "updated_at": 1774260000,
+    "last_login_at": 1774260000,
+    "email_verified": false
   },
-  "token": "1|sanctum_token_here"
+  "token": "firebase_id_token",
+  "refresh_token": "firebase_refresh_token",
+  "expires_in": 3600
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","auth_key_hash":"test_hash"}'
-```
+### `POST /login`
 
----
+Sign in with Firebase email/password and return a Firebase ID token.
 
-### Login
-
-**POST** `/login`
-
-Authenticate and receive access token.
-
-**Request Body:**
+**Request**
 ```json
 {
   "email": "user@example.com",
-  "auth_key_hash": "client_derived_auth_key_material"
+  "password": "secret12",
+  "auth_key_hash": "optional_client_derived_vault_auth_material"
 }
 ```
 
-The server verifies the supplied value against the stored Argon2id hash and returns a new Sanctum token on success.
+If `auth_key_hash` is supplied and the profile already has a stored Argon2id hash, the backend verifies it before completing the login response.
 
-**Response:** `200 OK`
+**Response**
 ```json
 {
-  "user": { ... },
-  "token": "2|sanctum_token_here"
+  "user": {
+    "id": "firebase_uid",
+    "email": "user@example.com",
+    "providers": ["password"],
+    "auth_key_hash_configured": true,
+    "created_at": 1774260000,
+    "updated_at": 1774260100,
+    "last_login_at": 1774260100,
+    "email_verified": false
+  },
+  "token": "firebase_id_token",
+  "refresh_token": "firebase_refresh_token",
+  "expires_in": 3600
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","auth_key_hash":"test_hash"}'
-```
+### `POST /login/google`
 
----
+Sign in with a Google ID token through Firebase Authentication.
 
-### Get Current User
-
-**GET** `/me`
-
-Get authenticated user information.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
+**Request**
 ```json
 {
-  "id": "uuid",
+  "id_token": "google_identity_token",
+  "auth_key_hash": "optional_client_derived_vault_auth_material"
+}
+```
+
+**Response**
+```json
+{
+  "user": {
+    "id": "firebase_uid",
+    "email": "user@example.com",
+    "providers": ["google.com"],
+    "auth_key_hash_configured": false,
+    "created_at": 1774260000,
+    "updated_at": 1774260200,
+    "last_login_at": 1774260200,
+    "email_verified": true
+  },
+  "token": "firebase_id_token",
+  "refresh_token": "firebase_refresh_token",
+  "expires_in": 3600
+}
+```
+
+### `GET /me`
+
+Return the authenticated Firestore user profile.
+
+**Headers**
+- `Authorization: Bearer <firebase_id_token>`
+
+**Response**
+```json
+{
+  "id": "firebase_uid",
   "email": "user@example.com",
-  "created_at": "2026-03-20T11:00:00.000000Z",
-  "updated_at": "2026-03-20T11:00:00.000000Z"
+  "providers": ["password"],
+  "auth_key_hash_configured": true,
+  "created_at": 1774260000,
+  "updated_at": 1774260100,
+  "last_login_at": 1774260100,
+  "email_verified": false
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+### `POST /logout`
 
----
+Revoke Firebase refresh tokens for the authenticated account.
 
-### Logout
+**Headers**
+- `Authorization: Bearer <firebase_id_token>`
 
-**POST** `/logout`
-
-Revoke current access token.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
+**Response**
 ```json
 {
-  "message": "Logged out successfully"
+  "message": "Logged out successfully. Firebase refresh tokens for this account were revoked."
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/logout \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+Important:
+- This is broader than deleting a single Sanctum token.
+- Existing Firebase ID tokens remain usable until they expire unless the client refreshes or the server checks revocation. The backend is configured to check revocation during token verification.
 
 ---
 
 ## Vault Items
 
-### List Vault Items
+All vault item routes require a Firebase bearer token.
 
-**GET** `/vault/items`
+### `GET /vault/items`
 
-Get all vault items (excluding deleted).
+List non-deleted items for the authenticated user.
 
-**Headers:**
-- `Authorization: Bearer {token}`
+**Query Params**
+- `updated_after` optional integer Unix timestamp
+- `type` optional string
+- `folder_id` optional string
 
-**Query Parameters:**
-- `updated_after` (optional): Unix timestamp - Get items updated after this time
-- `type` (optional): Filter by type (login, passkey, secure_note, etc.)
-- `folder_id` (optional): Filter by folder UUID
-
-**Response:** `200 OK`
+**Response**
 ```json
 [
   {
     "id": "uuid",
-    "user_id": "uuid",
+    "user_id": "firebase_uid",
     "type": "login",
     "name": "GitHub",
     "folder_id": "uuid",
-    "encrypted_data": "base64_encrypted_blob",
+    "encrypted_data": "YmFzZTY0LWVuY29kZWQtYmxvYg==",
     "favorite": true,
-    "created_at": 1710936000,
-    "updated_at": 1710936000,
+    "created_at": 1774260000,
+    "updated_at": 1774260100,
     "deleted_at": null
   }
 ]
 ```
 
-**cURL Examples:**
-```bash
-# Get all items
-curl -X GET http://localhost:8000/api/vault/items \
-  -H "Authorization: Bearer YOUR_TOKEN"
+### `POST /vault/items`
 
-# Filter by type
-curl -X GET "http://localhost:8000/api/vault/items?type=login" \
-  -H "Authorization: Bearer YOUR_TOKEN"
+Create an item.
 
-# Filter by folder
-curl -X GET "http://localhost:8000/api/vault/items?folder_id=FOLDER_UUID" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Delta sync (get items updated after timestamp)
-curl -X GET "http://localhost:8000/api/vault/items?updated_after=1710936000" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Create Vault Item
-
-**POST** `/vault/items`
-
-Create a new vault item.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:**
+**Request**
 ```json
 {
   "type": "login",
   "name": "GitHub",
-  "encrypted_data": "base64_encoded_encrypted_blob",
+  "encrypted_data": "YmFzZTY0LWVuY29kZWQtYmxvYg==",
   "folder_id": "uuid",
   "favorite": false
 }
 ```
 
-`folder_id`, when provided, must belong to the authenticated user.
+Rules:
+- `encrypted_data` must be valid base64.
+- `folder_id`, when present, must belong to the authenticated user.
 
-**Response:** `201 Created`
-```json
-{
-  "id": "uuid",
-  "user_id": "uuid",
-  "type": "login",
-  "name": "GitHub",
-  "folder_id": "uuid",
-  "encrypted_data": "base64_encrypted_blob",
-  "favorite": false,
-  "created_at": 1710936000,
-  "updated_at": 1710936000,
-  "deleted_at": null
-}
-```
+### `GET /vault/items/{id}`
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/vault/items \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "login",
-    "name": "GitHub",
-    "encrypted_data": "'"$(echo 'encrypted_data' | base64)"'",
-    "folder_id": null,
-    "favorite": true
-  }'
-```
+Return one non-deleted item.
 
----
+### `PUT /vault/items/{id}`
 
-### Get Vault Item
+Update an item.
 
-**GET** `/vault/items/{id}`
+**Request Fields**
+- `name` optional string
+- `encrypted_data` optional base64 string
+- `folder_id` optional string or `null`
+- `favorite` optional boolean
 
-Get a specific vault item by ID.
+### `DELETE /vault/items/{id}`
 
-**Headers:**
-- `Authorization: Bearer {token}`
+Soft-delete an item by setting `deleted_at`.
 
-**Response:** `200 OK`
-```json
-{
-  "id": "uuid",
-  "user_id": "uuid",
-  "type": "login",
-  "name": "GitHub",
-  "encrypted_data": "base64_encrypted_blob",
-  "favorite": true,
-  "created_at": 1710936000,
-  "updated_at": 1710936000,
-  "deleted_at": null
-}
-```
-
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/vault/items/ITEM_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Update Vault Item
-
-**PUT** `/vault/items/{id}`
-
-Update an existing vault item.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:** (all fields optional)
-```json
-{
-  "name": "GitHub Updated",
-  "encrypted_data": "new_base64_encoded_blob",
-  "folder_id": "uuid",
-  "favorite": false
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "uuid",
-  "name": "GitHub Updated",
-  "updated_at": 1710936100,
-  ...
-}
-```
-
-**cURL Example:**
-```bash
-curl -X PUT http://localhost:8000/api/vault/items/ITEM_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"GitHub Updated","favorite":false}'
-```
-
----
-
-### Delete Vault Item (Soft Delete)
-
-**DELETE** `/vault/items/{id}`
-
-Move item to trash (soft delete).
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
+**Response**
 ```json
 {
   "message": "Item moved to trash"
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X DELETE http://localhost:8000/api/vault/items/ITEM_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+### `GET /vault/trash`
 
----
+List soft-deleted items.
 
-### Get Trash Items
+### `POST /vault/items/{id}/restore`
 
-**GET** `/vault/trash`
+Restore a soft-deleted item.
 
-Get all deleted vault items.
+### `POST /vault/sync`
 
-**Headers:**
-- `Authorization: Bearer {token}`
+Batch upsert with last-write-wins conflict detection.
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "uuid",
-    "name": "Deleted Item",
-    "deleted_at": 1710936000,
-    ...
-  }
-]
-```
-
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/vault/trash \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Restore Vault Item
-
-**POST** `/vault/items/{id}/restore`
-
-Restore a deleted item from trash.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
-```json
-{
-  "id": "uuid",
-  "deleted_at": null,
-  "updated_at": 1710936200,
-  ...
-}
-```
-
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/vault/items/ITEM_UUID/restore \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Batch Sync
-
-**POST** `/vault/sync`
-
-Sync multiple vault items with conflict detection (last-write-wins).
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:**
+**Request**
 ```json
 {
   "items": [
     {
       "id": "uuid",
       "type": "login",
-      "name": "Twitter",
-      "encrypted_data": "base64_blob",
+      "name": "GitHub",
+      "encrypted_data": "YmFzZTY0LWVuY29kZWQtYmxvYg==",
       "folder_id": null,
       "favorite": false,
-      "created_at": 1710936000,
-      "updated_at": 1710936000,
+      "created_at": 1774260000,
+      "updated_at": 1774260100,
       "deleted_at": null
     }
   ]
 }
 ```
 
-Client-provided item UUIDs are preserved during sync so later CRUD operations can target the same IDs.
-
-**Response:** `200 OK`
+**Response**
 ```json
 {
   "synced": [
-    { "id": "uuid", "name": "Twitter", ... }
+    {
+      "id": "uuid",
+      "user_id": "firebase_uid",
+      "type": "login",
+      "name": "GitHub",
+      "folder_id": null,
+      "encrypted_data": "YmFzZTY0LWVuY29kZWQtYmxvYg==",
+      "favorite": false,
+      "created_at": 1774260000,
+      "updated_at": 1774260100,
+      "deleted_at": null
+    }
   ],
-  "conflicts": [
-    { "id": "uuid", "name": "Conflicted Item", ... }
-  ]
+  "conflicts": []
 }
 ```
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/vault/sync \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "items": [
-      {
-        "id": "'"$(uuidgen)"'",
-        "type": "login",
-        "name": "Twitter",
-        "encrypted_data": "'"$(echo 'data' | base64)"'",
-        "created_at": '"$(date +%s)"',
-        "updated_at": '"$(date +%s)"'
-      }
-    ]
-  }'
-```
+Conflict rule:
+- If the server copy has a newer `updated_at` than the incoming item, the server copy is returned in `conflicts` and the incoming copy is skipped.
 
 ---
 
 ## Folders
 
-### List Folders
+### `GET /folders`
 
-**GET** `/folders`
+List folders sorted by name.
 
-Get all folders for the authenticated user.
+### `POST /folders`
 
-**Headers:**
-- `Authorization: Bearer {token}`
+Create a folder.
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "uuid",
-    "user_id": "uuid",
-    "name": "Work",
-    "icon": "briefcase",
-    "parent_id": null,
-    "updated_at": 1710936000
-  }
-]
-```
-
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/folders \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Create Folder
-
-**POST** `/folders`
-
-Create a new folder.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:**
+**Request**
 ```json
 {
+  "id": "optional-client-uuid",
   "name": "Work",
   "icon": "briefcase",
   "parent_id": null
 }
 ```
 
-**Response:** `201 Created`
-```json
-{
-  "id": "uuid",
-  "user_id": "uuid",
-  "name": "Work",
-  "icon": "briefcase",
-  "parent_id": null,
-  "updated_at": 1710936000
-}
-```
+Rules:
+- `id` is optional. When supplied, the backend preserves the client UUID so Android Room IDs and Firestore IDs stay aligned.
+- `parent_id`, when present, must belong to the authenticated user.
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/folders \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Work","icon":"briefcase","parent_id":null}'
-```
+### `PUT /folders/{id}`
 
----
+Update a folder.
 
-### Update Folder
+Rules:
+- A folder cannot be its own parent.
+- `parent_id`, when present, must belong to the authenticated user.
 
-**PUT** `/folders/{id}`
+### `DELETE /folders/{id}`
 
-Update an existing folder.
+Delete a folder.
 
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:** (all fields optional)
-```json
-{
-  "name": "Work Updated",
-  "icon": "building",
-  "parent_id": "uuid"
-}
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "uuid",
-  "name": "Work Updated",
-  "icon": "building",
-  "updated_at": 1710936100,
-  ...
-}
-```
-
-**cURL Example:**
-```bash
-curl -X PUT http://localhost:8000/api/folders/FOLDER_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Work Updated","icon":"building"}'
-```
-
----
-
-### Delete Folder
-
-**DELETE** `/folders/{id}`
-
-Delete a folder (cascades to child folders and items).
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Folder deleted"
-}
-```
-
-**cURL Example:**
-```bash
-curl -X DELETE http://localhost:8000/api/folders/FOLDER_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+Current backend behavior:
+- Child folders referencing that folder have `parent_id` cleared.
+- Vault items referencing that folder have `folder_id` cleared.
 
 ---
 
 ## Tags
 
-### List Tags
+### `GET /tags`
 
-**GET** `/tags`
+List tags sorted by name.
 
-Get all tags for the authenticated user.
+### `POST /tags`
 
-**Headers:**
-- `Authorization: Bearer {token}`
+Create a tag.
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "uuid",
-    "user_id": "uuid",
-    "name": "important"
-  }
-]
-```
-
-**cURL Example:**
-```bash
-curl -X GET http://localhost:8000/api/tags \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
----
-
-### Create Tag
-
-**POST** `/tags`
-
-Create a new tag.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Request Body:**
+**Request**
 ```json
 {
+  "id": "optional-client-uuid",
   "name": "important"
 }
 ```
 
-**Response:** `201 Created`
-```json
-{
-  "id": "uuid",
-  "user_id": "uuid",
-  "name": "important"
-}
-```
+Rules:
+- `id` is optional. When supplied, the backend preserves the client UUID so Android Room IDs and Firestore IDs stay aligned.
 
-**cURL Example:**
-```bash
-curl -X POST http://localhost:8000/api/tags \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"important"}'
-```
-
----
-
-### Delete Tag
-
-**DELETE** `/tags/{id}`
+### `DELETE /tags/{id}`
 
 Delete a tag.
-
-**Headers:**
-- `Authorization: Bearer {token}`
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Tag deleted"
-}
-```
-
-**cURL Example:**
-```bash
-curl -X DELETE http://localhost:8000/api/tags/TAG_UUID \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
 
 ---
 
 ## Error Responses
 
-### 401 Unauthorized
+### `401 Unauthorized`
+
 ```json
 {
   "message": "Unauthenticated."
 }
 ```
 
-### 404 Not Found
-```json
-{
-  "message": "No query results for model [App\\Models\\VaultItem] uuid"
-}
-```
+Returned when:
+- The bearer token is missing.
+- The Firebase ID token is invalid.
+- The Firebase ID token is revoked and revocation checking is enabled.
 
-### 422 Validation Error
+### `422 Unprocessable Entity`
+
+Typical causes:
+- Invalid email/password payloads
+- Invalid Google ID token
+- Invalid base64 `encrypted_data`
+- Cross-user `folder_id` or `parent_id`
+
+Example:
 ```json
 {
-  "message": "The email field is required.",
+  "message": "The given data was invalid.",
   "errors": {
-    "email": ["The email field is required."]
+    "encrypted_data": [
+      "The encrypted_data field must be valid base64."
+    ]
   }
 }
 ```
 
 ---
 
-## Testing
+## Storage Model
 
-Run the comprehensive test script:
+The backend writes Firestore documents under the authenticated user namespace:
 
-```bash
-cd ~/repos/Truvalt/web
-php artisan serve  # In one terminal
-./test-api.sh      # In another terminal
-```
+- `users/{uid}`
+- `users/{uid}/vault_items/{itemId}`
+- `users/{uid}/folders/{folderId}`
+- `users/{uid}/tags/{tagId}`
 
-The test script will:
-1. Register a new user
-2. Login and get token
-3. Create folders, tags, and vault items
-4. Test all CRUD operations
-5. Test filtering and delta sync
-6. Test soft delete and restore
-7. Test batch sync with conflicts
-8. Clean up and logout
-9. Verify unauthenticated requests return JSON `401`
-
-Latest verified run:
-- Date: `2026-03-23`
-- Coverage: all 21 implemented API routes plus the unauthenticated `GET /api/vault/items` case
-- Environment: Laravel 12 local server on `127.0.0.1:8000` backed by external PostgreSQL over SSL
+This keeps data ownership explicit and simplifies per-user authorization checks in Laravel.
 
 ---
 
-## Security Notes
+## Testing Notes
 
-- All vault item data (`encrypted_data`) must be base64-encoded encrypted blobs
-- The API stores `encrypted_data` as binary in PostgreSQL and returns it as base64 in JSON responses
-- Server never decrypts vault data (zero-knowledge architecture)
-- The server stores only an Argon2id hash of the submitted auth key material
-- All endpoints (except register/login) require Bearer token authentication
-- Tokens are managed by Laravel Sanctum
-- Unauthenticated API requests return JSON `401` instead of redirecting to a web login page
-- Folder and parent-folder references are validated against the authenticated user to prevent cross-user linking
+- `web/test-api.sh` now supports a smoke-test mode with no Firebase credentials.
+- Full live auth flow testing requires:
+  - server-side Firebase credentials/env vars configured
+  - `TEST_PASSWORD` for email/password auth
+  - optional `GOOGLE_ID_TOKEN` for the Google sign-in endpoint
+- The current automated PHPUnit suite verifies route wiring, middleware, and controller behavior with mocked Firebase/Firestore services.

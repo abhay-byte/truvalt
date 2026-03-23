@@ -16,26 +16,21 @@ services:
         value: production
       - key: APP_DEBUG
         value: false
-      - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_URL
-        sync: false
-      - key: DB_SSLMODE
-        value: require
-      - key: REDIS_URL
-        fromService:
-          name: truvalt-redis
-          type: keyvalue
-          property: connectionString
       - key: SESSION_DRIVER
-        value: redis
+        value: file
       - key: CACHE_STORE
-        value: redis
+        value: file
       - key: QUEUE_CONNECTION
         value: sync
-
-  - type: keyvalue
-    name: truvalt-redis
-    plan: free
-    maxmemoryPolicy: noeviction
-    ipAllowList: []
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_WEB_API_KEY
+        sync: false
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false
+      - key: FIREBASE_AUTH_REDIRECT_URI
+        value: http://localhost
+      - key: FIRESTORE_DATABASE
+        value: (default)
+      - key: FIREBASE_CHECK_REVOKED_TOKENS
+        value: true

@@ -16,7 +16,6 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-010 Create vault item (all types) — Priority: High — Target: v1.0
 - [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
-- [ ] TASK-018 Cloud sync implementation — Priority: High — Target: v1.0
 - [ ] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
 - [ ] TASK-020 Conflict resolution (last-write-wins) — Priority: High — Target: v1.0
 - [x] TASK-021 Import from Bitwarden JSON — Priority: High — Target: v1.0

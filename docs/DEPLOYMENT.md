@@ -1,314 +1,182 @@
 # Deployment Guide
 
+## Current Backend Deployment Model
+
+Truvalt’s Laravel backend now expects Firebase Auth + Firestore instead of PostgreSQL-backed request-path storage.
+
+### Required Firebase Configuration
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `FIREBASE_PROJECT_ID` | Yes | Firebase / GCP project identifier |
+| `FIREBASE_CREDENTIALS` | Yes* | Path to service-account JSON |
+| `FIREBASE_CREDENTIALS_JSON` | Yes* | Inline service-account JSON alternative |
+| `FIREBASE_WEB_API_KEY` | Yes | Firebase Auth REST API key |
+| `FIREBASE_AUTH_REDIRECT_URI` | No | Redirect URI used for `signInWithIdp`; default `http://localhost` |
+| `FIRESTORE_DATABASE` | No | Firestore database name; default `(default)` |
+| `FIREBASE_CHECK_REVOKED_TOKENS` | No | Enable revocation checks on protected routes; default `true` |
+
+\* Provide either `FIREBASE_CREDENTIALS` or `FIREBASE_CREDENTIALS_JSON`.
+
+### Recommended Laravel Runtime Settings
+
+| Variable | Recommended Value | Why |
+|---|---|---|
+| `SESSION_DRIVER` | `file` | Avoid SQL-backed sessions |
+| `CACHE_STORE` | `file` | Avoid SQL-backed cache |
+| `QUEUE_CONNECTION` | `sync` | Keep deployment simple |
+| `APP_ENV` | `production` | Standard production mode |
+| `APP_DEBUG` | `false` | Disable debug in production |
+
+### SQL Status
+
+- PostgreSQL is no longer required for the normal backend request path.
+- You can keep legacy SQL config present, but the Firebase/Firestore backend path should not depend on it.
+- If a deployment still has `DB_URL` from the previous architecture, it is now optional unless other unported features still rely on SQL.
+
+---
+
 ## Render Deployment
 
-Truvalt backend is configured for one-click deployment to Render using Infrastructure as Code (Blueprint).
+### Render Service Shape
 
-### Prerequisites
-
-- GitHub account
-- Render account (free tier available)
-- Repository pushed to GitHub
-
-### Quick Deploy
-
-1. **Go to Render Dashboard**
-   - Visit [render.com](https://render.com)
-   - Sign in with GitHub
-
-2. **Create Blueprint**
-   - Click "New" → "Blueprint"
-   - Select `Truvalt` repository
-   - Render auto-detects `/render.yaml`
-   - Click "Apply"
-
-3. **Services Created**
-   - `truvalt-api` - Laravel web service
-   - `truvalt-redis` - Redis cache/sessions
-   - External managed PostgreSQL - configured via `DB_URL`
-
-### Architecture
+Only one web service is required for the current backend path:
 
 ```
 ┌─────────────────┐
-│   truvalt-api   │  (Web Service)
-│   Laravel 12    │  Port: 10000
-│   PHP 8.4 FPM   │  Health: /api/health
+│   truvalt-api   │
+│   Laravel 12    │
+│   Port: 10000   │
+│   Health: /api/health
 └────────┬────────┘
          │
-    ┌────┴────┬──────────┐
-    │         │          │
-┌───▼───┐ ┌──▼──────┐ ┌─▼────────┐
-│ Nginx │ │ PHP-FPM │ │Supervisor│
-└───────┘ └─────────┘ └──────────┘
-         │          │
-    ┌────┴────┬─────┴────┐
-    │         │          │
-┌───▼──────────────┐ ┌──────▼──────┐
-│ Managed Postgres │ │    Redis    │
-│ (external DB_URL)│ │ (sessions)  │
-└────────────┘ └───────────┘
+    ┌────┴──────────────┐
+    │                   │
+┌───▼───────────┐ ┌─────▼────────────┐
+│ Firebase Auth │ │ Cloud Firestore  │
+└───────────────┘ └──────────────────┘
 ```
 
-### Environment Variables
+### Render Build / Run Scripts
 
-Auto-configured by Render:
+The repository now includes dedicated deployment scripts in `/web`:
 
-| Variable | Source | Description |
-|----------|--------|-------------|
-| `APP_KEY` | Generated | Laravel encryption key |
-| `DB_CONNECTION` | Hardcoded | `pgsql` |
-| `DB_URL` | Manual secret | External PostgreSQL connection string |
-| `DB_SSLMODE` | Hardcoded | `require` |
-| `REDIS_URL` | truvalt-redis | Redis connection |
-| `APP_ENV` | Hardcoded | `production` |
-| `APP_DEBUG` | Hardcoded | `false` |
-| `SESSION_DRIVER` | Hardcoded | `redis` |
-| `CACHE_STORE` | Hardcoded | `redis` |
-| `QUEUE_CONNECTION` | Hardcoded | `sync` |
+| Script | Purpose |
+|---|---|
+| `render-build.sh` | Install Composer dependencies, install NPM dependencies, build frontend assets, prepare writable Laravel directories |
+| `render-run.sh` | Clear stale Laravel caches, then start Supervisor/Nginx/PHP-FPM |
 
-### Service Plans
+How Render uses them today:
+- `render.yaml` provisions a Docker-based web service.
+- `web/Dockerfile` runs `./render-build.sh` during image build.
+- `web/Dockerfile` uses `./render-run.sh` as the container command.
+- You do not need separate Render dashboard build/start commands when using the checked-in Docker Blueprint.
 
-**Free Tier (Default):**
-- Web Service: 512 MB RAM, shared CPU
-- PostgreSQL: 256 MB RAM, 1 GB storage
-- Redis: 25 MB storage
-
-**Upgrade Options:**
-- Starter: $7/month per service
-- Standard: $25/month per service
-- Pro: $85/month per service
-
-### Deployment Process
-
-1. **Build Phase:**
-   ```bash
-   docker build -t truvalt-api .
-   composer install --no-dev --optimize-autoloader
-   npm install
-   npm run build
-   ```
-
-2. **Deploy Phase:**
-   ```bash
-   supervisord -c /etc/supervisor/conf.d/supervisord.conf
-   ```
-
-   Database migrations are not yet automated in the current Render Blueprint, and `DB_URL` must be set manually in Render because the database is external.
-
-3. **Health Check:**
-   - Endpoint: `GET /api/health`
-   - Expected: `{"status":"ok"}`
-   - Interval: 30 seconds
-
-4. **Keep-Alive Route:**
-   - Endpoint: `GET /api/keep-alive`
-   - Use for external cron pings
-   - Expected: `{"status":"ok","purpose":"keep-alive","timestamp":"..."}`
-
-### Auto-Deployment
-
-Every push to `main` branch triggers:
-1. Docker image rebuild
-2. Zero-downtime deployment
-3. Health check validation
-
-### Manual Deployment
+If you later switch the Render service away from Docker to a native runtime, use:
 
 ```bash
-# Trigger manual deploy
-git push origin main
-
-# Or use Render CLI
-render deploy --service truvalt-api
+Build Command: ./render-build.sh
+Start Command: ./render-run.sh
 ```
 
-### Monitoring
+### Environment Variables in Render
 
-**Render Dashboard provides:**
-- Real-time logs
-- Metrics (CPU, memory, requests)
-- Deploy history
-- Shell access
+Set these in the Render dashboard for `truvalt-api`:
 
-**Access logs:**
 ```bash
-# Via Render CLI
-render logs --service truvalt-api --tail
-
-# Via Dashboard
-Services → truvalt-api → Logs
+APP_KEY=<generated-by-render-or-artisan>
+APP_ENV=production
+APP_DEBUG=false
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_WEB_API_KEY=your-web-api-key
+FIREBASE_CREDENTIALS_JSON={"type":"service_account",...}
+FIREBASE_AUTH_REDIRECT_URI=http://localhost
+FIRESTORE_DATABASE=(default)
+FIREBASE_CHECK_REVOKED_TOKENS=true
 ```
 
-### Database Management
+Notes:
+- `FIREBASE_CREDENTIALS_JSON` is usually easier on Render than mounting a file path.
+- Keep the service-account JSON private and out of git.
+- Do not commit Firebase secrets into `.env.example` or docs.
+- `APP_KEY` can be generated automatically by Render from the Blueprint.
+- The current Firebase/Firestore request path does not require `DB_URL`, `DB_PASSWORD`, or `REDIS_URL`.
+- The Android app should point its server URL to the public Render hostname, for example `https://truvalt-api.onrender.com`.
 
-**Run migrations:**
+---
+
+## Local Development
+
+### 1. Configure Environment
+
 ```bash
-# Via Render shell
-render shell truvalt-api
-php artisan migrate
+cd ~/repos/Truvalt/web
+cp .env.example .env
 ```
 
-**Database backups:**
-- Automatic daily backups (Pro plan)
-- Manual backups via dashboard
-- Point-in-time recovery (Pro plan)
+Add at least:
 
-### Scaling
-
-**Horizontal Scaling:**
-```yaml
-# In render.yaml
-services:
-  - type: web
-    name: truvalt-api
-    numInstances: 3  # Add this line
-```
-
-**Vertical Scaling:**
-- Change `plan` in render.yaml
-- Or upgrade via dashboard
-
-### Custom Domain
-
-1. **Add domain in Render:**
-   - Services → truvalt-api → Settings
-   - Custom Domains → Add
-   - Enter: `api.truvalt.com`
-
-2. **Configure DNS:**
-   ```
-   Type: CNAME
-   Name: api
-   Value: truvalt-api.onrender.com
-   ```
-
-3. **SSL Certificate:**
-   - Auto-provisioned by Render
-   - Let's Encrypt (free)
-   - Auto-renewal
-
-### Troubleshooting
-
-**Build fails:**
 ```bash
-# Check Dockerfile syntax
-docker build -t test .
-
-# Verify dependencies
-composer install
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_WEB_API_KEY=your-web-api-key
+FIREBASE_CREDENTIALS=/absolute/path/to/service-account.json
 ```
 
-**Health check fails:**
+### 2. Start the Server
+
 ```bash
-# Test locally
-curl http://localhost:10000/api/health
-
-# Test keep-alive route
-curl http://localhost:10000/api/keep-alive
-
-# Check logs
-render logs --service truvalt-api
+php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-**Database connection fails:**
+### 3. Smoke Test
+
 ```bash
-# Verify DB_URL is set
-render env --service truvalt-api
-
-# Test connection
-php artisan tinker
-DB::connection()->getPdo();
+./test-api.sh
 ```
 
-**External database setup:**
-- Set `DB_URL` manually in the Render Dashboard for `truvalt-api`
-- Keep the database credential out of `render.yaml`
-- Use `DB_SSLMODE=require` for managed PostgreSQL providers that enforce SSL
-- Ensure the managed PostgreSQL endpoint is reachable over IPv4 from the deployment/runtime environment; an IPv6-only hostname can stall local verification and Render-side connectivity checks
+For full live auth + Firestore verification:
 
-### Security
-
-**Automatic:**
-- HTTPS enforced
-- Environment variables encrypted
-- Private network for database/redis
-- DDoS protection
-
-**Manual:**
-- Restrict database IP allow list
-- Enable 2FA on Render account
-- Rotate APP_KEY periodically
-
-### Cost Optimization
-
-**Free Tier Limits:**
-- Services spin down after 15 min inactivity
-- 750 hours/month free
-- Shared resources
-
-**Tips:**
-- Use free tier for development
-- Upgrade production to Starter+
-- Monitor usage in dashboard
-- Set up billing alerts
-
-### CI/CD Integration
-
-**GitHub Actions example:**
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Trigger Render Deploy
-        run: |
-          curl -X POST \
-            https://api.render.com/deploy/srv-xxx \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
-```
-
-### Rollback
-
-**Via Dashboard:**
-1. Services → truvalt-api → Deploys
-2. Find previous successful deploy
-3. Click "Rollback"
-
-**Via CLI:**
 ```bash
-render rollback --service truvalt-api
+TEST_PASSWORD='your-test-password' ./test-api.sh
 ```
 
-### Environment-Specific Configs
+Optional Google sign-in endpoint verification:
 
-**Staging:**
-```yaml
-# render-staging.yaml
-services:
-  - type: web
-    name: truvalt-api-staging
-    branch: develop
-    plan: free
+```bash
+GOOGLE_ID_TOKEN='...' TEST_PASSWORD='your-test-password' ./test-api.sh
 ```
 
-**Production:**
-```yaml
-# render.yaml
-services:
-  - type: web
-    name: truvalt-api
-    rootDir: web
-    plan: starter
-```
+---
 
-### Support
+## Operational Notes
 
-- [Render Documentation](https://render.com/docs)
-- [Render Community](https://community.render.com)
-- [Status Page](https://status.render.com)
+### Public Routes
+
+These should work even if Firebase credentials are missing:
+- `GET /api/health`
+- `GET /api/keep-alive`
+
+That is intentional so the app can still boot and expose readiness probes before Firebase-backed routes are exercised.
+
+### Protected Routes
+
+These require valid Firebase configuration:
+- all bearer-token protected API endpoints
+- all Firestore-backed reads/writes
+
+### Logout Behavior
+
+`POST /api/logout` revokes Firebase refresh tokens for the authenticated user. This is broader than deleting a single Laravel token and should be treated as account-level refresh-token revocation.
+
+---
+
+## Security Notes
+
+- Prefer `FIREBASE_CREDENTIALS_JSON` only in encrypted secret stores.
+- Rotate the Firebase service-account key periodically.
+- Restrict who can view or edit production environment variables.
+- Keep `FIREBASE_CHECK_REVOKED_TOKENS=true` unless you have a measured reason to relax it.
+- The backend stores encrypted vault blobs only; do not add server-side vault decryption.

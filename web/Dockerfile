@@ -1,7 +1,6 @@
 FROM php:8.4-fpm-alpine
 
 RUN apk add --no-cache \
-    postgresql-dev \
     zip \
     unzip \
     git \
@@ -11,7 +10,7 @@ RUN apk add --no-cache \
     nginx \
     supervisor
 
-RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -19,15 +18,12 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
-RUN npm install
-RUN npm run build
-
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod +x /var/www/render-build.sh /var/www/render-run.sh
+RUN /var/www/render-build.sh
 
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 10000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/var/www/render-run.sh"]
