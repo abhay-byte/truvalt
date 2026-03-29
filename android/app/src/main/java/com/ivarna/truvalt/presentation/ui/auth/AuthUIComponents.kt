@@ -52,13 +52,13 @@ val AuthOnSurface: Color
 val AuthOnSurfaceVariant: Color
     @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
 val AuthSurfaceContainerHighest: Color
-    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+    @Composable get() = MaterialTheme.colorScheme.surfaceContainerHighest
 val AuthOutlineVariant: Color
     @Composable get() = MaterialTheme.colorScheme.outlineVariant
 val AuthSurfaceContainerLow: Color
-    @Composable get() = MaterialTheme.colorScheme.surface
+    @Composable get() = MaterialTheme.colorScheme.surfaceContainerLow
 val AuthSurfaceContainerLowest: Color
-    @Composable get() = MaterialTheme.colorScheme.background
+    @Composable get() = MaterialTheme.colorScheme.surfaceContainerLowest
 val AuthOnPrimary: Color
     @Composable get() = MaterialTheme.colorScheme.onPrimary
 val AuthError: Color
@@ -132,8 +132,7 @@ fun RedesignedGoogleSignInButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .shadow(4.dp, RoundedCornerShape(12.dp), spotColor = Color.Black.copy(alpha = 0.08f)),
+            .height(56.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = AuthSurfaceContainerLowest,
             contentColor = AuthOnSurface,
@@ -142,7 +141,7 @@ fun RedesignedGoogleSignInButton(
         ),
         enabled = !isLoading,
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, AuthOutlineVariant.copy(alpha = 0.3f)),
+        border = androidx.compose.foundation.BorderStroke(2.dp, AuthOutlineVariant),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         if (isLoading) {
@@ -365,8 +364,7 @@ fun BrandIconHeader(modifier: Modifier = Modifier) {
     ) {
         Card(
             modifier = Modifier
-                .size(80.dp)
-                .shadow(elevation = 24.dp, shape = RoundedCornerShape(24.dp), spotColor = AuthPrimary.copy(alpha = 0.2f)),
+                .size(80.dp),
             colors = CardDefaults.cardColors(containerColor = AuthPrimary),
             shape = RoundedCornerShape(24.dp)
         ) {
