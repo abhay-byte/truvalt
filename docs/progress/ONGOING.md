@@ -15,7 +15,7 @@
 
 | Task ID | Description | Started | Progress |
 |---|---|---|---|
-| TASK-018 | Cloud sync implementation via Firebase Auth + Firestore backend pivot | 2026-03-23 | Laravel backend is live-verified against the real Firebase project; Android now compiles with backend register/login session storage plus folder/tag/vault sync wiring; the server setup screen now explicitly branches to sign-up vs login for cloud mode; remaining work is live Google sign-in verification and deeper client sync coverage |
+| TASK-018 | Cloud sync implementation via direct Android → Firebase Auth + Firestore connection | 2026-03-23 | Android now connects directly to Firebase Auth (createUserWithEmailAndPassword / signInWithEmailAndPassword) and Cloud Firestore without routing through Laravel; added FirebaseModule (Hilt), FirestoreVaultRepository (direct Firestore SDK), rewrote AuthRepositoryImpl and SyncRepositoryImpl; awaiting google-services.json placement and build verification; Google sign-in still pending |
 
 ---
 

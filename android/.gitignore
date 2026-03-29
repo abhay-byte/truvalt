@@ -24,3 +24,6 @@ local.properties
 **/intermediates/
 **/tmp/
 **/outputs/
+
+# Firebase config (contains project secrets - do not commit)
+google-services.json

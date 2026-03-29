@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.lock.AppLockManager
+import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
@@ -36,39 +37,46 @@ class LoginViewModel @Inject constructor(
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
-            Log.d("LoginViewModel", "=== LOGIN START ===")
             _uiState.value = _uiState.value.copy(isLoading = true)
-            
             val result = authRepository.unlockWithPassword(email, password)
-            
             result.fold(
                 onSuccess = {
-                    Log.d("LoginViewModel", "Auth successful, deriving keys...")
-                    // Set vault key after successful login
                     val derivedKeys = cryptoManager.deriveKeyFromPassword(password, email)
-                    Log.d("LoginViewModel", "Keys derived - vaultKey size: ${derivedKeys.vaultKey.size}")
-                    
-                    Log.d("LoginViewModel", "Setting vault key in VaultKeyManager...")
                     vaultKeyManager.setInMemoryKey(derivedKeys.vaultKey)
-                    
-                    Log.d("LoginViewModel", "Setting vault key in VaultRepository...")
                     (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(derivedKeys.vaultKey)
-                    
-                    Log.d("LoginViewModel", "Unlocking AppLockManager...")
                     appLockManager.unlock()
-                    
-                    Log.d("LoginViewModel", "=== LOGIN COMPLETE ===")
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isLoggedIn = true
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
                 },
                 onFailure = { e ->
                     Log.e("LoginViewModel", "Login failed: ${e.message}", e)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message ?: "Login failed"
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Login failed")
+                }
+            )
+        }
+    }
+
+    fun signInWithGoogle(googleIdToken: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val authImpl = authRepository as? AuthRepositoryImpl
+            if (authImpl == null) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Auth not available")
+                return@launch
+            }
+            val result = authImpl.signInWithGoogle(googleIdToken)
+            result.fold(
+                onSuccess = {
+                    // Vault key was set inside signInWithGoogle — just wire it up here
+                    authImpl.getMasterKey()?.let { mk ->
+                        vaultKeyManager.setInMemoryKey(mk)
+                        (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(mk)
+                    }
+                    appLockManager.unlock()
+                    _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
+                },
+                onFailure = { e ->
+                    Log.e("LoginViewModel", "Google sign-in failed: ${e.message}", e)
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Google sign-in failed")
                 }
             )
         }
@@ -77,17 +85,11 @@ class LoginViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
-    
+
     fun setupOfflineMode() {
-        Log.d("LoginViewModel", "=== SETUP OFFLINE MODE ===")
-        // Generate a temporary vault key for offline mode
-        val offlineKey = ByteArray(32) { 0 } // Simple zero key for offline
-        Log.d("LoginViewModel", "Generated offline key: ${offlineKey.size} bytes")
-        
+        val offlineKey = ByteArray(32) { 0 }
         vaultKeyManager.setInMemoryKey(offlineKey)
         (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(offlineKey)
         appLockManager.unlock()
-        
-        Log.d("LoginViewModel", "=== OFFLINE MODE READY ===")
     }
 }

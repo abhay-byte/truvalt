@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Base64
+import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.data.local.dao.FolderDao
 import com.ivarna.truvalt.data.local.dao.TagDao
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
@@ -11,13 +12,7 @@ import com.ivarna.truvalt.data.local.entity.FolderEntity
 import com.ivarna.truvalt.data.local.entity.TagEntity
 import com.ivarna.truvalt.data.local.entity.VaultItemEntity
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
-import com.ivarna.truvalt.data.remote.api.BackendApiFactory
-import com.ivarna.truvalt.data.remote.api.TruvaltApiService
-import com.ivarna.truvalt.data.remote.dto.BackendFolderRequest
-import com.ivarna.truvalt.data.remote.dto.BackendSyncRequest
-import com.ivarna.truvalt.data.remote.dto.BackendTagRequest
-import com.ivarna.truvalt.data.remote.dto.BackendVaultItemDto
-import com.ivarna.truvalt.data.remote.dto.BackendVaultItemPayload
+import com.ivarna.truvalt.data.remote.FirestoreVaultRepository
 import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,190 +28,175 @@ class SyncRepositoryImpl @Inject constructor(
     private val vaultItemDao: VaultItemDao,
     private val folderDao: FolderDao,
     private val tagDao: TagDao,
-    private val backendApiFactory: BackendApiFactory
+    private val firebaseAuth: FirebaseAuth,
+    private val firestoreRepository: FirestoreVaultRepository,
 ) : SyncRepository {
 
     override suspend fun sync(): Result<Unit> {
-        return if (isOnline() && !isLocalOnly()) {
-            try {
-                val serverUrl = preferences.getServerUrlSync()
-                    ?: return Result.failure(IllegalStateException("Server URL not configured"))
-                val idToken = preferences.getBackendIdTokenSync()
-                    ?: return Result.failure(IllegalStateException("No backend session found. Please log in again."))
-                val api = backendApiFactory.create(serverUrl)
-                val bearer = "Bearer $idToken"
-                val lastSyncTimeMs = preferences.lastSyncTime.first()
+        if (isLocalOnly()) return Result.failure(IllegalStateException("Local-only mode"))
+        if (!isOnline()) return Result.failure(IllegalStateException("No internet connection"))
 
-                withContext(Dispatchers.IO) {
-                    pushFolders(api, bearer)
-                    pushTags(api, bearer)
-                    pushVaultItems(api, bearer)
-                    pullRemoteState(api, bearer, lastSyncTimeMs)
-                }
+        val uid = firebaseAuth.currentUser?.uid
+            ?: return Result.failure(IllegalStateException("Not signed in to Firebase"))
 
-                preferences.setLastSyncTime(System.currentTimeMillis())
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+        return try {
+            withContext(Dispatchers.IO) {
+                pushFolders(uid)
+                pushTags(uid)
+                pushVaultItems(uid)
+                pullRemoteState(uid)
             }
-        } else {
-            Result.failure(IllegalStateException("Offline or local-only mode"))
+            preferences.setLastSyncTime(System.currentTimeMillis())
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    override suspend fun getLastSyncTime(): Long {
-        return preferences.lastSyncTime.first()
-    }
+    override suspend fun getLastSyncTime(): Long = preferences.lastSyncTime.first()
 
-    override suspend fun setLastSyncTime(time: Long) {
-        preferences.setLastSyncTime(time)
-    }
+    override suspend fun setLastSyncTime(time: Long) = preferences.setLastSyncTime(time)
 
     override suspend fun isOnline(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork ?: return false
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
-    override suspend fun isLocalOnly(): Boolean {
-        return preferences.isLocalOnlySync()
-    }
+    override suspend fun isLocalOnly(): Boolean = preferences.isLocalOnlySync()
 
-    override suspend fun setLocalOnly(localOnly: Boolean) {
-        preferences.setLocalOnly(localOnly)
-    }
+    override suspend fun setLocalOnly(localOnly: Boolean) = preferences.setLocalOnly(localOnly)
 
-    override suspend fun getServerUrl(): String? {
-        return preferences.getServerUrlSync()
-    }
+    override suspend fun getServerUrl(): String? = preferences.getServerUrlSync()
 
-    override suspend fun setServerUrl(url: String) {
-        preferences.setServerUrl(backendApiFactory.normalizeBaseUrl(url).trimEnd('/'))
-    }
+    override suspend fun setServerUrl(url: String) = preferences.setServerUrl(url)
 
-    private suspend fun pushFolders(api: TruvaltApiService, bearer: String) {
-        val remoteFolders = api.getFolders(bearer).associateBy { it.id }
+    // ── Push local folders → Firestore ────────────────────────────────────────
+
+    private suspend fun pushFolders(uid: String) {
+        val remoteFolderIds = firestoreRepository.getFolders(uid).map { it["id"] as String }.toSet()
         val localFolders = folderDao.getAllFoldersNow()
 
         localFolders.forEach { folder ->
-            val request = BackendFolderRequest(
-                id = folder.id,
-                name = folder.name,
-                icon = folder.icon,
-                parent_id = folder.parentId
+            firestoreRepository.saveFolder(
+                uid = uid,
+                folder = mapOf(
+                    "id" to folder.id,
+                    "name" to folder.name,
+                    "icon" to folder.icon,
+                    "parent_id" to folder.parentId,
+                )
             )
-
-            if (remoteFolders.containsKey(folder.id)) {
-                api.updateFolder(bearer, folder.id, request)
-            } else {
-                api.createFolder(bearer, request)
-            }
         }
 
-        val refreshedFolders = api.getFolders(bearer).map { remote ->
+        // Pull back authoritative remote list into Room
+        val remoteFolders = firestoreRepository.getFolders(uid).map { remote ->
             FolderEntity(
-                id = remote.id,
-                name = remote.name,
-                icon = remote.icon,
-                parentId = remote.parent_id,
-                updatedAt = fromApiSeconds(remote.updated_at)
+                id = remote["id"] as String,
+                name = remote["name"] as? String ?: "",
+                icon = remote["icon"] as? String,
+                parentId = remote["parent_id"] as? String,
+                updatedAt = ((remote["updated_at"] as? Number)?.toLong() ?: 0L) * 1000L,
             )
         }
-        folderDao.insertFolders(refreshedFolders)
+        if (remoteFolders.isNotEmpty()) folderDao.insertFolders(remoteFolders)
     }
 
-    private suspend fun pushTags(api: TruvaltApiService, bearer: String) {
-        val remoteTags = api.getTags(bearer).associateBy { it.id }
+    // ── Push local tags → Firestore ───────────────────────────────────────────
+
+    private suspend fun pushTags(uid: String) {
+        val remoteTagIds = firestoreRepository.getTags(uid).map { it["id"] as String }.toSet()
         val localTags = tagDao.getAllTagsNow()
 
         localTags.forEach { tag ->
-            if (!remoteTags.containsKey(tag.id)) {
-                api.createTag(
-                    bearer,
-                    BackendTagRequest(
-                        id = tag.id,
-                        name = tag.name
-                    )
+            if (!remoteTagIds.contains(tag.id)) {
+                firestoreRepository.saveTag(
+                    uid = uid,
+                    tag = mapOf("id" to tag.id, "name" to tag.name)
                 )
             }
         }
 
-        val refreshedTags = api.getTags(bearer).map { remote ->
+        val remoteTags = firestoreRepository.getTags(uid).map { remote ->
             TagEntity(
-                id = remote.id,
-                name = remote.name
+                id = remote["id"] as String,
+                name = remote["name"] as? String ?: "",
             )
         }
-        tagDao.insertTags(refreshedTags)
+        if (remoteTags.isNotEmpty()) tagDao.insertTags(remoteTags)
     }
 
-    private suspend fun pushVaultItems(api: TruvaltApiService, bearer: String) {
+    // ── Push pending vault items → Firestore (batch sync) ────────────────────
+
+    private suspend fun pushVaultItems(uid: String) {
         val pendingUpload = vaultItemDao.getItemsBySyncStatus("PENDING_UPLOAD")
         val pendingDelete = vaultItemDao.getItemsBySyncStatus("PENDING_DELETE")
         val pendingItems = (pendingUpload + pendingDelete).distinctBy { it.id }
 
-        if (pendingItems.isEmpty()) {
-            return
+        if (pendingItems.isEmpty()) return
+
+        val payload = pendingItems.map { item ->
+            mapOf(
+                "id" to item.id,
+                "type" to item.type,
+                "name" to item.name,
+                "encrypted_data" to Base64.encodeToString(item.encryptedData, Base64.NO_WRAP),
+                "folder_id" to item.folderId,
+                "favorite" to item.favorite,
+                "created_at" to toSeconds(item.createdAt),
+                "updated_at" to toSeconds(item.updatedAt),
+                "deleted_at" to item.deletedAt?.let(::toSeconds),
+            )
         }
 
-        val response = api.syncVaultItems(
-            bearer,
-            BackendSyncRequest(
-                items = pendingItems.map { it.toBackendPayload() }
-            )
-        )
-
-        val merged = (response.synced + response.conflicts).distinctBy { it.id }
+        val (synced, conflicts) = firestoreRepository.syncVaultItems(uid, payload)
+        val merged = (synced + conflicts).distinctBy { it["id"] }
         if (merged.isNotEmpty()) {
             vaultItemDao.insertItems(merged.map { it.toEntity() })
-            merged.forEach { vaultItemDao.updateSyncStatus(it.id, "SYNCED") }
+            merged.forEach { vaultItemDao.updateSyncStatus(it["id"] as String, "SYNCED") }
         }
     }
 
-    private suspend fun pullRemoteState(api: TruvaltApiService, bearer: String, lastSyncTimeMs: Long) {
-        val updatedAfterSeconds = lastSyncTimeMs.takeIf { it > 0L }?.let(::toApiSeconds)
-        val activeItems = api.getVaultItems(bearer, updatedAfterSeconds)
-        val trashItems = api.getTrashItems(bearer)
-        val allRemoteItems = (activeItems + trashItems).distinctBy { it.id }
+    // ── Pull full remote state → Room ─────────────────────────────────────────
 
-        if (allRemoteItems.isNotEmpty()) {
-            vaultItemDao.insertItems(allRemoteItems.map { it.toEntity() })
-            allRemoteItems.forEach { vaultItemDao.updateSyncStatus(it.id, "SYNCED") }
+    private suspend fun pullRemoteState(uid: String) {
+        val lastSyncMs = preferences.lastSyncTime.first()
+        val updatedAfterSeconds = if (lastSyncMs > 0L) toSeconds(lastSyncMs) else null
+
+        val activeItems = firestoreRepository.getVaultItems(uid, updatedAfterSeconds)
+        val trashItems = firestoreRepository.getTrashedItems(uid)
+        val allRemote = (activeItems + trashItems).distinctBy { it["id"] }
+
+        if (allRemote.isNotEmpty()) {
+            vaultItemDao.insertItems(allRemote.map { it.toEntity() })
+            allRemote.forEach { vaultItemDao.updateSyncStatus(it["id"] as String, "SYNCED") }
         }
     }
 
-    private fun VaultItemEntity.toBackendPayload(): BackendVaultItemPayload {
-        return BackendVaultItemPayload(
-            id = id,
-            type = type,
-            name = name,
-            encrypted_data = Base64.encodeToString(encryptedData, Base64.NO_WRAP),
-            updated_at = toApiSeconds(updatedAt),
-            created_at = toApiSeconds(createdAt),
-            folder_id = folderId,
-            favorite = favorite,
-            deleted_at = deletedAt?.let(::toApiSeconds)
-        )
-    }
+    // ── Converters ────────────────────────────────────────────────────────────
 
-    private fun BackendVaultItemDto.toEntity(): VaultItemEntity {
+    private fun toSeconds(ms: Long): Long = ms / 1000L
+
+    private fun fromSeconds(seconds: Long): Long = seconds * 1000L
+
+    private fun Map<String, Any?>.toEntity(): VaultItemEntity {
+        val encryptedDataStr = this["encrypted_data"] as? String ?: ""
         return VaultItemEntity(
-            id = id,
-            type = type,
-            name = name,
-            folderId = folder_id,
-            encryptedData = Base64.decode(encrypted_data, Base64.DEFAULT),
-            favorite = favorite,
-            createdAt = fromApiSeconds(created_at),
-            updatedAt = fromApiSeconds(updated_at),
-            deletedAt = deleted_at?.let(::fromApiSeconds),
-            syncStatus = "SYNCED"
+            id = this["id"] as String,
+            type = this["type"] as? String ?: "",
+            name = this["name"] as? String ?: "",
+            folderId = this["folder_id"] as? String,
+            encryptedData = if (encryptedDataStr.isNotEmpty())
+                Base64.decode(encryptedDataStr, Base64.DEFAULT)
+            else
+                ByteArray(0),
+            favorite = this["favorite"] as? Boolean ?: false,
+            createdAt = fromSeconds((this["created_at"] as? Number)?.toLong() ?: 0L),
+            updatedAt = fromSeconds((this["updated_at"] as? Number)?.toLong() ?: 0L),
+            deletedAt = (this["deleted_at"] as? Number)?.toLong()?.let(::fromSeconds),
+            syncStatus = "SYNCED",
         )
     }
-
-    private fun toApiSeconds(valueMs: Long): Long = valueMs / 1000L
-
-    private fun fromApiSeconds(valueSeconds: Long): Long = valueSeconds * 1000L
 }

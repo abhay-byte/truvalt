@@ -8,7 +8,6 @@ import com.ivarna.truvalt.data.local.dao.TagDao
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
 import com.ivarna.truvalt.data.local.database.TruvaltDatabase
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
-import com.ivarna.truvalt.data.remote.api.BackendApiFactory
 import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
 import com.ivarna.truvalt.data.repository.SyncRepositoryImpl
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
@@ -21,8 +20,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import javax.inject.Singleton
 
 @Module
@@ -40,19 +37,13 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideVaultItemDao(database: TruvaltDatabase): VaultItemDao {
-        return database.vaultItemDao()
-    }
+    fun provideVaultItemDao(database: TruvaltDatabase): VaultItemDao = database.vaultItemDao()
 
     @Provides
-    fun provideFolderDao(database: TruvaltDatabase): FolderDao {
-        return database.folderDao()
-    }
+    fun provideFolderDao(database: TruvaltDatabase): FolderDao = database.folderDao()
 
     @Provides
-    fun provideTagDao(database: TruvaltDatabase): TagDao {
-        return database.tagDao()
-    }
+    fun provideTagDao(database: TruvaltDatabase): TagDao = database.tagDao()
 }
 
 @Module
@@ -61,32 +52,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCryptoManager(): CryptoManager {
-        return CryptoManager()
-    }
+    fun provideCryptoManager(): CryptoManager = CryptoManager()
 
     @Provides
     @Singleton
     fun provideTruvaltPreferences(@ApplicationContext context: Context): TruvaltPreferences {
         return TruvaltPreferences(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
-
-        return OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideBackendApiFactory(okHttpClient: OkHttpClient): BackendApiFactory {
-        return BackendApiFactory(okHttpClient)
     }
 }
 

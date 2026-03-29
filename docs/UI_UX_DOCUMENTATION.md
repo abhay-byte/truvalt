@@ -94,7 +94,7 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `login` |
-| **Purpose** | Authenticate against the Firebase-backed Laravel backend with email + master password |
+| **Purpose** | Authenticate directly via Firebase Authentication with email + master password; vault key derived locally from master password |
 | **UI Elements** | Email field, Master password field, Login button, Register link, Offline mode link |
 | **Validation** | Email format, password not empty |
 | **Navigation** | Exit → Register or VaultHome |
@@ -308,7 +308,8 @@ flowchart TD
 |---|---|
 | **Route/ID** | `settings_server` |
 | **Purpose** | Configure sync settings |
-| **UI Elements** | Server URL, Sync toggle, Last sync time, Sync now button, Clear local data |
+| **UI Elements** | Sync toggle, Last sync time, Sync now button, Clear local data |
+| **Notes** | Cloud mode syncs directly to Firebase/Firestore — no server URL required. Server URL field only shown in self-hosted (local-only override) mode. |
 
 ---
 

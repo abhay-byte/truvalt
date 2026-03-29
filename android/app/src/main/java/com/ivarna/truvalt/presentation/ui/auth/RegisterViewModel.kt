@@ -1,11 +1,12 @@
 package com.ivarna.truvalt.presentation.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.util.Log
 import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.lock.AppLockManager
+import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
@@ -37,27 +38,43 @@ class RegisterViewModel @Inject constructor(
     fun register(email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            
             val result = authRepository.createVault(email, password)
-            
             result.fold(
                 onSuccess = {
-                    // Set vault key after successful registration
                     val derivedKeys = cryptoManager.deriveKeyFromPassword(password, email)
                     vaultKeyManager.setInMemoryKey(derivedKeys.vaultKey)
                     (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(derivedKeys.vaultKey)
                     appLockManager.unlock()
-                    
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isRegistered = true
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, isRegistered = true)
                 },
                 onFailure = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = e.message ?: "Registration failed"
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Registration failed")
+                }
+            )
+        }
+    }
+
+    fun signInWithGoogle(googleIdToken: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val authImpl = authRepository as? AuthRepositoryImpl
+            if (authImpl == null) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Auth not available")
+                return@launch
+            }
+            val result = authImpl.signInWithGoogle(googleIdToken)
+            result.fold(
+                onSuccess = {
+                    authImpl.getMasterKey()?.let { mk ->
+                        vaultKeyManager.setInMemoryKey(mk)
+                        (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(mk)
+                    }
+                    appLockManager.unlock()
+                    _uiState.value = _uiState.value.copy(isLoading = false, isRegistered = true)
+                },
+                onFailure = { e ->
+                    Log.e("RegisterViewModel", "Google sign-in failed: ${e.message}", e)
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Google sign-in failed")
                 }
             )
         }
@@ -66,13 +83,11 @@ class RegisterViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
-    
+
     fun setupOfflineMode() {
-        Log.d("RegisterViewModel", "=== SETUP OFFLINE MODE ===")
         val offlineKey = ByteArray(32) { 0 }
         vaultKeyManager.setInMemoryKey(offlineKey)
         (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(offlineKey)
         appLockManager.unlock()
-        Log.d("RegisterViewModel", "=== OFFLINE MODE READY ===")
     }
 }
