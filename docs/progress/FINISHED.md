@@ -5,8 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
-|---|---|
-| 2026-03-29 | 2 |
+| 2026-03-29 | 4 |
 | 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
@@ -21,6 +20,8 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| UI-004 | Redesign Vault Home Screen | 2026-03-29 | Replaced generic Material TopAppBar and NavigationBar with a custom glass-like header and floating bottom navigation, revamped filter chips, and introduced category-based colored `VaultItemCard` layouts to match the new high-fidelity html design. |
+| UI-003 | Redesign Auth Gateway & Security Suite | 2026-03-29 | Overhauled the Server Setup, Login, and Registration screens with a premium design system, including a password strength meter, security status cards, and a unified gateway hub. |
 | UI-002 | Redesign Onboarding Screens | 2026-03-29 | Implemented a 3-slide HorizontalPager flow with high-fidelity Compose illustrations, smooth page indicators, and Material 3 styling based on Tailwind designs |
 | UI-001 | Redesign Splash Screen | 2026-03-29 | Translated Tailwind HTML into Compose UI; Added new brand colors, radial gradient background, and custom spinning animation loader |
 | FEAT-003 | Integrate Android cloud mode with the Firebase-backed Laravel API foundation | 2026-03-23 | Added Android Retrofit DTO/service/factory layers, persisted backend Firebase session tokens in DataStore, wired register/login to the Laravel backend in cloud mode, wired sync for folders/tags/vault items, and verified the app still builds successfully with `assembleDebug` |

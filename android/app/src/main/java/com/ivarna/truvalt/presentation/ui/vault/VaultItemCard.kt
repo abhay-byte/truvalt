@@ -31,19 +31,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
 
-private fun iconForType(type: String): ImageVector = when (type) {
-    "login" -> Icons.Default.Key
-    "passkey" -> Icons.Default.Fingerprint
-    "passphrase" -> Icons.Default.ChatBubble
-    "secure_note" -> Icons.Default.StickyNote2
-    "totp" -> Icons.Default.Pin
-    "security_code" -> Icons.Default.Shield
-    "credit_card" -> Icons.Default.CreditCard
-    "identity" -> Icons.Default.Person
-    else -> Icons.Default.Key
+private data class TypeStyle(val icon: ImageVector, val bgColor: Color, val fgColor: Color)
+
+private fun getStyleForType(type: String): TypeStyle = when (type) {
+    "login" -> TypeStyle(Icons.Default.Key, Color(0xFFE8F0FE), Color(0xFF1A73E8))
+    "passkey" -> TypeStyle(Icons.Default.Fingerprint, Color(0xFFF1F5F9), Color(0xFF334155))
+    "passphrase" -> TypeStyle(Icons.Default.ChatBubble, Color(0xFFF1F5F9), Color(0xFF334155))
+    "secure_note" -> TypeStyle(Icons.Default.StickyNote2, Color(0xFFFFD2FC), Color(0xFF765377))
+    "totp" -> TypeStyle(Icons.Default.Pin, Color(0xFFE8F0FE), Color(0xFF1A73E8))
+    "security_code" -> TypeStyle(Icons.Default.Shield, Color(0xFFF3E8FF), Color(0xFF7E22CE)) // purple
+    "credit_card" -> TypeStyle(Icons.Default.CreditCard, Color(0xFFFFF7ED), Color(0xFFEA580C))
+    "identity" -> TypeStyle(Icons.Default.Person, Color(0xFFDCFCE7), Color(0xFF166534))
+    else -> TypeStyle(Icons.Default.Key, Color(0xFFE8F0FE), Color(0xFF1A73E8))
 }
 
 @Composable
@@ -54,56 +60,65 @@ fun VaultItemCard(
     onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+    val typeStyle = getStyleForType(item.type)
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+        color = Color.White // surface-container-lowest
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(20.dp), // p-5
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(48.dp), // w-12 h-12
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = typeStyle.bgColor
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = iconForType(item.type),
+                        imageVector = typeStyle.icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint = typeStyle.fgColor,
                         modifier = Modifier.size(24.dp)
                     )
                 }
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.name, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = item.name, 
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF33313A)
+                )
                 if (item.subtitle.isNotEmpty()) {
                     Text(
-                        item.subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = item.subtitle,
+                        fontSize = 14.sp,
+                        color = Color(0xFF605E68)
                     )
                 }
             }
-            if (item.isFavorite) {
-                Icon(
-                    Icons.Default.Star,
-                    contentDescription = "Favorite",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            IconButton(onClick = onCopy) {
-                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", modifier = Modifier.size(20.dp))
-            }
-            IconButton(onClick = onMoreClick) {
-                Icon(Icons.Default.MoreVert, contentDescription = "More", modifier = Modifier.size(20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (item.isFavorite) {
+                    IconButton(onClick = { /* Handle favorite click */ }) {
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = "Favorite",
+                            tint = Color(0xFF605E68), // matching text-on-surface-variant text style
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                IconButton(onClick = onCopy) {
+                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color(0xFF605E68), modifier = Modifier.size(24.dp))
+                }
             }
         }
     }

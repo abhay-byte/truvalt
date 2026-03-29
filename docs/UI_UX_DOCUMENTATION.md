@@ -47,7 +47,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `splash` |
 | **Purpose** | App launch, check existing session, biometric availability |
-| **UI Elements** | App logo, tagline, loading indicator |
+| **UI Elements** | App logo, tagline, animated loading ring with pulse + activity dots, safe-area aware layout |
 | **States** | Loading, BiometricPrompt, NavigateToHome, NavigateToOnboarding |
 | **Navigation** | Exit → Onboarding or ServerSetup or VaultHome |
 
@@ -59,7 +59,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `onboarding` |
 | **Purpose** | First-time user introduction (3 slides) |
-| **UI Elements** | PageView with illustrations, Next/Skip buttons, page indicators |
+| **UI Elements** | Safe-area aware PageView with custom illustrations, Next/Skip buttons, page indicators |
 | **States** | Page1, Page2, Page3, Complete |
 | **Navigation** | Exit → ServerSetup |
 
@@ -131,7 +131,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `vault_home` |
 | **Purpose** | Display vault items list with search and filters |
-| **UI Elements** | SearchBar, FilterChips (All, Favorites, Logins, Notes, etc.), VaultItemCard list, FAB (add item), BottomNav |
+| **UI Elements** | Top-fixed glass-like Header, Editorial Text ("My Vault"), pill-shaped SearchBar, colored FilterChips LazyRow, colored VaultItemCard list, pill FAB (add item), Floating Glassmorphic BottomNav |
 | **States** | Loading, Empty, Populated, SearchResults, Filtered |
 | **Navigation** | Item tap → VaultItemDetail, FAB → VaultItemCreate, Search → SearchResults |
 
@@ -327,7 +327,7 @@ flowchart TD
 
 | Component | Description | Used In |
 |---|---|---|
-| `VaultItemCard` | Item type icon, name, username/subtitle, favorite indicator, copy button | VaultHome, Search |
+| `VaultItemCard` | Type-specific colored background with icon, bold name, muted subtitle, right-aligned favorite/copy actions in a rounded white container | VaultHome, Search |
 | `TotpCountdownRing` | Circular progress ring counting down TOTP period | VaultItemDetail, TotpView |
 | `PasswordStrengthBar` | 4-level color bar with zxcvbn score label | Generator, ItemEdit |
 | `EncryptedFieldRow` | Hidden field with eye toggle, copy button, reveal timeout | ItemDetail |

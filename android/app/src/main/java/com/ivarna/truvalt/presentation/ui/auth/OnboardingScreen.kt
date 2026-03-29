@@ -11,7 +11,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Verified
@@ -28,12 +28,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 
 private val OnboardingSurface = Color(0xFFFCF8FE)
@@ -59,10 +57,12 @@ fun OnboardingScreen(
 
     Scaffold(
         containerColor = OnboardingSurface,
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 TextButton(
@@ -83,6 +83,7 @@ fun OnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .navigationBarsPadding()
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -101,7 +102,7 @@ fun OnboardingScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 48.dp, top = 24.dp)
+                    .padding(bottom = 32.dp, top = 24.dp)
                     .padding(horizontal = 32.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -162,7 +163,7 @@ fun OnboardingScreen(
                             if (pagerState.currentPage < 2) {
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Icon(
-                                    imageVector = Icons.Default.ArrowForward,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
                                     tint = OnboardingOnPrimary,
                                     modifier = Modifier.size(24.dp)
@@ -181,40 +182,27 @@ fun OnboardingSlide1() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 40.dp),
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Illustration Space
         Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            // Background Glow
-            Box(
+            SecurityIllustration(
                 modifier = Modifier
-                    .size(240.dp)
-                    .blur(60.dp)
-                    .alpha(0.1f)
-                    .background(OnboardingPrimary, CircleShape)
-            )
-            
-            AsyncImage(
-                model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAwQKcV-QmMlH-EvVsv08eginISDSIqbgJxri4JGT-BlP6BVDctZfQa9Bnr71k5NLTP2gTlT_o5Ka5ksRX0gbZJIx5f4h_QbDj5DPmLvIyvH3MFjaErCx16xNgeXIFHaIpTNLSIjEJIo2NO4yLYTLhmGAqSdSfx8DlsovJX4xBzkR55B6fbNFu6uVKpimw2irsvAib5AIG4rUj9nE4mdvdMdIl_ooENdjaCk0cXb7R7qZ3ShMRuHyZFWn6YMTHnOb-2JSlGZyJ7QrU",
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .aspectRatio(1f),
-                contentScale = ContentScale.Fit
+                    .fillMaxWidth()
+                    .aspectRatio(0.98f)
             )
         }
 
-        // Copy
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = 64.dp)
+            modifier = Modifier.padding(bottom = 52.dp)
         ) {
             Text(
                 text = "Your data, only yours",
@@ -235,6 +223,236 @@ fun OnboardingSlide1() {
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun SecurityIllustration(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(296.dp)
+                .blur(72.dp)
+                .alpha(0.18f)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            OnboardingPrimary.copy(alpha = 0.9f),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .aspectRatio(1f)
+        ) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .aspectRatio(1.02f)
+                    .shadow(26.dp, RoundedCornerShape(32.dp), spotColor = OnboardingPrimary.copy(alpha = 0.18f)),
+                colors = CardDefaults.cardColors(containerColor = OnboardingSurfaceContainerLowest),
+                shape = RoundedCornerShape(32.dp),
+                border = BorderStroke(1.dp, OnboardingOutlineVariant.copy(alpha = 0.2f))
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        OnboardingPrimary.copy(alpha = 0.12f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                repeat(3) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(OnboardingSurfaceVariant, CircleShape)
+                                    )
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(74.dp)
+                                    .height(10.dp)
+                                    .background(OnboardingSurfaceContainerHigh, RoundedCornerShape(4.dp))
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(110.dp)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                OnboardingPrimary.copy(alpha = 0.2f),
+                                                OnboardingPrimary.copy(alpha = 0.06f)
+                                            )
+                                        ),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shield,
+                                    contentDescription = null,
+                                    tint = OnboardingPrimary,
+                                    modifier = Modifier.size(56.dp)
+                                )
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                SecurePill("AES-256")
+                                SecurePill("Zero-knowledge")
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            repeat(3) { index ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .background(
+                                                if (index == 0) OnboardingPrimary.copy(alpha = 0.85f)
+                                                else OnboardingSurfaceContainerHigh,
+                                                CircleShape
+                                            )
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(
+                                                when (index) {
+                                                    0 -> 0.92f
+                                                    1 -> 0.78f
+                                                    else -> 0.62f
+                                                }
+                                            )
+                                            .height(12.dp)
+                                            .background(
+                                                if (index == 0) OnboardingPrimary.copy(alpha = 0.15f)
+                                                else OnboardingSurfaceContainerHigh,
+                                                RoundedCornerShape(6.dp)
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 10.dp, bottom = 18.dp)
+                    .size(width = 132.dp, height = 84.dp)
+                    .shadow(18.dp, RoundedCornerShape(24.dp), spotColor = OnboardingPrimary.copy(alpha = 0.18f)),
+                colors = CardDefaults.cardColors(containerColor = OnboardingSurfaceContainerLowest),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, OnboardingOutlineVariant.copy(alpha = 0.2f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(OnboardingPrimary.copy(alpha = 0.12f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Verified,
+                                contentDescription = null,
+                                tint = OnboardingPrimary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Text(
+                            text = "Private",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OnboardingOnSurface
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.86f)
+                            .height(8.dp)
+                            .background(OnboardingSurfaceContainer, RoundedCornerShape(4.dp))
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.58f)
+                            .height(8.dp)
+                            .background(OnboardingSurfaceContainerHigh, RoundedCornerShape(4.dp))
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SecurePill(text: String) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(OnboardingPrimary.copy(alpha = 0.1f))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = text,
+            color = OnboardingPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

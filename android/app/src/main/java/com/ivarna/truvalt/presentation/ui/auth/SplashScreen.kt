@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -132,12 +133,40 @@ fun SplashScreen(
         ),
         label = "rotation"
     )
+    val loaderPulse by infiniteTransition.animateFloat(
+        initialValue = 0.86f,
+        targetValue = 1.14f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "loaderPulse"
+    )
+    val loaderSweep by infiniteTransition.animateFloat(
+        initialValue = 120f,
+        targetValue = 300f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1400, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "loaderSweep"
+    )
+    val dotsPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dotsPhase"
+    )
     
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(truvaltSurface)
-            .background(radialGradient), // The background glow effect
+            .background(radialGradient)
+            .statusBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(
@@ -217,11 +246,19 @@ fun SplashScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp),
+                .navigationBarsPadding()
+                .padding(bottom = 56.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(modifier = Modifier.size(48.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .graphicsLayer {
+                            scaleX = loaderPulse
+                            scaleY = loaderPulse
+                        }
+                ) {
                     // Track
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawCircle(
@@ -238,8 +275,8 @@ fun SplashScreen(
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             drawArc(
                                 color = truvaltPrimary,
-                                startAngle = 0f,
-                                sweepAngle = 270f,
+                                startAngle = 18f,
+                                sweepAngle = loaderSweep,
                                 useCenter = false,
                                 style = Stroke(
                                     width = 3.dp.toPx(),
@@ -259,6 +296,24 @@ fun SplashScreen(
                     color = truvaltOnSurfaceVariant.copy(alpha = 0.4f),
                     letterSpacing = 2.sp, // tracking-[0.15em]
                 )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(3) { index ->
+                        val phase = (dotsPhase + index * 0.18f) % 1f
+                        val alpha = 0.24f + (1f - kotlin.math.abs(phase - 0.5f) * 2f) * 0.66f
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(truvaltPrimary.copy(alpha = alpha))
+                        )
+                    }
+                }
             }
         }
     }

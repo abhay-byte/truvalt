@@ -9,7 +9,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -36,29 +46,62 @@ fun MainScaffold(rootNavController: NavHostController) {
 
     val bottomNavItems = listOf(
         BottomNavItem("vault_graph", "vault_graph", "Vault", Icons.Default.Lock),
-        BottomNavItem("generator_graph", "generator_graph", "Generator", Icons.Default.Key),
-        BottomNavItem("health_graph", "health_graph", "Health", Icons.Default.Security),
+        BottomNavItem("generator_graph", "generator_graph", "Sharing", Icons.Default.Group),
+        BottomNavItem("health_graph", "health_graph", "Security", Icons.Default.VerifiedUser),
         BottomNavItem("settings_graph", "settings_graph", "Settings", Icons.Default.Settings)
     )
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                bottomNavItems.forEach { item ->
-                    NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == item.graph } == true,
-                        onClick = {
-                            tabNavController.navigate(item.graph) {
-                                popUpTo(tabNavController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+            Surface(
+                color = Color(0xCCFCF8FE), // Matches #fcf8fe/80
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        // Note: padding from bottom for safe drawing should be handled by windowInsets padding values
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .padding(top = 12.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    bottomNavItems.forEach { item ->
+                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.graph } == true
+                        val color = if (isSelected) Color(0xFF5850BD) else Color(0xFF7C7984) // Primary vs Outline
+                        val bgColor = if (isSelected) Color(0xFF5850BD).copy(alpha = 0.1f) else Color.Transparent
+
+                        Column(
+                            modifier = Modifier
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = {
+                                        tabNavController.navigate(item.graph) {
+                                            popUpTo(tabNavController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                )
+                                .background(bgColor, RoundedCornerShape(16.dp))
+                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                        ) {
+                            Icon(item.icon, contentDescription = item.label, tint = color, modifier = Modifier.size(24.dp))
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = item.label,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = color
+                            )
                         }
-                    )
+                    }
                 }
             }
         }

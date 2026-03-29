@@ -21,7 +21,7 @@
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Render deployment guide | 2026-03-23 |
 | [progress/TODO.md](./progress/TODO.md) | Task list with priorities | 2026-03-23 |
 | [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-03-29 |
-| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-03-23 |
+| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-03-29 |
 
 ---
 
