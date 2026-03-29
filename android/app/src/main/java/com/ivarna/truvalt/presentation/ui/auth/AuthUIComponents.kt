@@ -42,18 +42,29 @@ import coil.compose.AsyncImage
 import java.security.MessageDigest
 import java.util.UUID
 
-// Common Theme Colors from HTML
-val AuthPrimary = Color(0xFF5850BD)
-val AuthBackground = Color(0xFFFCF8FE)
-val AuthOnSurface = Color(0xFF33313A)
-val AuthOnSurfaceVariant = Color(0xFF605E68)
-val AuthSurfaceContainerHighest = Color(0xFFE5E1ED)
-val AuthOutlineVariant = Color(0xFFB4B0BC)
-val AuthSurfaceContainerLow = Color(0xFFF6F2FA)
-val AuthSurfaceContainerLowest = Color(0xFFFFFFFF)
-val AuthOnPrimary = Color(0xFFFCF7FF)
-val AuthError = Color(0xFFA8364B)
-val AuthSuccess = Color(0xFF34A853)
+// Common Theme Colors mapped to MaterialTheme
+val AuthPrimary: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+val AuthBackground: Color
+    @Composable get() = MaterialTheme.colorScheme.background
+val AuthOnSurface: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+val AuthOnSurfaceVariant: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+val AuthSurfaceContainerHighest: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+val AuthOutlineVariant: Color
+    @Composable get() = MaterialTheme.colorScheme.outlineVariant
+val AuthSurfaceContainerLow: Color
+    @Composable get() = MaterialTheme.colorScheme.surface
+val AuthSurfaceContainerLowest: Color
+    @Composable get() = MaterialTheme.colorScheme.background
+val AuthOnPrimary: Color
+    @Composable get() = MaterialTheme.colorScheme.onPrimary
+val AuthError: Color
+    @Composable get() = MaterialTheme.colorScheme.error
+val AuthSuccess: Color
+    get() = Color(0xFF34A853)
 
 /** Walks up the context wrapper chain to find the host [Activity], or null. */
 fun Context.findActivity(): Activity? {

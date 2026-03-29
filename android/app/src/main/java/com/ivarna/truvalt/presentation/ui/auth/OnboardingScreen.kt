@@ -34,17 +34,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
-private val OnboardingSurface = Color(0xFFFCF8FE)
-private val OnboardingPrimary = Color(0xFF534AB7)
-private val OnboardingOnSurface = Color(0xFF33313A)
-private val OnboardingOnSurfaceVariant = Color(0xFF605E68)
-private val OnboardingSurfaceVariant = Color(0xFFE5E1ED)
-private val OnboardingOnPrimary = Color(0xFFFCF7FF)
-private val OnboardingOutlineVariant = Color(0xFFB4B0BC)
-private val OnboardingSurfaceContainerLow = Color(0xFFF6F2FA)
-private val OnboardingSurfaceContainer = Color(0xFFF0ECF6)
-private val OnboardingSurfaceContainerHigh = Color(0xFFEBE6F1)
-private val OnboardingSurfaceContainerLowest = Color(0xFFFFFFFF)
+private val OnboardingSurface: Color
+    @Composable get() = MaterialTheme.colorScheme.background
+private val OnboardingPrimary: Color
+    @Composable get() = MaterialTheme.colorScheme.primary
+private val OnboardingOnSurface: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurface
+private val OnboardingOnSurfaceVariant: Color
+    @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+private val OnboardingSurfaceVariant: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+private val OnboardingOnPrimary: Color
+    @Composable get() = MaterialTheme.colorScheme.onPrimary
+private val OnboardingOutlineVariant: Color
+    @Composable get() = MaterialTheme.colorScheme.outlineVariant
+private val OnboardingSurfaceContainerLow: Color
+    @Composable get() = MaterialTheme.colorScheme.surface
+private val OnboardingSurfaceContainer: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+private val OnboardingSurfaceContainerHigh: Color
+    @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+private val OnboardingSurfaceContainerLowest: Color
+    @Composable get() = MaterialTheme.colorScheme.background
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -484,6 +495,7 @@ fun OnboardingSlide2() {
             Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
                 
                 // Connection line (Dashed)
+                val dashedLineColor = OnboardingPrimary.copy(alpha = 0.2f)
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val path = androidx.compose.ui.graphics.Path().apply {
                         moveTo(size.width * 0.3f, size.height * 0.65f)
@@ -494,7 +506,7 @@ fun OnboardingSlide2() {
                     }
                     drawPath(
                         path = path,
-                        color = OnboardingPrimary.copy(alpha = 0.2f),
+                        color = dashedLineColor,
                         style = androidx.compose.ui.graphics.drawscope.Stroke(
                             width = 2.dp.toPx(),
                             pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 12f))

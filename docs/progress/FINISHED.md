@@ -5,7 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
-| 2026-03-29 | 8 |
+| 2026-03-29 | 9 |
 | 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
@@ -20,6 +20,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| UI-007 | Implement Material 3 Theme in Auth & Onboarding | 2026-03-29 | Removed hardcoded background and surface colors from OnboardingScreen and AuthUIComponents. Replaced them with Composable getters bound to MaterialTheme.colorScheme to ensure the gateway respected Dark/Light system modes correctly |
 | FIX-008 | Add account sign-out action in Settings | 2026-03-29 | Added a dedicated Settings sign-out action that signs out the current account session, clears cached backend auth tokens, locks the local vault, routes back to Login, and updated the Settings UI/docs before rebuilding and reinstalling the debug APK |
 | TASK-018 | Complete Firebase auth/cloud flow and premium Android UX refinement | 2026-03-29 | Finalized direct Android → Firebase Auth + Firestore flow, fixed Google sign-in configuration and Android Keystore IV handling, added signed-in account details in Settings, refreshed onboarding/splash/startup routing, redesigned Vault Home and Generator with dark/light-aware premium UI, verified builds, installed the APK via `adb`, and updated all affected docs/progress tracking |
 | UI-005 | Correct App Bar logo and Vault theme | 2026-03-29 | Removed hardcoded background colors in VaultHomeScreen and VaultItemCard; added truvalt_icon to Top Bar; switched text color styling to respect dark/light Material 3 theme scheme |
