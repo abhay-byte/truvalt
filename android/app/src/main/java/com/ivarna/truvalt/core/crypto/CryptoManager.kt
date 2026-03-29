@@ -243,12 +243,10 @@ class CryptoManager @Inject constructor() {
 
     fun encryptWithKeystore(data: ByteArray): ByteArray {
         val key = getOrCreateKeystoreKey()
-        val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        
         val cipher = Cipher.getInstance(AES_MODE)
-        val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, iv)
-        cipher.init(Cipher.ENCRYPT_MODE, key, gcmSpec)
-        
+        cipher.init(Cipher.ENCRYPT_MODE, key)
+        val iv = cipher.iv
+
         return iv + cipher.doFinal(data)
     }
 

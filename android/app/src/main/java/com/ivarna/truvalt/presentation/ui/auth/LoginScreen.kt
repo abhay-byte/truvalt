@@ -64,6 +64,7 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.ivarna.truvalt.R
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
@@ -77,9 +78,6 @@ internal fun Context.findActivity(): Activity? {
     }
     return null
 }
-
-private const val WEB_CLIENT_ID =
-    "682840965721-dglou6qc1rua7n27cudtk9chqrtpspgs.apps.googleusercontent.com"
 
 @Composable
 fun LoginScreen(
@@ -281,6 +279,7 @@ suspend fun launchGoogleSignIn(
     onError: (String) -> Unit
 ) {
     val credentialManager = CredentialManager.create(context)
+    val webClientId = context.getString(R.string.default_web_client_id)
 
     // Nonce to prevent replay attacks
     val rawNonce = UUID.randomUUID().toString()
@@ -290,7 +289,7 @@ suspend fun launchGoogleSignIn(
 
     // GetSignInWithGoogleOption always shows the Google account chooser —
     // it does NOT filter by previously authorized accounts (unlike GetGoogleIdOption).
-    val signInOption = GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID)
+    val signInOption = GetSignInWithGoogleOption.Builder(webClientId)
         .setNonce(nonce)
         .build()
 

@@ -18,6 +18,7 @@ val keyPropsFile = file("/home/abhay/repos/keys/truvalt-key.properties")
 val keyProps = Properties().apply {
     if (keyPropsFile.exists()) FileInputStream(keyPropsFile).use { load(it) }
 }
+val debugKeystoreFile = file("/home/abhay/repos/keys/debug.keystore")
 
 android {
     namespace = "com.ivarna.truvalt"
@@ -41,6 +42,16 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+            // Match the SHA-1 already registered in Firebase for local debug builds.
+            if (debugKeystoreFile.exists()) {
+                storeFile = debugKeystoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+
         create("release") {
             storeFile     = file(keyProps["storeFile"] as String)
             storePassword = keyProps["storePassword"] as String
@@ -64,9 +75,9 @@ android {
         }
         debug {
             isDebuggable = true
-            // Use the same release keystore for debug so the SHA-1 registered
-            // in Firebase Console matches every build variant.
-            signingConfig = signingConfigs.getByName("release")
+            if (debugKeystoreFile.exists()) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             ndk {
                 abiFilters += listOf("arm64-v8a")
             }

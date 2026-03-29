@@ -1,7 +1,9 @@
 package com.ivarna.truvalt.data.repository
 
 import android.content.Context
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -186,7 +188,7 @@ class AuthRepositoryImpl @Inject constructor(
             preferences.setVaultUnlocked(true)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(IllegalStateException(mapGoogleSignInError(e), e))
         }
     }
 
@@ -204,5 +206,31 @@ class AuthRepositoryImpl @Inject constructor(
     fun getVaultKey(email: String, password: String): ByteArray {
         val derivedKeys = cryptoManager.deriveKeyFromPassword(password, email)
         return derivedKeys.vaultKey
+    }
+
+    private fun mapGoogleSignInError(error: Exception): String {
+        return when (error) {
+            is FirebaseNetworkException -> "Network error while contacting Firebase. Please try again."
+            is FirebaseAuthInvalidCredentialsException -> {
+                val message = error.message.orEmpty()
+                if (message.contains("malformed", ignoreCase = true) ||
+                    message.contains("expired", ignoreCase = true)
+                ) {
+                    "Google sign-in session expired. Please try again."
+                } else {
+                    "Google sign-in failed because the Google credential was rejected."
+                }
+            }
+            is FirebaseAuthException -> when (error.errorCode) {
+                "ERROR_OPERATION_NOT_ALLOWED" ->
+                    "Google sign-in is not enabled for this Firebase project. Enable the Google provider in Firebase Authentication."
+                "ERROR_INVALID_CREDENTIAL" ->
+                    "Google sign-in failed because this app build is not registered in Firebase. Update the Android SHA fingerprint and download a fresh google-services.json if needed."
+                "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" ->
+                    "This email is already linked to a different sign-in method."
+                else -> error.message ?: "Google sign-in failed."
+            }
+            else -> error.message ?: "Google sign-in failed."
+        }
     }
 }

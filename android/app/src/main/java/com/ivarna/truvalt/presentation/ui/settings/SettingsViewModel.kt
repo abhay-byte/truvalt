@@ -2,16 +2,30 @@ package com.ivarna.truvalt.presentation.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.text.DateFormat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+data class AccountProfileUiState(
+    val displayName: String,
+    val email: String,
+    val photoUrl: String? = null,
+    val providerLabel: String = "Firebase",
+    val uid: String,
+    val emailVerified: Boolean = false,
+    val createdAt: String? = null,
+    val lastSignInAt: String? = null
+)
 
 data class SettingsUiState(
     val isBiometricEnabled: Boolean = false,
@@ -21,6 +35,7 @@ data class SettingsUiState(
     val isLocalOnly: Boolean = false,
     val serverUrl: String? = null,
     val lastSyncTime: Long = 0L,
+    val accountProfile: AccountProfileUiState? = null,
     val isLoading: Boolean = false
 ) {
     val autoLockLabel: String
@@ -40,6 +55,7 @@ class SettingsViewModel @Inject constructor(
     private val preferences: TruvaltPreferences,
     private val authRepository: AuthRepository,
     private val syncRepository: SyncRepository,
+    private val firebaseAuth: FirebaseAuth,
     val biometricHelper: com.ivarna.truvalt.core.biometric.BiometricHelper,
     val pinStorage: com.ivarna.truvalt.core.pin.PinStorage
 ) : ViewModel() {
@@ -63,6 +79,7 @@ class SettingsViewModel @Inject constructor(
                 isLocalOnly = preferences.isLocalOnly.first(),
                 serverUrl = preferences.serverUrl.first(),
                 lastSyncTime = preferences.lastSyncTime.first(),
+                accountProfile = firebaseAuth.currentUser?.toAccountProfile(),
                 isLoading = false
             )
         }
@@ -120,5 +137,40 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             preferences.clearVaultData()
         }
+    }
+
+    private fun FirebaseUser.toAccountProfile(): AccountProfileUiState {
+        val providerIds = providerData
+            .mapNotNull { it.providerId }
+            .filterNot { it == "firebase" }
+            .distinct()
+
+        val providerLabel = when {
+            providerIds.contains("google.com") -> "Google account"
+            providerIds.contains("password") -> "Email account"
+            providerIds.isNotEmpty() -> providerIds.joinToString()
+            else -> "Firebase account"
+        }
+
+        fun formatTimestamp(timestamp: Long): String? {
+            if (timestamp <= 0L) return null
+            return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(timestamp)
+        }
+
+        val bestName = displayName
+            ?.takeIf { it.isNotBlank() }
+            ?: email?.substringBefore("@")
+            ?: "Signed in"
+
+        return AccountProfileUiState(
+            displayName = bestName,
+            email = email ?: "No email available",
+            photoUrl = photoUrl?.toString(),
+            providerLabel = providerLabel,
+            uid = uid,
+            emailVerified = isEmailVerified,
+            createdAt = formatTimestamp(metadata?.creationTimestamp ?: 0L),
+            lastSignInAt = formatTimestamp(metadata?.lastSignInTimestamp ?: 0L)
+        )
     }
 }

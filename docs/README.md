@@ -8,7 +8,7 @@
 
 | File | Description | Last Updated |
 |---|---|---|
-| [README.md](./README.md) | Master index and change management guide | 2026-03-23 |
+| [README.md](./README.md) | Master index and change management guide | 2026-03-29 |
 | [PROBLEM_STATEMENT.md](./PROBLEM_STATEMENT.md) | Background, problem definition, goals, constraints | 2026-03-16 |
 | [SRS.md](./SRS.md) | Software Requirements Specification with all functional requirements | 2026-03-23 |
 | [SDD.md](./SDD.md) | Software Design Document with architecture, database, API design | 2026-03-23 |
@@ -20,7 +20,7 @@
 | [API_TEST_RESULTS.md](./API_TEST_RESULTS.md) | API test results and coverage | 2026-03-23 |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Render deployment guide | 2026-03-23 |
 | [progress/TODO.md](./progress/TODO.md) | Task list with priorities | 2026-03-23 |
-| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-03-23 |
+| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-03-29 |
 | [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-03-23 |
 
 ---
