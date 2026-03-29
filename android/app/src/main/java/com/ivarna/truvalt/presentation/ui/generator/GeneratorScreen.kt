@@ -67,6 +67,7 @@ import com.ivarna.truvalt.core.utils.PasswordStrength
 import com.ivarna.truvalt.core.utils.PasswordStrengthMeter
 import com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette
 import com.ivarna.truvalt.presentation.ui.vault.rememberVaultPalette
+import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
 import kotlinx.coroutines.launch
 
 private data class GeneratorMode(
@@ -189,27 +190,29 @@ fun GeneratorScreen(
                     )
             )
 
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars),
-                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 36.dp),
-                verticalArrangement = Arrangement.spacedBy(22.dp)
+                    .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                item {
-                    GeneratorHeader(
-                        palette = palette,
-                        photoUrl = firebaseUser?.photoUrl?.toString(),
-                        profileFallback = firebaseUser?.displayName
-                            ?.firstOrNull()
-                            ?.uppercase()
-                            ?: firebaseUser?.email?.firstOrNull()?.uppercase()
-                            ?: "T"
-                    )
-                }
+                TruvaltTopAppBar(
+                    title = "Generator",
+                    palette = palette,
+                    photoUrl = firebaseUser?.photoUrl?.toString(),
+                    profileFallback = firebaseUser?.displayName
+                        ?.firstOrNull()
+                        ?.uppercase()
+                        ?: firebaseUser?.email?.firstOrNull()?.uppercase()
+                        ?: "T"
+                )
 
-                item {
-                    ModeSelector(
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(22.dp)
+                ) {
+                    item {
+                        ModeSelector(
                         palette = palette,
                         modes = modes,
                         selectedMode = selectedMode,
@@ -343,7 +346,6 @@ fun GeneratorScreen(
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                            }
                         }
                     }
                 }
@@ -351,72 +353,7 @@ fun GeneratorScreen(
         }
     }
 }
-
-@Composable
-private fun GeneratorHeader(
-    palette: VaultHomePalette,
-    photoUrl: String?,
-    profileFallback: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(palette.mutedSurface),
-                contentAlignment = Alignment.Center
-            ) {
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(id = R.drawable.truvalt_icon),
-                    contentDescription = "Truvalt",
-                    modifier = Modifier.size(30.dp)
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = "Generator",
-                    color = palette.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = "Build high-entropy credentials instantly",
-                    color = palette.muted,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
-        Surface(
-            modifier = Modifier.size(46.dp),
-            shape = CircleShape,
-            color = palette.mutedSurface
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                if (!photoUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = photoUrl,
-                        contentDescription = "Profile",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text = profileFallback,
-                        color = palette.brand,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
+}
 }
 
 @Composable

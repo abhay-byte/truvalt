@@ -3,6 +3,7 @@ package com.ivarna.truvalt.presentation.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,8 +12,10 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,12 +63,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.google.firebase.auth.FirebaseAuth
+import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
+import com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette
+import com.ivarna.truvalt.presentation.ui.vault.rememberVaultPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,40 +91,57 @@ fun SettingsScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
 
+    val palette = rememberVaultPalette()
+    val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
+    val profileFallback = firebaseUser?.displayName?.firstOrNull()?.uppercase()
+        ?: firebaseUser?.email?.firstOrNull()?.uppercase() ?: "T"
+
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Settings",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                    )
-                }
-            )
-        }
+        contentWindowInsets = WindowInsets(0),
+        containerColor = Color.Transparent
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(palette.background, palette.backgroundAccent)
+                    )
+                )
                 .padding(padding)
-                .consumeWindowInsets(padding)
-                .verticalScroll(rememberScrollState())
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+            ) {
+                TruvaltTopAppBar(
+                    title = "Settings",
+                    palette = palette,
+                    photoUrl = firebaseUser?.photoUrl?.toString(),
+                    profileFallback = profileFallback
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
             uiState.accountProfile?.let { account ->
                 SignedInAccountCard(
                     profile = account,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    palette = palette,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                     onClick = { showAccountDialog = true }
                 )
             }
 
-            SettingsSection(title = "Security") {
+            SettingsSection(title = "Security", palette = palette) {
                 SettingsItem(
                     icon = Icons.Default.Security,
                     title = "Security Settings",
                     subtitle = "Biometric, PIN, and lock settings",
+                    palette = palette,
                     onClick = onNavigateToSecuritySettings
                 )
 
@@ -123,6 +149,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Timer,
                     title = "Auto-lock",
                     subtitle = uiState.autoLockLabel,
+                    palette = palette,
                     onClick = { }
                 )
 
@@ -130,24 +157,27 @@ fun SettingsScreen(
                     icon = Icons.Default.Timer,
                     title = "Clipboard Timeout",
                     subtitle = "${uiState.clipboardTimeout} seconds",
+                    palette = palette,
                     onClick = { }
                 )
             }
 
-            SettingsSection(title = "Appearance") {
+            SettingsSection(title = "Appearance", palette = palette) {
                 SettingsItem(
                     icon = Icons.Default.Brightness4,
                     title = "Theme",
                     subtitle = uiState.themeMode.replaceFirstChar { it.uppercase() },
+                    palette = palette,
                     onClick = { showThemeDialog = true }
                 )
             }
 
-            SettingsSection(title = "Sync") {
+            SettingsSection(title = "Sync", palette = palette) {
                 SettingsItem(
                     icon = if (uiState.isLocalOnly) Icons.Default.CloudOff else Icons.Default.Cloud,
                     title = "Local-only Mode",
                     subtitle = if (uiState.isLocalOnly) "Vault stored locally only" else "Sync enabled",
+                    palette = palette,
                     trailing = {
                         Switch(
                             checked = uiState.isLocalOnly,
@@ -161,6 +191,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Sync,
                         title = "Server URL",
                         subtitle = uiState.serverUrl ?: "Not configured",
+                        palette = palette,
                         onClick = { }
                     )
 
@@ -172,16 +203,18 @@ fun SettingsScreen(
                         } else {
                             "Never"
                         },
+                        palette = palette,
                         onClick = { viewModel.syncNow() }
                     )
                 }
             }
 
-            SettingsSection(title = "Data") {
+            SettingsSection(title = "Data", palette = palette) {
                 SettingsItem(
                     icon = Icons.Default.Upload,
                     title = "Import",
                     subtitle = "Import from other password managers",
+                    palette = palette,
                     onClick = { }
                 )
 
@@ -189,32 +222,37 @@ fun SettingsScreen(
                     icon = Icons.Default.Download,
                     title = "Export",
                     subtitle = "Export vault to file",
+                    palette = palette,
                     onClick = { }
                 )
             }
 
-            SettingsSection(title = "Danger Zone") {
+            SettingsSection(title = "Danger Zone", palette = palette) {
                 SettingsItem(
                     icon = Icons.Default.Delete,
                     title = "Delete Vault",
                     subtitle = "Permanently delete all data",
                     onClick = { showDeleteDialog = true },
-                    dangerous = true
+                    dangerous = true,
+                    palette = palette
                 )
             }
 
-            SettingsSection(title = "Account") {
+            SettingsSection(title = "Account", palette = palette) {
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.Logout,
                     title = "Lock Vault",
                     subtitle = "Lock and return to login",
+                    palette = palette,
                     onClick = { showLogoutDialog = true }
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+        }
     }
+}
 
     if (showThemeDialog) {
         AlertDialog(
@@ -332,6 +370,7 @@ fun SettingsScreen(
 @Composable
 private fun SignedInAccountCard(
     profile: AccountProfileUiState,
+    palette: VaultHomePalette,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -341,7 +380,7 @@ private fun SignedInAccountCard(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
+            containerColor = palette.cardSurface
         )
     ) {
         Row(
@@ -360,12 +399,13 @@ private fun SignedInAccountCard(
                 Text(
                     text = profile.displayName,
                     style = MaterialTheme.typography.titleMedium,
+                    color = palette.title,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = profile.email,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = palette.muted
                 )
                 Row(
                     modifier = Modifier.padding(top = 6.dp),
@@ -375,12 +415,12 @@ private fun SignedInAccountCard(
                         imageVector = if (profile.emailVerified) Icons.Default.Verified else Icons.Default.Info,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = if (profile.emailVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (profile.emailVerified) palette.brand else palette.muted
                     )
                     Text(
                         text = profile.providerLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = palette.muted,
                         modifier = Modifier.padding(start = 6.dp)
                     )
                 }
@@ -389,7 +429,7 @@ private fun SignedInAccountCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = palette.muted
             )
         }
     }
@@ -445,6 +485,7 @@ private fun AccountDetailRow(label: String, value: String) {
 @Composable
 fun SettingsSection(
     title: String,
+    palette: VaultHomePalette,
     content: @Composable () -> Unit
 ) {
     Column(
@@ -453,11 +494,12 @@ fun SettingsSection(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            color = palette.brand,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
         )
         content()
-        HorizontalDivider()
+        HorizontalDivider(color = palette.cardBorder, modifier = Modifier.padding(horizontal = 24.dp))
     }
 }
 
@@ -466,31 +508,38 @@ fun SettingsItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    palette: VaultHomePalette,
     onClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     dangerous: Boolean = false
 ) {
-    ListItem(
-        headlineContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (dangerous) MaterialTheme.colorScheme.error else palette.muted
+        )
+        Spacer(modifier = Modifier.size(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = if (dangerous) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                color = if (dangerous) MaterialTheme.colorScheme.error else palette.title,
+                style = MaterialTheme.typography.titleMedium
             )
-        },
-        supportingContent = {
             Text(
                 text = subtitle,
-                color = if (dangerous) MaterialTheme.colorScheme.error.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (dangerous) MaterialTheme.colorScheme.error.copy(alpha = 0.7f) else palette.muted,
+                style = MaterialTheme.typography.bodyMedium
             )
-        },
-        leadingContent = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (dangerous) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
-        trailingContent = trailing,
-        modifier = Modifier.clickable(enabled = onClick != null) { onClick?.invoke() }
-    )
+        }
+        if (trailing != null) {
+            trailing()
+        }
+    }
 }

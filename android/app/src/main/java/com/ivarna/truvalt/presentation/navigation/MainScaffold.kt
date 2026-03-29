@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,7 +37,8 @@ data class BottomNavItem(
     val route: String,
     val graph: String,
     val label: String,
-    val icon: ImageVector
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
 )
 
 @Composable
@@ -47,13 +49,15 @@ fun MainScaffold(rootNavController: NavHostController) {
     val palette = rememberVaultPalette()
 
     val bottomNavItems = listOf(
-        BottomNavItem("vault_graph", "vault_graph", "Vault", Icons.Default.Lock),
-        BottomNavItem("generator_graph", "generator_graph", "Generator", Icons.Default.VpnKey),
-        BottomNavItem("health_graph", "health_graph", "Health", Icons.Default.Speed),
-        BottomNavItem("settings_graph", "settings_graph", "Settings", Icons.Default.Settings)
+        BottomNavItem("vault_graph", "vault_graph", "VAULT", Icons.Filled.Lock, Icons.Outlined.Lock),
+        BottomNavItem("generator_graph", "generator_graph", "GENERATOR", Icons.Filled.Password, Icons.Outlined.Password),
+        BottomNavItem("health_graph", "health_graph", "HEALTH", Icons.Filled.Speed, Icons.Outlined.Speed),
+        BottomNavItem("settings_graph", "settings_graph", "SETTINGS", Icons.Filled.Settings, Icons.Outlined.Settings)
     )
 
     Scaffold(
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0),
         bottomBar = {
             Surface(
                 color = palette.navSurface,
@@ -94,27 +98,30 @@ fun MainScaffold(rootNavController: NavHostController) {
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                         ) {
-                            Icon(item.icon, contentDescription = item.label, tint = color, modifier = Modifier.size(24.dp))
+                            Icon(
+                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                contentDescription = item.label,
+                                tint = color,
+                                modifier = Modifier.size(24.dp)
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 text = item.label,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = color
+                                fontWeight = FontWeight.Bold,
+                                color = color,
+                                letterSpacing = 0.5.sp
                             )
                         }
                     }
                 }
             }
         }
-    ) { paddingValues ->
+    ) { _ ->
         NavHost(
             navController = tabNavController,
             startDestination = "vault_graph",
-            modifier = androidx.compose.ui.Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
+            modifier = androidx.compose.ui.Modifier.fillMaxSize()
         ) {
             navigation(startDestination = Screen.VaultHome.route, route = "vault_graph") {
                 composable(Screen.VaultHome.route) {

@@ -53,7 +53,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.R
+import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
 
 private data class VaultFilterOption(
     val id: String?,
@@ -81,6 +83,9 @@ fun VaultHomeScreen(
         VaultFilterOption(id = "secure_note", label = "Notes"),
         VaultFilterOption(id = "credit_card", label = "Cards")
     )
+    val firebaseUser = androidx.compose.runtime.remember { FirebaseAuth.getInstance().currentUser }
+    val profileFallback = firebaseUser?.displayName?.firstOrNull()?.uppercase()
+        ?: firebaseUser?.email?.firstOrNull()?.uppercase() ?: "T"
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -115,25 +120,31 @@ fun VaultHomeScreen(
                     )
             )
 
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars),
-                contentPadding = PaddingValues(
-                    start = 24.dp,
-                    end = 24.dp,
-                    top = 16.dp,
-                    bottom = 32.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                item {
-                    VaultHeader(palette = palette)
-                }
+                TruvaltTopAppBar(
+                    title = "TRUVALT",
+                    palette = palette,
+                    photoUrl = firebaseUser?.photoUrl?.toString(),
+                    profileFallback = profileFallback
+                )
 
-                item {
-                    VaultSearchField(
-                        value = uiState.searchQuery,
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = 8.dp,
+                        bottom = 120.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    item {
+                        VaultSearchField(
+                            value = uiState.searchQuery,
                         onValueChange = viewModel::setSearchQuery,
                         palette = palette
                     )
@@ -193,67 +204,6 @@ fun VaultHomeScreen(
         }
     }
 }
-
-@Composable
-private fun VaultHeader(palette: VaultHomePalette) {
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = palette.headerSurface
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(palette.mutedSurface),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = androidx.compose.ui.res.painterResource(id = R.drawable.truvalt_icon),
-                        contentDescription = "Truvalt",
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        text = "TRUVALT",
-                        color = palette.brand,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.6.sp
-                    )
-                    Text(
-                        text = "Your secure vault, beautifully organized",
-                        color = palette.muted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-
-            IconButton(
-                onClick = { },
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(palette.mutedSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Sync,
-                    contentDescription = "Sync",
-                    tint = palette.brand
-                )
-            }
-        }
-    }
 }
 
 @Composable
