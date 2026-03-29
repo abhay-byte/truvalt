@@ -119,9 +119,14 @@ fun RegisterScreen(
             GoogleSignInButton(
                 isLoading = uiState.isLoading,
                 onClick = {
+                    val activity = context.findActivity()
+                    if (activity == null) {
+                        scope.launch { snackbarHostState.showSnackbar("Cannot launch Google Sign-In: no Activity") }
+                        return@GoogleSignInButton
+                    }
                     scope.launch {
                         launchGoogleSignIn(
-                            context = context as Activity,
+                            context = activity,
                             onToken = { token -> viewModel.signInWithGoogle(token) },
                             onError = { msg ->
                                 scope.launch { snackbarHostState.showSnackbar(msg) }

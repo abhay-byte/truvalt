@@ -39,7 +39,11 @@ class SplashViewModel @Inject constructor(
     val isFirstLaunch: StateFlow<Boolean> = preferences.isFirstLaunch
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
     
-    val hasMasterPassword: StateFlow<Boolean> = preferences.wrappedVaultKey
+    // hasVaultKey is true when the user has completed registration by any method:
+    //   - email/password: storeVaultKey writes to encryptedVaultKey
+    //   - Google Sign-In: same — encryptedVaultKey is populated by signInWithGoogle
+    //   - backendUserId signals Firebase auth is set up (cloud mode)
+    val hasMasterPassword: StateFlow<Boolean> = preferences.encryptedVaultKey
         .map { it != null }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
     

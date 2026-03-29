@@ -10,12 +10,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -33,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,6 +54,8 @@ fun ServerSetupScreen(
     onNavigateToVault: () -> Unit,
     viewModel: ServerSetupViewModel = hiltViewModel()
 ) {
+    // Helper state to know which Firebase Cloud button was tapped
+    var pendingCloudDestination by remember { mutableStateOf<CloudAuthDestination?>(null) }
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -61,7 +68,8 @@ fun ServerSetupScreen(
             if (useLocalOnly) {
                 onNavigateToVault()
             } else {
-                when (cloudAuthDestination) {
+                val dest = pendingCloudDestination ?: cloudAuthDestination
+                when (dest) {
                     CloudAuthDestination.LOGIN -> onNavigateToLogin()
                     CloudAuthDestination.REGISTER -> onNavigateToRegister()
                 }
@@ -214,15 +222,54 @@ fun ServerSetupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ── Firebase Cloud shortcut ─────────────────────────────────────────
+            // Tap these to skip entering a server URL and go straight to
+            // Firebase-backed auth. Calling saveServerConfig here ensures
+            // isFirstLaunch is cleared so the splash won't loop back here.
             if (!useLocalOnly) {
-                TextButton(onClick = onNavigateToRegister) {
-                    Text("Use Firebase Cloud → Create Account")
-                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Or use Firebase Cloud directly:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-                TextButton(onClick = onNavigateToLogin) {
-                    Text("Use Firebase Cloud → Sign In")
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FilledTonalButton(
+                        onClick = {
+                            pendingCloudDestination = CloudAuthDestination.REGISTER
+                            viewModel.saveServerConfig("", false, useFirebaseCloud = true)
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cloud,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        Text("Register", fontWeight = FontWeight.SemiBold)
+                    }
+
+                    FilledTonalButton(
+                        onClick = {
+                            pendingCloudDestination = CloudAuthDestination.LOGIN
+                            viewModel.saveServerConfig("", false, useFirebaseCloud = true)
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cloud,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        Text("Sign In", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }

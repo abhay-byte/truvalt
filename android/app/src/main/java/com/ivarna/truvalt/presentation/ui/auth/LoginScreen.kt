@@ -1,9 +1,10 @@
 package com.ivarna.truvalt.presentation.ui.auth
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -56,14 +57,26 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
+
+/** Walks up the context wrapper chain to find the host [Activity], or null. */
+internal fun Context.findActivity(): Activity? {
+    var ctx = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
 
 private const val WEB_CLIENT_ID =
     "682840965721-dglou6qc1rua7n27cudtk9chqrtpspgs.apps.googleusercontent.com"
@@ -124,9 +137,14 @@ fun LoginScreen(
             GoogleSignInButton(
                 isLoading = uiState.isLoading,
                 onClick = {
+                    val activity = context.findActivity()
+                    if (activity == null) {
+                        scope.launch { snackbarHostState.showSnackbar("Cannot launch Google Sign-In: no Activity") }
+                        return@GoogleSignInButton
+                    }
                     scope.launch {
                         launchGoogleSignIn(
-                            context = context as Activity,
+                            context = activity,
                             onToken = { token -> viewModel.signInWithGoogle(token) },
                             onError = { msg ->
                                 scope.launch { snackbarHostState.showSnackbar(msg) }
@@ -255,6 +273,7 @@ fun GoogleSignInButton(
 }
 
 // ── Google Credential Manager launcher ───────────────────────────────────────
+// Uses GetSignInWithGoogleOption which always shows the account picker (never NoCredentialException)
 
 suspend fun launchGoogleSignIn(
     context: Activity,
@@ -263,41 +282,41 @@ suspend fun launchGoogleSignIn(
 ) {
     val credentialManager = CredentialManager.create(context)
 
+    // Nonce to prevent replay attacks
     val rawNonce = UUID.randomUUID().toString()
     val nonce = MessageDigest.getInstance("SHA-256")
         .digest(rawNonce.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
-    suspend fun tryGetCredential(filterByAuthorized: Boolean): Boolean {
-        val option = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(filterByAuthorized)
-            .setServerClientId(WEB_CLIENT_ID)
-            .setAutoSelectEnabled(!filterByAuthorized)
-            .setNonce(nonce)
-            .build()
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(option)
-            .build()
-        return try {
-            val result = credentialManager.getCredential(context, request)
-            val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-            onToken(credential.idToken)
-            true
-        } catch (e: androidx.credentials.exceptions.NoCredentialException) {
-            false // No pre-authorised account — try fallback
-        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
-            true // User cancelled — don't show error, just stop
-        } catch (e: GetCredentialException) {
-            false
-        }
-    }
+    // GetSignInWithGoogleOption always shows the Google account chooser —
+    // it does NOT filter by previously authorized accounts (unlike GetGoogleIdOption).
+    val signInOption = GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID)
+        .setNonce(nonce)
+        .build()
 
-    // Try pre-authorised accounts first, then all accounts
-    val handled = tryGetCredential(filterByAuthorized = true)
-    if (!handled) {
-        val fallbackHandled = tryGetCredential(filterByAuthorized = false)
-        if (!fallbackHandled) {
-            onError("No Google account found on this device. Please add a Google account in Settings → Accounts.")
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(signInOption)
+        .build()
+
+    try {
+        val result = credentialManager.getCredential(context, request)
+        val credential = result.credential
+
+        if (credential is CustomCredential &&
+            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
+            val googleCred = GoogleIdTokenCredential.createFrom(credential.data)
+            onToken(googleCred.idToken)
+        } else {
+            onError("Unexpected credential type: ${credential.type}")
         }
+    } catch (_: GetCredentialCancellationException) {
+        // Silent — user cancelled
+    } catch (e: GetCredentialException) {
+        android.util.Log.e("GoogleSignIn", "${e::class.simpleName}: ${e.message}")
+        onError("Google Sign-In failed: ${e.message ?: e::class.simpleName}")
+    } catch (e: Exception) {
+        android.util.Log.e("GoogleSignIn", "Unexpected: ${e.message}")
+        onError("Google Sign-In error: ${e.message}")
     }
 }
