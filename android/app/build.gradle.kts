@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,6 +10,13 @@ plugins {
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.kapt")
     id("com.google.gms.google-services")
+}
+
+// Load signing credentials from ~/repos/keys/truvalt-key.properties
+// (never committed to git — lives only on the dev machine)
+val keyPropsFile = file("/home/abhay/repos/keys/truvalt-key.properties")
+val keyProps = Properties().apply {
+    if (keyPropsFile.exists()) FileInputStream(keyPropsFile).use { load(it) }
 }
 
 android {
@@ -30,10 +40,20 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile     = file(keyProps["storeFile"] as String)
+            storePassword = keyProps["storePassword"] as String
+            keyAlias      = keyProps["keyAlias"] as String
+            keyPassword   = keyProps["keyPassword"] as String
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             ndk {
                 abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             }
@@ -44,6 +64,9 @@ android {
         }
         debug {
             isDebuggable = true
+            // Use the same release keystore for debug so the SHA-1 registered
+            // in Firebase Console matches every build variant.
+            signingConfig = signingConfigs.getByName("release")
             ndk {
                 abiFilters += listOf("arm64-v8a")
             }
@@ -111,8 +134,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // Google Sign-In via Credential Manager (modern API, replaces deprecated GoogleSignInClient)
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Retrofit (kept for any residual use, can be removed later)
