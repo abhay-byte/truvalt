@@ -251,7 +251,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.AutoMirrored.Filled.Logout,
                     title = "Sign Out",
-                    subtitle = "Sign out from Firebase on this device",
+                    subtitle = "Sign out of your account on this device",
                     palette = palette,
                     onClick = { showLogoutDialog = true }
                 )
@@ -329,7 +329,7 @@ fun SettingsScreen(
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Sign Out") },
-            text = { Text("Are you sure you want to sign out of your Firebase account on this device?") },
+            text = { Text("Are you sure you want to sign out of your account on this device?") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.logout()

@@ -20,7 +20,7 @@ data class AccountProfileUiState(
     val displayName: String,
     val email: String,
     val photoUrl: String? = null,
-    val providerLabel: String = "Firebase",
+    val providerLabel: String = "Account",
     val uid: String,
     val emailVerified: Boolean = false,
     val createdAt: String? = null,
@@ -162,7 +162,7 @@ class SettingsViewModel @Inject constructor(
             providerIds.contains("google.com") -> "Google account"
             providerIds.contains("password") -> "Email account"
             providerIds.isNotEmpty() -> providerIds.joinToString()
-            else -> "Firebase account"
+            else -> "Account"
         }
 
         fun formatTimestamp(timestamp: Long): String? {

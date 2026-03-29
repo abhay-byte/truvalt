@@ -247,7 +247,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `settings` |
 | **Purpose** | Access all settings |
-| **UI Elements** | Signed-in account card with profile photo/initial, name, email, provider badge, tappable account info dialog, settings list (security, appearance, sync, import/export, danger zone, lock vault, Firebase sign-out action) |
+| **UI Elements** | Signed-in account card with profile photo/initial, name, email, provider badge, tappable account info dialog, settings list (security, appearance, sync, import/export, danger zone, lock vault, account sign-out action) |
 | **Navigation** | Item → respective settings screen |
 
 ---
