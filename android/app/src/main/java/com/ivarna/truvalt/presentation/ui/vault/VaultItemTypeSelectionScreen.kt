@@ -1,7 +1,10 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,7 +96,7 @@ fun VaultItemTypeSelectionScreen(
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     shape = RoundedCornerShape(20.dp),
-                    border = androidx.compose.foundation.BorderStroke(
+                    border = BorderStroke(
                         1.dp, 
                         MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
                     )
@@ -105,10 +108,10 @@ fun VaultItemTypeSelectionScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Jewel-like Icon Box
-                        androidx.compose.foundation.layout.Box(
+                        Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .androidx.compose.foundation.background(
+                                .background(
                                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                     shape = RoundedCornerShape(14.dp)
                                 ),

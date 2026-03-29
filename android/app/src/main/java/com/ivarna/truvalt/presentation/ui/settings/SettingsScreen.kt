@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,17 +20,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
@@ -43,17 +38,16 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,18 +57,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
-import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
-import com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette
-import com.ivarna.truvalt.presentation.ui.vault.rememberVaultPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,181 +81,265 @@ fun SettingsScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
 
-    val palette = rememberVaultPalette()
     val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
-    val profileFallback = firebaseUser?.displayName?.firstOrNull()?.uppercase()
-        ?: firebaseUser?.email?.firstOrNull()?.uppercase() ?: "T"
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
-        containerColor = Color.Transparent
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Settings",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(palette.background, palette.backgroundAccent)
-                    )
-                )
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-            ) {
-                TruvaltTopAppBar(
-                    title = "Settings",
-                    palette = palette,
-                    photoUrl = firebaseUser?.photoUrl?.toString(),
-                    profileFallback = profileFallback
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
+            // Account Card
             uiState.accountProfile?.let { account ->
-                SignedInAccountCard(
-                    profile = account,
-                    palette = palette,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                    onClick = { showAccountDialog = true }
-                )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp)
+                        .clickable { showAccountDialog = true },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                    ),
+                    elevation = CardDefaults.cardElevation(0.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Profile avatar
+                        if (!account.photoUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = account.photoUrl,
+                                contentDescription = "${account.displayName} photo",
+                                modifier = Modifier.size(56.dp).clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = account.displayName.firstOrNull()?.uppercase() ?: "T",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp)
+                        ) {
+                            Text(
+                                account.displayName,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                account.email,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Row(
+                                modifier = Modifier.padding(top = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (account.emailVerified) Icons.Default.Verified else Icons.Default.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(13.dp),
+                                    tint = if (account.emailVerified) MaterialTheme.colorScheme.primary
+                                           else MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    account.providerLabel,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
 
-            SettingsSection(title = "Security", palette = palette) {
-                SettingsItem(
+            Spacer(Modifier.height(8.dp))
+
+            // Security Section
+            SettingsSectionCard(title = "Security") {
+                SettingsRowItem(
                     icon = Icons.Default.Security,
                     title = "Security Settings",
                     subtitle = "Biometric, PIN, and lock settings",
-                    palette = palette,
                     onClick = onNavigateToSecuritySettings
                 )
-
-                SettingsItem(
+                SettingsRowItem(
                     icon = Icons.Default.Timer,
                     title = "Auto-lock",
                     subtitle = uiState.autoLockLabel,
-                    palette = palette,
-                    onClick = { }
+                    onClick = {}
                 )
-
-                SettingsItem(
+                SettingsRowItem(
                     icon = Icons.Default.Timer,
                     title = "Clipboard Timeout",
                     subtitle = "${uiState.clipboardTimeout} seconds",
-                    palette = palette,
-                    onClick = { }
+                    onClick = {},
+                    isLast = true
                 )
             }
 
-            SettingsSection(title = "Appearance", palette = palette) {
-                SettingsItem(
+            Spacer(Modifier.height(16.dp))
+
+            // Appearance Section
+            SettingsSectionCard(title = "Appearance") {
+                SettingsRowItem(
                     icon = Icons.Default.Brightness4,
                     title = "Theme",
                     subtitle = uiState.themeMode.replaceFirstChar { it.uppercase() },
-                    palette = palette,
-                    onClick = { showThemeDialog = true }
+                    onClick = { showThemeDialog = true },
+                    isLast = true
                 )
             }
 
-            SettingsSection(title = "Sync", palette = palette) {
-                SettingsItem(
+            Spacer(Modifier.height(16.dp))
+
+            // Sync Section
+            SettingsSectionCard(title = "Sync") {
+                SettingsRowItem(
                     icon = if (uiState.isLocalOnly) Icons.Default.CloudOff else Icons.Default.Cloud,
                     title = "Local-only Mode",
                     subtitle = if (uiState.isLocalOnly) "Vault stored locally only" else "Sync enabled",
-                    palette = palette,
                     trailing = {
                         Switch(
                             checked = uiState.isLocalOnly,
-                            onCheckedChange = { viewModel.setLocalOnly(it) }
+                            onCheckedChange = { viewModel.setLocalOnly(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary
+                            )
                         )
-                    }
+                    },
+                    isLast = uiState.isLocalOnly
                 )
-
                 if (!uiState.isLocalOnly) {
-                    SettingsItem(
+                    SettingsRowItem(
                         icon = Icons.Default.Sync,
                         title = "Server URL",
                         subtitle = uiState.serverUrl ?: "Not configured",
-                        palette = palette,
-                        onClick = { }
+                        onClick = {}
                     )
-
-                    SettingsItem(
+                    SettingsRowItem(
                         icon = Icons.Default.Sync,
                         title = "Last Synced",
-                        subtitle = if (uiState.lastSyncTime > 0) {
-                            "Just now"
-                        } else {
-                            "Never"
-                        },
-                        palette = palette,
-                        onClick = { viewModel.syncNow() }
+                        subtitle = if (uiState.lastSyncTime > 0) "Just now" else "Never",
+                        onClick = { viewModel.syncNow() },
+                        isLast = true
                     )
                 }
             }
 
-            SettingsSection(title = "Data", palette = palette) {
-                SettingsItem(
+            Spacer(Modifier.height(16.dp))
+
+            // Data Section
+            SettingsSectionCard(title = "Data") {
+                SettingsRowItem(
                     icon = Icons.Default.Upload,
                     title = "Import",
                     subtitle = "Import from other password managers",
-                    palette = palette,
-                    onClick = { }
+                    onClick = {}
                 )
-
-                SettingsItem(
+                SettingsRowItem(
                     icon = Icons.Default.Download,
                     title = "Export",
                     subtitle = "Export vault to file",
-                    palette = palette,
-                    onClick = { }
+                    onClick = {},
+                    isLast = true
                 )
             }
 
-            SettingsSection(title = "Danger Zone", palette = palette) {
-                SettingsItem(
+            Spacer(Modifier.height(16.dp))
+
+            // Account Section
+            SettingsSectionCard(title = "Account") {
+                SettingsRowItem(
+                    icon = Icons.Default.Lock,
+                    title = "Lock Vault",
+                    subtitle = "Lock and return to login",
+                    onClick = { showLockDialog = true }
+                )
+                SettingsRowItem(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    title = "Sign Out",
+                    subtitle = "Sign out of your account on this device",
+                    onClick = { showLogoutDialog = true },
+                    isLast = true
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Danger Zone
+            SettingsSectionCard(title = "Danger Zone") {
+                SettingsRowItem(
                     icon = Icons.Default.Delete,
                     title = "Delete Vault",
                     subtitle = "Permanently delete all data",
                     onClick = { showDeleteDialog = true },
                     dangerous = true,
-                    palette = palette
+                    isLast = true
                 )
             }
 
-            SettingsSection(title = "Account", palette = palette) {
-                SettingsItem(
-                    icon = Icons.AutoMirrored.Filled.Logout,
-                    title = "Lock Vault",
-                    subtitle = "Lock and return to login",
-                    palette = palette,
-                    onClick = { showLockDialog = true }
-                )
-
-                SettingsItem(
-                    icon = Icons.AutoMirrored.Filled.Logout,
-                    title = "Sign Out",
-                    subtitle = "Sign out of your account on this device",
-                    palette = palette,
-                    onClick = { showLogoutDialog = true }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+            Spacer(Modifier.height(32.dp))
         }
     }
-}
+
+    // --- Dialogs ---
 
     if (showThemeDialog) {
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("Theme") },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(28.dp),
+            title = {
+                Text("Theme", style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface)
+            },
             text = {
                 Column {
                     listOf("system", "light", "dark", "amoled").forEach { theme ->
@@ -289,16 +362,16 @@ fun SettingsScreen(
                             )
                             Text(
                                 text = theme.replaceFirstChar { it.uppercase() },
-                                modifier = Modifier.padding(start = 8.dp)
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showThemeDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showThemeDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -306,21 +379,21 @@ fun SettingsScreen(
     if (showLockDialog) {
         AlertDialog(
             onDismissRequest = { showLockDialog = false },
-            title = { Text("Lock Vault") },
-            text = { Text("Are you sure you want to lock your vault?") },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(28.dp),
+            title = { Text("Lock Vault", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Are you sure you want to lock your vault?",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.lockVault()
                     showLockDialog = false
                     onNavigateToLogin()
-                }) {
-                    Text("Lock")
-                }
+                }) { Text("Lock") }
             },
             dismissButton = {
-                TextButton(onClick = { showLockDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showLockDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -328,21 +401,21 @@ fun SettingsScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Sign Out") },
-            text = { Text("Are you sure you want to sign out of your account on this device?") },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(28.dp),
+            title = { Text("Sign Out", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Are you sure you want to sign out of your account on this device?",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.logout()
                     showLogoutDialog = false
                     onNavigateToLogin()
-                }) {
-                    Text("Sign Out")
-                }
+                }) { Text("Sign Out") }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -350,21 +423,21 @@ fun SettingsScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Vault") },
-            text = { Text("This will permanently delete all your data. This action cannot be undone.") },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(28.dp),
+            title = { Text("Delete Vault", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("This will permanently delete all your data. This action cannot be undone.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteVault()
                     showDeleteDialog = false
                     onNavigateToLogin()
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -373,9 +446,11 @@ fun SettingsScreen(
         uiState.accountProfile?.let { account ->
             AlertDialog(
                 onDismissRequest = { showAccountDialog = false },
-                title = { Text("Signed-in Account") },
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = RoundedCornerShape(28.dp),
+                title = { Text("Signed-in Account", style = MaterialTheme.typography.headlineSmall) },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         AccountDetailRow(label = "Name", value = account.displayName)
                         AccountDetailRow(label = "Email", value = account.email)
                         AccountDetailRow(label = "Provider", value = account.providerLabel)
@@ -389,114 +464,114 @@ fun SettingsScreen(
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = { showAccountDialog = false }) {
-                        Text("Close")
-                    }
+                    TextButton(onClick = { showAccountDialog = false }) { Text("Close") }
                 }
             )
         }
     }
 }
 
+// ─── Section Card ─────────────────────────────────────────────────────────────
+
 @Composable
-private fun SignedInAccountCard(
-    profile: AccountProfileUiState,
-    palette: VaultHomePalette,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+private fun SettingsSectionCard(
+    title: String,
+    content: @Composable () -> Unit
 ) {
-    Card(
+    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            letterSpacing = androidx.compose.ui.unit.TextUnit(
+                0.1f, androidx.compose.ui.unit.TextUnitType.Em
+            ),
+            modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
+        )
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            ),
+            elevation = CardDefaults.cardElevation(0.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            content()
+        }
+    }
+}
+
+// ─── Row Item ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SettingsRowItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    trailing: @Composable (() -> Unit)? = null,
+    dangerous: Boolean = false,
+    isLast: Boolean = false
+) {
+    val contentColor = if (dangerous) MaterialTheme.colorScheme.error
+                       else MaterialTheme.colorScheme.onSurface
+    val subtitleColor = if (dangerous) MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+    val iconTint = if (dangerous) MaterialTheme.colorScheme.error
+                   else MaterialTheme.colorScheme.primary
+
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = palette.cardSurface
-        )
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(40.dp)
+                .background(
+                    color = if (dangerous) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                            else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
         ) {
-            ProfileAvatar(profile = profile)
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 14.dp)
-            ) {
-                Text(
-                    text = profile.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = palette.title,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = profile.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.muted
-                )
-                Row(
-                    modifier = Modifier.padding(top = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (profile.emailVerified) Icons.Default.Verified else Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = if (profile.emailVerified) palette.brand else palette.muted
-                    )
-                    Text(
-                        text = profile.providerLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = palette.muted,
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                }
-            }
-
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                imageVector = icon,
                 contentDescription = null,
-                tint = palette.muted
+                modifier = Modifier.size(20.dp),
+                tint = iconTint
             )
         }
-    }
-}
 
-@Composable
-private fun ProfileAvatar(profile: AccountProfileUiState) {
-    val fallbackLetter = profile.displayName.firstOrNull()?.uppercase() ?: "U"
-
-    if (!profile.photoUrl.isNullOrBlank()) {
-        AsyncImage(
-            model = profile.photoUrl,
-            contentDescription = "${profile.displayName} profile photo",
+        Column(
             modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
-    } else {
-        Row(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+                .weight(1f)
+                .padding(horizontal = 16.dp)
         ) {
-            Text(
-                text = fallbackLetter,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
+            Text(text = title, style = MaterialTheme.typography.titleMedium, color = contentColor)
+            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = subtitleColor)
+        }
+
+        if (trailing != null) {
+            trailing()
+        } else if (onClick != null && !dangerous) {
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(18.dp)
             )
         }
     }
 }
+
+// ─── Account Detail Row ───────────────────────────────────────────────────────
 
 @Composable
 private fun AccountDetailRow(label: String, value: String) {
@@ -508,30 +583,21 @@ private fun AccountDetailRow(label: String, value: String) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
+// ─── Legacy helpers kept for any external callsites ──────────────────────────
+
 @Composable
 fun SettingsSection(
     title: String,
-    palette: VaultHomePalette,
+    palette: com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette,
     content: @Composable () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = palette.brand,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
-        )
-        content()
-        HorizontalDivider(color = palette.cardBorder, modifier = Modifier.padding(horizontal = 24.dp))
-    }
+    SettingsSectionCard(title = title, content = content)
 }
 
 @Composable
@@ -539,38 +605,17 @@ fun SettingsItem(
     icon: ImageVector,
     title: String,
     subtitle: String,
-    palette: VaultHomePalette,
+    palette: com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette,
     onClick: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     dangerous: Boolean = false
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (dangerous) MaterialTheme.colorScheme.error else palette.muted
-        )
-        Spacer(modifier = Modifier.size(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = if (dangerous) MaterialTheme.colorScheme.error else palette.title,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = subtitle,
-                color = if (dangerous) MaterialTheme.colorScheme.error.copy(alpha = 0.7f) else palette.muted,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-        if (trailing != null) {
-            trailing()
-        }
-    }
+    SettingsRowItem(
+        icon = icon,
+        title = title,
+        subtitle = subtitle,
+        onClick = onClick,
+        trailing = trailing,
+        dangerous = dangerous
+    )
 }
