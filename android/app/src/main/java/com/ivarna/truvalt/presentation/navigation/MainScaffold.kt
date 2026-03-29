@@ -54,7 +54,7 @@ fun MainScaffold(rootNavController: NavHostController) {
     Scaffold(
         bottomBar = {
             Surface(
-                color = Color(0xCCFCF8FE), // Matches #fcf8fe/80
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 4.dp
             ) {
@@ -70,8 +70,8 @@ fun MainScaffold(rootNavController: NavHostController) {
                 ) {
                     bottomNavItems.forEach { item ->
                         val isSelected = currentDestination?.hierarchy?.any { it.route == item.graph } == true
-                        val color = if (isSelected) Color(0xFF5850BD) else Color(0xFF7C7984) // Primary vs Outline
-                        val bgColor = if (isSelected) Color(0xFF5850BD).copy(alpha = 0.1f) else Color.Transparent
+                        val color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                        val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
 
                         Column(
                             modifier = Modifier
