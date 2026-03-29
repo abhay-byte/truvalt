@@ -6,7 +6,7 @@
 
 | Completed Date | Task Count |
 |---|---|
-| 2026-03-29 | 1 |
+| 2026-03-29 | 2 |
 | 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
@@ -21,6 +21,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| UI-002 | Redesign Onboarding Screens | 2026-03-29 | Implemented a 3-slide HorizontalPager flow with high-fidelity Compose illustrations, smooth page indicators, and Material 3 styling based on Tailwind designs |
 | UI-001 | Redesign Splash Screen | 2026-03-29 | Translated Tailwind HTML into Compose UI; Added new brand colors, radial gradient background, and custom spinning animation loader |
 | FEAT-003 | Integrate Android cloud mode with the Firebase-backed Laravel API foundation | 2026-03-23 | Added Android Retrofit DTO/service/factory layers, persisted backend Firebase session tokens in DataStore, wired register/login to the Laravel backend in cloud mode, wired sync for folders/tags/vault items, and verified the app still builds successfully with `assembleDebug` |
 | CHORE-005 | Add Render build/run scripts and refresh Android auth-entry workflow docs | 2026-03-23 | Added `web/render-build.sh` and `web/render-run.sh`, documented the exact Render Firebase/file-runtime variables and Docker flow, updated the server setup UX to explicitly branch to sign-up vs login, and copied the latest debug APK to `/sdcard/Download/Truvalt-20260323-1253.apk` |

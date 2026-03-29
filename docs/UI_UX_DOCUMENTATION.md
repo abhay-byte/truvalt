@@ -247,7 +247,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `settings` |
 | **Purpose** | Access all settings |
-| **UI Elements** | Settings list (profile, security, sessions, appearance, import/export, about) |
+| **UI Elements** | Signed-in account card with profile photo/initial, name, email, provider badge, tappable account info dialog, settings list (security, appearance, sync, import/export, danger zone, lock vault) |
 | **Navigation** | Item → respective settings screen |
 
 ---

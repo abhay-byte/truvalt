@@ -19,6 +19,7 @@ import com.ivarna.truvalt.presentation.ui.vault.VaultItemTypeSelectionScreen
 
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
+    data object Onboarding : Screen("onboarding")
     data object ServerSetup : Screen("server_setup")
     data object MasterPasswordSetup : Screen("master_password_setup")
     data object MasterPasswordUnlock : Screen("master_password_unlock")
@@ -72,7 +73,7 @@ fun TruvaltNavHost(
             com.ivarna.truvalt.presentation.ui.auth.SplashScreen(
                 onNavigationDecided = { destination ->
                     val route = when (destination) {
-                        SplashDestination.ONBOARDING -> Screen.ServerSetup.route
+                        SplashDestination.ONBOARDING -> Screen.Onboarding.route
                         SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
                         SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
                         SplashDestination.UNLOCK_MASTER_PASSWORD -> Screen.MasterPasswordUnlock.route
@@ -87,6 +88,21 @@ fun TruvaltNavHost(
                 isBiometricEnabled = isBiometricAvailable,
                 isPinEnabled = isPinEnabled,
                 hasMasterPassword = hasMasterPassword
+            )
+        }
+
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onComplete = {
+                    navController.navigate(Screen.ServerSetup.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Screen.ServerSetup.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
             )
         }
 
