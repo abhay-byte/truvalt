@@ -263,48 +263,41 @@ suspend fun launchGoogleSignIn(
 ) {
     val credentialManager = CredentialManager.create(context)
 
-    // Generate a nonce to prevent replay attacks
     val rawNonce = UUID.randomUUID().toString()
     val nonce = MessageDigest.getInstance("SHA-256")
         .digest(rawNonce.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
-    // First try: filter by accounts already authorised with this app
-    val googleIdOption = GetGoogleIdOption.Builder()
-        .setFilterByAuthorizedAccounts(true)
-        .setServerClientId(WEB_CLIENT_ID)
-        .setAutoSelectEnabled(true)
-        .setNonce(nonce)
-        .build()
-
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(googleIdOption)
-        .build()
-
-    try {
-        val result = credentialManager.getCredential(context, request)
-        val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-        onToken(credential.idToken)
-    } catch (e: GetCredentialException) {
-        // Fallback: show all Google accounts (not just pre-authorised ones)
-        val fallbackOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
+    suspend fun tryGetCredential(filterByAuthorized: Boolean): Boolean {
+        val option = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(filterByAuthorized)
             .setServerClientId(WEB_CLIENT_ID)
+            .setAutoSelectEnabled(!filterByAuthorized)
             .setNonce(nonce)
             .build()
-        val fallbackRequest = GetCredentialRequest.Builder()
-            .addCredentialOption(fallbackOption)
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(option)
             .build()
-        try {
-            val result = credentialManager.getCredential(context, fallbackRequest)
+        return try {
+            val result = credentialManager.getCredential(context, request)
             val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
             onToken(credential.idToken)
-        } catch (e2: GetCredentialException) {
-            onError(e2.message ?: "Google sign-in cancelled")
-        } catch (e2: Exception) {
-            onError(e2.message ?: "Google sign-in failed")
+            true
+        } catch (e: androidx.credentials.exceptions.NoCredentialException) {
+            false // No pre-authorised account — try fallback
+        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+            true // User cancelled — don't show error, just stop
+        } catch (e: GetCredentialException) {
+            false
         }
-    } catch (e: Exception) {
-        onError(e.message ?: "Google sign-in failed")
+    }
+
+    // Try pre-authorised accounts first, then all accounts
+    val handled = tryGetCredential(filterByAuthorized = true)
+    if (!handled) {
+        val fallbackHandled = tryGetCredential(filterByAuthorized = false)
+        if (!fallbackHandled) {
+            onError("No Google account found on this device. Please add a Google account in Settings → Accounts.")
+        }
     }
 }

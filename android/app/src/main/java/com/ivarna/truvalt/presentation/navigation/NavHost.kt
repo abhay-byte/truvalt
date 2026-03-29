@@ -146,8 +146,8 @@ fun TruvaltNavHost(
                     }
                 },
                 onNavigateToVault = {
-                    navController.navigate(Screen.MasterPasswordSetup.route) {
-                        popUpTo(Screen.ServerSetup.route) { inclusive = true }
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )
@@ -189,11 +189,13 @@ fun TruvaltNavHost(
         composable(Screen.Register.route) {
             RegisterScreen(
                 onNavigateToLogin = {
-                    navController.popBackStack()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 },
                 onNavigateToVault = {
                     navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

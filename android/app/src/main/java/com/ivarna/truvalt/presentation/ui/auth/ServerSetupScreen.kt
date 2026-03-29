@@ -95,7 +95,7 @@ fun ServerSetupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Connect to your self-hosted server or use local-only mode",
+                text = "Connect to a self-hosted server, or use Firebase cloud sync (no server URL needed) or local-only mode",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -216,13 +216,13 @@ fun ServerSetupScreen(
 
             if (!useLocalOnly) {
                 TextButton(onClick = onNavigateToRegister) {
-                    Text("Need a new account? Sign Up")
+                    Text("Use Firebase Cloud → Create Account")
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 TextButton(onClick = onNavigateToLogin) {
-                    Text("Already have an account? Login")
+                    Text("Use Firebase Cloud → Sign In")
                 }
             }
         }
