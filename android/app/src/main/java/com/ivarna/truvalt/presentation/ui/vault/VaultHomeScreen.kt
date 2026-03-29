@@ -51,7 +51,7 @@ fun VaultHomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFCF8FE)) // surface
+                    .background(MaterialTheme.colorScheme.background) // surface
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 // Header Row
@@ -61,24 +61,23 @@ fun VaultHomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                        }
-                        Spacer(Modifier.width(12.dp))
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.ivarna.truvalt.R.drawable.truvalt_icon),
+                            contentDescription = "Truvalt Logo",
+                            modifier = Modifier.size(28.dp),
+                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+                        )
+                        Spacer(Modifier.width(10.dp))
                         Text(
-                            text = "Truvalt",
+                            text = "TRUVALT",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF5850BD), // AuthPrimary
-                            letterSpacing = (-0.5).sp
+                            color = MaterialTheme.colorScheme.onBackground,
+                            letterSpacing = 1.sp
                         )
                     }
                     IconButton(onClick = { /* Sync action */ }) {
-                        Icon(Icons.Default.Sync, contentDescription = "Sync", tint = Color(0xFF5B596E))
+                        Icon(Icons.Default.Sync, contentDescription = "Sync", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 }
                 
@@ -89,13 +88,13 @@ fun VaultHomeScreen(
                     text = "My Vault",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF33313A), // AuthOnSurface
+                    color = MaterialTheme.colorScheme.onBackground, // AuthOnSurface
                     letterSpacing = (-1).sp
                 )
                 Text(
                     text = "${uiState.items.size} secure entries found in your sanctuary.",
                     fontSize = 14.sp,
-                    color = Color(0xFF605E68) // AuthOnSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant // AuthOnSurfaceVariant
                 )
                 
                 Spacer(Modifier.height(24.dp))
@@ -112,12 +111,12 @@ fun VaultHomeScreen(
                     placeholder = { Text("Search vault...", color = Color(0xFF7C7984)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF7C7984)) },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFFE5E1ED), // surface-container-highest
-                        unfocusedContainerColor = Color(0xFFE5E1ED),
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, // surface-container-highest
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color(0xFF33313A),
-                        unfocusedTextColor = Color(0xFF33313A)
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     ),
                     singleLine = true
                 )
@@ -138,7 +137,7 @@ fun VaultHomeScreen(
                         
                         Surface(
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                            color = if (isSelected) Color(0xFF5850BD) else Color(0xFFF6F2FA), // primary vs surface-container-low
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, // primary vs surface-container-low
                             modifier = Modifier.clickable {
                                 if (filterId == null) {
                                     selectedTypeFilter = null
@@ -154,7 +153,7 @@ fun VaultHomeScreen(
                                 text = label,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isSelected) Color.White else Color(0xFF605E68), // on-primary vs on-surface-variant
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, // on-primary vs on-surface-variant
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                             )
                         }
@@ -165,11 +164,11 @@ fun VaultHomeScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { showAddItemSheet = true },
-                icon = { Icon(Icons.Rounded.Add, contentDescription = "Add item", tint = Color.White) },
-                text = { Text("Add item", fontWeight = FontWeight.Bold, color = Color.White) },
+                icon = { Icon(Icons.Rounded.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onPrimary) },
+                text = { Text("Add item", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary) },
                 expanded = !listState.isScrollInProgress,
-                containerColor = Color(0xFF5850BD), // Primary
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary, // Primary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp),
                 elevation = FloatingActionButtonDefaults.elevation(8.dp)
             )

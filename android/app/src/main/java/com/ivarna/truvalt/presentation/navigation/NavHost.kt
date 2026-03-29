@@ -45,6 +45,7 @@ sealed class Screen(val route: String) {
     data object Import : Screen("import")
     data object Export : Screen("export")
     data object Settings : Screen("settings")
+    data object AppearanceSettings : Screen("appearance_settings")
     data object SecuritySettings : Screen("security_settings")
     data object Trash : Screen("trash")
 }

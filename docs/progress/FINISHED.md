@@ -5,7 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
-| 2026-03-29 | 4 |
+| 2026-03-29 | 5 |
 | 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
 | 2026-03-20 | 3 |
@@ -20,6 +20,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| UI-005 | Correct App Bar logo and Vault theme | 2026-03-29 | Removed hardcoded background colors in VaultHomeScreen and VaultItemCard; added truvalt_icon to Top Bar; switched text color styling to respect dark/light Material 3 theme scheme |
 | UI-004 | Redesign Vault Home Screen | 2026-03-29 | Replaced generic Material TopAppBar and NavigationBar with a custom glass-like header and floating bottom navigation, revamped filter chips, and introduced category-based colored `VaultItemCard` layouts to match the new high-fidelity html design. |
 | UI-003 | Redesign Auth Gateway & Security Suite | 2026-03-29 | Overhauled the Server Setup, Login, and Registration screens with a premium design system, including a password strength meter, security status cards, and a unified gateway hub. |
 | UI-002 | Redesign Onboarding Screens | 2026-03-29 | Implemented a 3-slide HorizontalPager flow with high-fidelity Compose illustrations, smooth page indicators, and Material 3 styling based on Tailwind designs |

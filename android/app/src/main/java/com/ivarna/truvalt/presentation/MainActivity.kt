@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.ivarna.truvalt.core.lock.AppLockManager
@@ -31,7 +33,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TruvaltTheme {
+            val themeMode by preferences.themeMode.collectAsState(initial = "system")
+            val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+            
+            val darkTheme = when (themeMode) {
+                "dark", "amoled" -> true
+                "light" -> false
+                else -> isSystemDark
+            }
+            val amoled = themeMode == "amoled"
+
+            TruvaltTheme(
+                darkTheme = darkTheme,
+                amoled = amoled,
+                dynamicColor = false // Force Truvalt custom branding
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

@@ -67,7 +67,7 @@ fun VaultItemCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White // surface-container-lowest
+        color = MaterialTheme.colorScheme.surfaceVariant // surface-container-lowest
     ) {
         Row(
             modifier = Modifier
@@ -95,13 +95,13 @@ fun VaultItemCard(
                     text = item.name, 
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF33313A)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (item.subtitle.isNotEmpty()) {
                     Text(
                         text = item.subtitle,
                         fontSize = 14.sp,
-                        color = Color(0xFF605E68)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -111,13 +111,13 @@ fun VaultItemCard(
                         Icon(
                             Icons.Default.Star,
                             contentDescription = "Favorite",
-                            tint = Color(0xFF605E68), // matching text-on-surface-variant text style
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, // matching text-on-surface-variant text style
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
                 IconButton(onClick = onCopy) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color(0xFF605E68), modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
                 }
             }
         }
