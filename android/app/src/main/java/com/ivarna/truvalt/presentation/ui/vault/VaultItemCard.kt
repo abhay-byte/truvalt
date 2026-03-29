@@ -1,5 +1,8 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,19 +13,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.StickyNote2
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,20 +36,25 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
 
-private data class TypeStyle(val icon: ImageVector, val bgColor: Color, val fgColor: Color)
+private data class ItemTypeStyle(
+    val icon: ImageVector,
+    val iconColor: Color
+)
 
-private fun getStyleForType(type: String): TypeStyle = when (type) {
-    "login" -> TypeStyle(Icons.Default.Key, Color(0xFFE8F0FE), Color(0xFF1A73E8))
-    "passkey" -> TypeStyle(Icons.Default.Fingerprint, Color(0xFFF1F5F9), Color(0xFF334155))
-    "passphrase" -> TypeStyle(Icons.Default.ChatBubble, Color(0xFFF1F5F9), Color(0xFF334155))
-    "secure_note" -> TypeStyle(Icons.Default.StickyNote2, Color(0xFFFFD2FC), Color(0xFF765377))
-    "totp" -> TypeStyle(Icons.Default.Pin, Color(0xFFE8F0FE), Color(0xFF1A73E8))
-    "security_code" -> TypeStyle(Icons.Default.Shield, Color(0xFFF3E8FF), Color(0xFF7E22CE)) // purple
-    "credit_card" -> TypeStyle(Icons.Default.CreditCard, Color(0xFFFFF7ED), Color(0xFFEA580C))
-    "identity" -> TypeStyle(Icons.Default.Person, Color(0xFFDCFCE7), Color(0xFF166534))
-    else -> TypeStyle(Icons.Default.Key, Color(0xFFE8F0FE), Color(0xFF1A73E8))
+@Composable
+private fun itemTypeStyle(type: String): ItemTypeStyle {
+    val palette = rememberVaultPalette()
+    return when (type) {
+        "login" -> ItemTypeStyle(Icons.Default.AccountCircle, palette.brand)
+        "passkey" -> ItemTypeStyle(Icons.Default.Key, palette.brandStrong)
+        "passphrase" -> ItemTypeStyle(Icons.Default.VpnKey, palette.brandStrong)
+        "secure_note" -> ItemTypeStyle(Icons.Default.Description, palette.healthAccent)
+        "security_code" -> ItemTypeStyle(Icons.Default.Shield, palette.brandStrong)
+        "credit_card" -> ItemTypeStyle(Icons.Default.CreditCard, palette.body)
+        "identity" -> ItemTypeStyle(Icons.Default.Person, palette.brand)
+        else -> ItemTypeStyle(Icons.Default.Cloud, palette.brand)
+    }
 }
 
 @Composable
@@ -57,68 +62,89 @@ fun VaultItemCard(
     item: VaultItemUi,
     onClick: () -> Unit,
     onCopy: () -> Unit,
-    onMoreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val typeStyle = getStyleForType(item.type)
+    val palette = rememberVaultPalette()
+    val typeStyle = itemTypeStyle(item.type)
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant // surface-container-lowest
+        shape = RoundedCornerShape(24.dp),
+        color = palette.cardSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp), // p-5
+                .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp), // w-12 h-12
-                shape = RoundedCornerShape(12.dp),
-                color = typeStyle.bgColor
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(palette.iconTileSurface, RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = typeStyle.icon,
-                        contentDescription = null,
-                        tint = typeStyle.fgColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.name, 
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                Icon(
+                    imageVector = typeStyle.icon,
+                    contentDescription = null,
+                    tint = typeStyle.iconColor,
+                    modifier = Modifier.size(30.dp)
                 )
-                if (item.subtitle.isNotEmpty()) {
-                    Text(
-                        text = item.subtitle,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (item.isFavorite) {
-                    IconButton(onClick = { /* Handle favorite click */ }) {
-                        Icon(
-                            Icons.Default.Star,
-                            contentDescription = "Favorite",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant, // matching text-on-surface-variant text style
-                            modifier = Modifier.size(24.dp)
-                        )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = item.name,
+                        color = palette.title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (item.isFavorite) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    palette.chipSelectedSurface.copy(alpha = 0.6f),
+                                    RoundedCornerShape(999.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Fav",
+                                color = palette.chipSelectedText,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
+                Text(
+                    text = item.subtitle.ifBlank { item.typeLabel },
+                    color = palette.muted,
+                    fontSize = 14.sp,
+                    lineHeight = 18.sp
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onCopy) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy",
+                        tint = palette.body
+                    )
                 }
+                    Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = palette.muted
+                )
             }
         }
     }

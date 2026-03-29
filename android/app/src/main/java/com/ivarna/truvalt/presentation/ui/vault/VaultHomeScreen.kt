@@ -1,29 +1,65 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ivarna.truvalt.domain.model.VaultItemType
+import com.ivarna.truvalt.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+private data class VaultFilterOption(
+    val id: String?,
+    val label: String
+)
+
 @Composable
 fun VaultHomeScreen(
     onNavigateToItemDetail: (String) -> Unit,
@@ -37,263 +73,493 @@ fun VaultHomeScreen(
     viewModel: VaultViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showMenu by remember { mutableStateOf(false) }
-    var showAddItemSheet by remember { mutableStateOf(false) }
-    var isSearchActive by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedTypeFilter by remember { mutableStateOf<VaultItemType?>(null) }
-    val listState = rememberLazyListState()
-
+    val palette = rememberVaultPalette()
+    val filterOptions = listOf(
+        VaultFilterOption(id = null, label = "All"),
+        VaultFilterOption(id = "favorites", label = "Favorites"),
+        VaultFilterOption(id = "login", label = "Logins"),
+        VaultFilterOption(id = "secure_note", label = "Notes"),
+        VaultFilterOption(id = "credit_card", label = "Cards")
+    )
 
     Scaffold(
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background) // surface
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                // Header Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = com.ivarna.truvalt.R.drawable.truvalt_icon),
-                            contentDescription = "Truvalt Logo",
-                            modifier = Modifier.size(28.dp),
-                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = "TRUVALT",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                    IconButton(onClick = { /* Sync action */ }) {
-                        Icon(Icons.Default.Sync, contentDescription = "Sync", tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                }
-                
-                Spacer(Modifier.height(24.dp))
-                
-                // Editorial Header
-                Text(
-                    text = "My Vault",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground, // AuthOnSurface
-                    letterSpacing = (-1).sp
-                )
-                Text(
-                    text = "${uiState.items.size} secure entries found in your sanctuary.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant // AuthOnSurfaceVariant
-                )
-                
-                Spacer(Modifier.height(24.dp))
-                
-                // Search Input
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { 
-                        searchQuery = it
-                        viewModel.setSearchQuery(it)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                    placeholder = { Text("Search vault...", color = Color(0xFF7C7984)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF7C7984)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant, // surface-container-highest
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    singleLine = true
-                )
-                
-                Spacer(Modifier.height(16.dp))
-                
-                // Filter Chips List
-                // We'll map the UI types to mimic the html
-                val uiFilterTypes = listOf("All" to null, "Logins" to "login", "Passkeys" to "passkey", "Notes" to "secure_note", "Cards" to "credit_card")
-                
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(uiFilterTypes.size) { index ->
-                        val (label, filterId) = uiFilterTypes[index]
-                        val isSelected = (selectedTypeFilter?.id == filterId) || (filterId == null && selectedTypeFilter == null)
-                        
-                        Surface(
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, // primary vs surface-container-low
-                            modifier = Modifier.clickable {
-                                if (filterId == null) {
-                                    selectedTypeFilter = null
-                                    viewModel.setFilter(null)
-                                } else {
-                                    val type = VaultItemType.getAllTypes().find { it.id == filterId }
-                                    selectedTypeFilter = type
-                                    viewModel.setFilter(filterId)
-                                }
-                            }
-                        ) {
-                            Text(
-                                text = label,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, // on-primary vs on-surface-variant
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { showAddItemSheet = true },
-                icon = { Icon(Icons.Rounded.Add, contentDescription = "Add item", tint = MaterialTheme.colorScheme.onPrimary) },
-                text = { Text("Add item", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary) },
-                expanded = !listState.isScrollInProgress,
-                containerColor = MaterialTheme.colorScheme.primary, // Primary
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(8.dp)
+            GradientAddButton(
+                palette = palette,
+                onClick = { onNavigateToTypeSelection() }
             )
         }
     ) { padding ->
-        if (uiState.items.isEmpty()) {
-            EmptyVaultState(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(palette.background, palette.backgroundAccent)
+                    )
+                )
+                .padding(padding)
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                hasFilter = selectedTypeFilter != null || searchQuery.isNotEmpty(),
-                onAddItem = { showAddItemSheet = true },
-                onClearFilters = {
-                    selectedTypeFilter = null
-                    searchQuery = ""
-                    viewModel.setFilter(null)
-                    viewModel.setSearchQuery("")
-                }
+                    .size(320.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 36.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(palette.heroGlow, Color.Transparent)
+                        ),
+                        shape = CircleShape
+                    )
             )
-        } else {
+
             LazyColumn(
-                state = listState,
-                contentPadding = padding,
                 modifier = Modifier
                     .fillMaxSize()
-                    .consumeWindowInsets(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .windowInsetsPadding(WindowInsets.statusBars),
+                contentPadding = PaddingValues(
+                    start = 24.dp,
+                    end = 24.dp,
+                    top = 16.dp,
+                    bottom = 32.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 item {
-                    Text(
-                        text = "${uiState.items.size} items",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                    VaultHeader(palette = palette)
+                }
+
+                item {
+                    VaultSearchField(
+                        value = uiState.searchQuery,
+                        onValueChange = viewModel::setSearchQuery,
+                        palette = palette
                     )
                 }
-                
-                items(uiState.items, key = { it.id }) { item ->
-                    VaultItemCard(
-                        item = item,
-                        onClick = { onNavigateToItemDetail(item.id) },
-                        onCopy = {
-                            // TODO: Copy to clipboard
-                        },
-                        onMoreClick = {
-                            // TODO: Show more menu
-                        }
+
+                item {
+                    FilterChipRow(
+                        palette = palette,
+                        selectedFilter = uiState.filter,
+                        options = filterOptions,
+                        onSelect = viewModel::setFilter
+                    )
+                }
+
+                item {
+                    SectionHeader(
+                        palette = palette,
+                        title = "Recent Access",
+                        count = uiState.items.size
+                    )
+                }
+
+                if (uiState.isLoading) {
+                    item {
+                        LoadingCard(palette = palette)
+                    }
+                } else if (uiState.items.isEmpty()) {
+                    item {
+                        EmptyVaultState(
+                            palette = palette,
+                            hasFilter = uiState.filter != null || uiState.searchQuery.isNotBlank(),
+                            onAddItem = onNavigateToTypeSelection,
+                            onClearFilters = {
+                                viewModel.setFilter(null)
+                                viewModel.setSearchQuery("")
+                            }
+                        )
+                    }
+                } else {
+                    items(uiState.items, key = { it.id }) { item ->
+                        VaultItemCard(
+                            item = item,
+                            onClick = { onNavigateToItemDetail(item.id) },
+                            onCopy = { }
+                        )
+                    }
+                }
+
+                item {
+                    HealthSummaryCard(
+                        palette = palette,
+                        summary = uiState.health,
+                        onClick = onNavigateToHealth
                     )
                 }
             }
         }
     }
-    
-    // Add Item Type Sheet
-    if (showAddItemSheet) {
-        AddItemTypeSheet(
-            onTypeSelected = { type ->
-                showAddItemSheet = false
-                onNavigateToItemCreate(type.id)
-            },
-            onDismiss = { showAddItemSheet = false }
+}
+
+@Composable
+private fun VaultHeader(palette: VaultHomePalette) {
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = palette.headerSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(palette.mutedSurface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(id = R.drawable.truvalt_icon),
+                        contentDescription = "Truvalt",
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "TRUVALT",
+                        color = palette.brand,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.6.sp
+                    )
+                    Text(
+                        text = "Your secure vault, beautifully organized",
+                        color = palette.muted,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(palette.mutedSurface)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Sync,
+                    contentDescription = "Sync",
+                    tint = palette.brand
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VaultSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    palette: VaultHomePalette
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        placeholder = {
+            Text(
+                text = "Search your vault...",
+                color = palette.muted
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = palette.muted
+            )
+        },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = palette.searchSurface,
+            unfocusedContainerColor = palette.searchSurface,
+            disabledContainerColor = palette.searchSurface,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            cursorColor = palette.brand,
+            focusedTextColor = palette.title,
+            unfocusedTextColor = palette.title
+        )
+    )
+}
+
+@Composable
+private fun FilterChipRow(
+    palette: VaultHomePalette,
+    selectedFilter: String?,
+    options: List<VaultFilterOption>,
+    onSelect: (String?) -> Unit
+) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(options) { option ->
+            val selected = option.id == selectedFilter || (option.id == null && selectedFilter == null)
+            Surface(
+                modifier = Modifier.clickable { onSelect(option.id) },
+                shape = RoundedCornerShape(999.dp),
+                color = if (selected) palette.chipSelectedSurface else palette.chipIdleSurface
+            ) {
+                Text(
+                    text = option.label,
+                    color = if (selected) palette.chipSelectedText else palette.chipIdleText,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    palette: VaultHomePalette,
+    title: String,
+    count: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        Text(
+            text = title,
+            color = palette.title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "$count ITEMS",
+            color = palette.muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 2.sp
         )
     }
 }
 
 @Composable
+private fun HealthSummaryCard(
+    palette: VaultHomePalette,
+    summary: VaultHealthSummary,
+    onClick: () -> Unit
+) {
+    val summaryText = when {
+        summary.analyzedCount == 0 -> "Add login items to unlock live password health insights."
+        summary.reusedCount > 0 && summary.weakCount > 0 ->
+            "${summary.weakCount} weak and ${summary.reusedCount} reused passwords found."
+        summary.reusedCount > 0 -> "${summary.reusedCount} reused password groups found."
+        summary.weakCount > 0 -> "${summary.weakCount} weak passwords need attention."
+        summary.oldCount > 0 -> "${summary.oldCount} passwords are older than 180 days."
+        else -> "No weak or reused passwords detected in your vault."
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(28.dp),
+        color = palette.cardSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Health Score",
+                        color = palette.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = summaryText,
+                        color = palette.body,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.size(20.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(
+                        progress = { summary.score / 100f },
+                        modifier = Modifier.size(82.dp),
+                        color = palette.healthAccent,
+                        trackColor = palette.healthRing,
+                        strokeWidth = 6.dp
+                    )
+                    Text(
+                        text = summary.score.toString(),
+                        color = palette.healthAccent,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+            HorizontalDivider(color = palette.cardBorder)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "${summary.secureCount} secure of ${summary.analyzedCount} logins analyzed",
+                    color = palette.muted,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(palette.healthTrack)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(summary.score / 100f)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(palette.healthAccent, palette.brandStrong)
+                                )
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradientAddButton(
+    palette: VaultHomePalette,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(palette.fabGradientStart, palette.fabGradientEnd)
+                )
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Add item",
+            tint = Color.White,
+            modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
+@Composable
+private fun LoadingCard(palette: VaultHomePalette) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = palette.cardSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                color = palette.brand,
+                strokeWidth = 2.5.dp
+            )
+            Spacer(modifier = Modifier.size(14.dp))
+            Text(
+                text = "Loading your vault...",
+                color = palette.muted
+            )
+        }
+    }
+}
+
+@Composable
 fun EmptyVaultState(
-    modifier: Modifier = Modifier,
-    hasFilter: Boolean = false,
+    palette: VaultHomePalette,
+    hasFilter: Boolean,
     onAddItem: () -> Unit,
     onClearFilters: () -> Unit
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = palette.cardSurface
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(32.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            if (hasFilter) {
+            Box(
+                modifier = Modifier
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(palette.mutedSurface),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
-                    imageVector = Icons.Default.SearchOff,
+                    imageVector = if (hasFilter) Icons.Default.SearchOff else Icons.Default.Lock,
                     contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    tint = palette.brand,
+                    modifier = Modifier.size(34.dp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "No results",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Try a different filter or search term",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Text(
+                text = if (hasFilter) "No matching entries" else "Your vault is waiting",
+                color = palette.title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (hasFilter) {
+                    "Try a different search or chip filter to surface the right item."
+                } else {
+                    "Start adding logins, notes, and cards to make this space your secure command center."
+                },
+                color = palette.body,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            if (hasFilter) {
                 TextButton(onClick = onClearFilters) {
-                    Text("Clear filters")
+                    Text("Clear filters", color = palette.brand)
                 }
             } else {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Your vault is empty",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Tap + to add your first item",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onAddItem) {
-                    Icon(Icons.Rounded.Add, null)
-                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.size(8.dp))
                     Text("Add your first item")
                 }
             }
@@ -301,23 +567,11 @@ fun EmptyVaultState(
     }
 }
 
-fun getTypeLabel(type: VaultItemType): String {
-    return when (type) {
-        is VaultItemType.Login -> "Logins"
-        is VaultItemType.Passkey -> "Passkeys"
-        is VaultItemType.Passphrase -> "Passphrases"
-        is VaultItemType.SecureNote -> "Notes"
-        is VaultItemType.SecurityCode -> "Security Codes"
-        is VaultItemType.CreditCard -> "Cards"
-        is VaultItemType.Identity -> "Identities"
-        is VaultItemType.Custom -> "Custom"
-    }
-}
-
 data class VaultItemUi(
     val id: String,
     val name: String,
     val type: String,
+    val typeLabel: String,
     val subtitle: String = "",
     val isFavorite: Boolean = false
 )

@@ -55,16 +55,7 @@ fun TruvaltNavHost(
     navController: NavHostController = rememberNavController(),
     viewModel: SplashViewModel = hiltViewModel()
 ) {
-    val isLocked by viewModel.isLocked.collectAsState()
-    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
-    val isPinEnabled by viewModel.isPinEnabled.collectAsState()
-    val isFirstLaunch by viewModel.isFirstLaunch.collectAsState()
-    val hasMasterPassword by viewModel.hasMasterPassword.collectAsState()
-    
-    // Check biometric availability dynamically
-    val isBiometricAvailable = remember(isLocked) {
-        viewModel.isBiometricAvailable()
-    }
+    val startupDestination by viewModel.startupDestination.collectAsState()
     
     NavHost(
         navController = navController,
@@ -75,6 +66,8 @@ fun TruvaltNavHost(
                 onNavigationDecided = { destination ->
                     val route = when (destination) {
                         SplashDestination.ONBOARDING -> Screen.Onboarding.route
+                        SplashDestination.SERVER_SETUP -> Screen.ServerSetup.route
+                        SplashDestination.LOGIN -> Screen.Login.route
                         SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
                         SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
                         SplashDestination.UNLOCK_MASTER_PASSWORD -> Screen.MasterPasswordUnlock.route
@@ -84,11 +77,7 @@ fun TruvaltNavHost(
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
-                isFirstLaunch = isFirstLaunch,
-                isLocked = isLocked,
-                isBiometricEnabled = isBiometricAvailable,
-                isPinEnabled = isPinEnabled,
-                hasMasterPassword = hasMasterPassword
+                destination = startupDestination
             )
         }
 

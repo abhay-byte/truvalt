@@ -45,9 +45,9 @@ Status legend: 🔴 Not Started | 🟡 In Progress | 🟢 Complete | ⚫ Cancell
 
 | ID | Feature | Description | Priority | Status | Version |
 |---|---|---|---|---|---|
-| F-024 | Password Generator | Length, charset, exclude ambiguous, exclude chars | Critical | 🔴 | v1.0 |
-| F-025 | Passphrase Generator | EFF wordlist, word count, separator, capitalize, append digit | High | 🔴 | v1.0 |
-| F-026 | Password Strength Meter | zxcvbn-based score, shown on generation and item edit | High | 🔴 | v1.0 |
+| F-024 | Password Generator | Length, charset, exclude ambiguous, exclude chars | Critical | 🟢 | v1.0 |
+| F-025 | Passphrase Generator | EFF wordlist, word count, separator, capitalize, append digit | High | 🟢 | v1.0 |
+| F-026 | Password Strength Meter | zxcvbn-based score, shown on generation and item edit | High | 🟢 | v1.0 |
 | F-027 | Generator History | Last 20 generated passwords/phrases (session-only, not synced) | Low | 🔴 | v1.1 |
 
 ---

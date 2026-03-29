@@ -30,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.ivarna.truvalt.presentation.ui.vault.rememberVaultPalette
 
 data class BottomNavItem(
     val route: String,
@@ -43,26 +44,27 @@ fun MainScaffold(rootNavController: NavHostController) {
     val tabNavController = rememberNavController()
     val navBackStackEntry by tabNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val palette = rememberVaultPalette()
 
     val bottomNavItems = listOf(
         BottomNavItem("vault_graph", "vault_graph", "Vault", Icons.Default.Lock),
-        BottomNavItem("generator_graph", "generator_graph", "Sharing", Icons.Default.Group),
-        BottomNavItem("health_graph", "health_graph", "Security", Icons.Default.VerifiedUser),
+        BottomNavItem("generator_graph", "generator_graph", "Generator", Icons.Default.VpnKey),
+        BottomNavItem("health_graph", "health_graph", "Health", Icons.Default.Speed),
         BottomNavItem("settings_graph", "settings_graph", "Settings", Icons.Default.Settings)
     )
 
     Scaffold(
         bottomBar = {
             Surface(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                color = palette.navSurface,
                 modifier = Modifier.fillMaxWidth(),
-                shadowElevation = 4.dp
+                shadowElevation = 12.dp,
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        // Note: padding from bottom for safe drawing should be handled by windowInsets padding values
                         .windowInsetsPadding(WindowInsets.navigationBars)
                         .padding(top = 12.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.SpaceAround,
@@ -70,8 +72,8 @@ fun MainScaffold(rootNavController: NavHostController) {
                 ) {
                     bottomNavItems.forEach { item ->
                         val isSelected = currentDestination?.hierarchy?.any { it.route == item.graph } == true
-                        val color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                        val bgColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                        val color = if (isSelected) palette.brand else palette.muted
+                        val bgColor = if (isSelected) palette.navSelectedSurface else Color.Transparent
 
                         Column(
                             modifier = Modifier
@@ -88,8 +90,8 @@ fun MainScaffold(rootNavController: NavHostController) {
                                         }
                                     }
                                 )
-                                .background(bgColor, RoundedCornerShape(16.dp))
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                                .background(bgColor, RoundedCornerShape(18.dp))
+                                .padding(horizontal = 18.dp, vertical = 8.dp),
                             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                         ) {
                             Icon(item.icon, contentDescription = item.label, tint = color, modifier = Modifier.size(24.dp))

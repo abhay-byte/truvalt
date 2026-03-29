@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
@@ -21,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,8 @@ import kotlinx.coroutines.delay
 
 enum class SplashDestination {
     ONBOARDING,
+    SERVER_SETUP,
+    LOGIN,
     UNLOCK_BIOMETRIC,
     UNLOCK_PIN,
     UNLOCK_MASTER_PASSWORD,
@@ -39,71 +43,16 @@ enum class SplashDestination {
 @Composable
 fun SplashScreen(
     onNavigationDecided: (SplashDestination) -> Unit,
-    isFirstLaunch: Boolean,
-    isLocked: Boolean,
-    isBiometricEnabled: Boolean,
-    isPinEnabled: Boolean,
-    hasMasterPassword: Boolean
+    destination: SplashDestination?
 ) {
     var visible by remember { mutableStateOf(false) }
-    var debugInfo by remember { mutableStateOf("") }
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(destination) {
         visible = true
-        delay(1500)
-        
-        // Debug info
-        val info = """
-            isLocked: $isLocked
-            isBiometric: $isBiometricEnabled
-            isPinEnabled: $isPinEnabled
-            isFirstLaunch: $isFirstLaunch
-            hasMasterPassword: $hasMasterPassword
-        """.trimIndent()
-        debugInfo = info
-        println("SplashScreen - $info")
-        
-        val destination = when {
-            // Priority 1: First launch onboarding
-            isFirstLaunch -> {
-                debugInfo += "\n\n→ ONBOARDING"
-                println("Going to ONBOARDING")
-                SplashDestination.ONBOARDING
-            }
-            // Priority 2: If locked and has biometric, use it
-            isLocked && isBiometricEnabled -> {
-                debugInfo += "\n\n→ BIOMETRIC"
-                println("Going to BIOMETRIC")
-                SplashDestination.UNLOCK_BIOMETRIC
-            }
-            // Priority 3: If locked and has PIN, use it
-            isLocked && isPinEnabled -> {
-                debugInfo += "\n\n→ PIN"
-                println("Going to PIN")
-                SplashDestination.UNLOCK_PIN
-            }
-            // Priority 4: If locked and has master password, unlock with it
-            isLocked && hasMasterPassword -> {
-                debugInfo += "\n\n→ MASTER PASSWORD"
-                println("Going to MASTER PASSWORD")
-                SplashDestination.UNLOCK_MASTER_PASSWORD
-            }
-            // Priority 5: If locked but no auth set up, go to onboarding
-            isLocked -> {
-                debugInfo += "\n\n→ ONBOARDING (no auth)"
-                println("Going to ONBOARDING (no auth)")
-                SplashDestination.ONBOARDING
-            }
-            // Priority 6: Already unlocked, go to vault
-            else -> {
-                debugInfo += "\n\n→ VAULT"
-                println("Going to VAULT")
-                SplashDestination.VAULT_HOME
-            }
+        if (destination != null) {
+            delay(1500)
+            onNavigationDecided(destination)
         }
-        
-        delay(2000) // Show debug info for 2 seconds
-        onNavigationDecided(destination)
     }
 
     val truvaltSurface = Color(0xFF0E0050)
@@ -160,6 +109,33 @@ fun SplashScreen(
         ),
         label = "dotsPhase"
     )
+    val logoFloat by infiniteTransition.animateFloat(
+        initialValue = -8f,
+        targetValue = 8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2400, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoFloat"
+    )
+    val logoTilt by infiniteTransition.animateFloat(
+        initialValue = 1.5f,
+        targetValue = 5.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2400, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoTilt"
+    )
+    val logoPulse by infiniteTransition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoPulse"
+    )
     
     Box(
         modifier = Modifier
@@ -180,64 +156,86 @@ fun SplashScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
             ) {
-                // Outer circle for the icon
                 Box(
                     modifier = Modifier
-                        .size(128.dp)
+                        .size(132.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF190968)) // surface-container from HTML
+                        .background(Color(0xFF190968))
                         .border(1.dp, truvaltPrimary.copy(alpha = 0.1f), CircleShape)
                         .shadow(
                             elevation = 50.dp,
                             shape = CircleShape,
                             ambientColor = truvaltPrimary,
                             spotColor = truvaltPrimary
-                        ),
+                        )
+                        .graphicsLayer {
+                            translationY = logoFloat
+                            scaleX = logoPulse
+                            scaleY = logoPulse
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    // Inner rotated square with gradient
                     Box(
                         modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(24.dp))
+                            .size(110.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        truvaltPrimary.copy(alpha = 0.16f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                            .blur(8.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(98.dp)
+                            .clip(RoundedCornerShape(30.dp))
                             .background(
                                 Brush.linearGradient(
                                     colors = listOf(truvaltPrimary, truvaltPrimaryContainer)
                                 )
                             )
-                            .rotate(3f)
-                            .shadow(24.dp, shape = RoundedCornerShape(24.dp)),
+                            .shadow(24.dp, shape = RoundedCornerShape(30.dp))
+                            .graphicsLayer {
+                                rotationZ = logoTilt
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.truvalt_icon),
                             contentDescription = "Truvalt Logo",
-                            modifier = Modifier.size(56.dp) // Adjusted the inside icon size
+                            modifier = Modifier.size(68.dp),
+                            contentScale = ContentScale.Fit
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
                     text = "Truvalt",
-                    fontSize = 48.sp,
+                    fontSize = 50.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = truvaltOnSurface,
-                    letterSpacing = (-1.5).sp // tracking-tighter
+                    letterSpacing = (-1.8).sp
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "Your vault, zero knowledge",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = truvaltOnSurfaceVariant.copy(alpha = 0.8f),
-                    letterSpacing = 0.5.sp // tracking-wide
+                    letterSpacing = 0.5.sp
                 )
             }
         }
@@ -253,29 +251,27 @@ fun SplashScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
-                        .graphicsLayer {
-                            scaleX = loaderPulse
-                            scaleY = loaderPulse
-                        }
+                        .size(52.dp)
                 ) {
-                    // Track
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawCircle(
                             color = truvaltSurfaceContainerHighest,
                             style = Stroke(width = 3.dp.toPx())
                         )
                     }
-                    // Progress
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = loaderPulse
+                                scaleY = loaderPulse
+                            }
                             .rotate(rotation)
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             drawArc(
                                 color = truvaltPrimary,
-                                startAngle = 18f,
+                                startAngle = 0f,
                                 sweepAngle = loaderSweep,
                                 useCenter = false,
                                 style = Stroke(
@@ -291,10 +287,10 @@ fun SplashScreen(
                 
                 Text(
                     text = "ESTABLISHING SECURE LINK",
-                    fontSize = 11.sp, // 0.6875rem
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = truvaltOnSurfaceVariant.copy(alpha = 0.4f),
-                    letterSpacing = 2.sp, // tracking-[0.15em]
+                    letterSpacing = 2.sp,
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))

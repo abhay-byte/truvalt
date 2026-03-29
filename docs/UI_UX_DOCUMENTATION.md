@@ -46,10 +46,10 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `splash` |
-| **Purpose** | App launch, check existing session, biometric availability |
-| **UI Elements** | App logo, tagline, animated loading ring with pulse + activity dots, safe-area aware layout |
-| **States** | Loading, BiometricPrompt, NavigateToHome, NavigateToOnboarding |
-| **Navigation** | Exit → Onboarding or ServerSetup or VaultHome |
+| **Purpose** | App launch, restore saved vault session when possible, and route to the correct next screen |
+| **UI Elements** | Animated `truvalt_icon.png` hero mark inside a glowing gradient badge, tagline, animated loading ring with pulse + activity dots, safe-area aware layout |
+| **States** | Loading, NavigateToHome, NavigateToOnboarding, NavigateToServerSetup, NavigateToLogin |
+| **Navigation** | Exit → Onboarding, ServerSetup, Login, or VaultHome |
 
 ---
 
@@ -131,7 +131,7 @@ flowchart TD
 |---|---|
 | **Route/ID** | `vault_home` |
 | **Purpose** | Display vault items list with search and filters |
-| **UI Elements** | Top-fixed glass-like Header, Editorial Text ("My Vault"), pill-shaped SearchBar, colored FilterChips LazyRow, colored VaultItemCard list, pill FAB (add item), Floating Glassmorphic BottomNav |
+| **UI Elements** | Branded header card with `truvalt_icon`, rounded sync action, atmospheric search surface, quick-filter chip rail, recent-access vault cards with live subtitles, vault health summary card, gradient add FAB, rounded bottom navigation tuned for both dark and light themes |
 | **States** | Loading, Empty, Populated, SearchResults, Filtered |
 | **Navigation** | Item tap → VaultItemDetail, FAB → VaultItemCreate, Search → SearchResults |
 
@@ -167,8 +167,8 @@ flowchart TD
 |---|---|
 | **Route/ID** | `password_generator` |
 | **Purpose** | Generate secure passwords or passphrases |
-| **UI Elements** | Generated value display, Length slider, Character options (uppercase, lowercase, digits, symbols), Exclude ambiguous checkbox, Generate button, Copy button, Use button |
-| **States** | Idle, Generated |
+| **UI Elements** | Branded top header with live account avatar, password/passphrase mode pills, glass-like generated-value hero card, strength/entropy meter, oversized length slider card, large toggle cards for charset controls, advanced ambiguous-character switch, gradient copy CTA, theme-aware surfaces for both dark and light modes |
+| **States** | Idle, Generated, PasswordMode, PassphraseMode |
 | **Navigation** | Use → Insert into current field, Copy → Clipboard |
 
 ---
@@ -327,7 +327,7 @@ flowchart TD
 
 | Component | Description | Used In |
 |---|---|---|
-| `VaultItemCard` | Type-specific colored background with icon, bold name, muted subtitle, right-aligned favorite/copy actions in a rounded white container | VaultHome, Search |
+| `VaultItemCard` | High-contrast vault row card with icon tile, real item-specific subtitle, favorite badge, copy action, and chevron affordance; adapts palette between dark and light themes | VaultHome, Search |
 | `TotpCountdownRing` | Circular progress ring counting down TOTP period | VaultItemDetail, TotpView |
 | `PasswordStrengthBar` | 4-level color bar with zxcvbn score label | Generator, ItemEdit |
 | `EncryptedFieldRow` | Hidden field with eye toggle, copy button, reveal timeout | ItemDetail |
@@ -336,9 +336,9 @@ flowchart TD
 | `SecureClipboardSnackbar` | Shows "Copied — clears in Xs" with cancel action | Global |
 | `BiometricPromptLauncher` | Triggers Android BiometricPrompt | BiometricUnlock |
 | `LoadingShimmer` | Shimmer cards for vault list loading state | VaultHome |
-| `EmptyVaultState` | Illustration + CTA for empty vault or search | VaultHome, Search |
+| `EmptyVaultState` | Rounded contextual empty/search state with clear next-step CTA and vault-specific messaging | VaultHome, Search |
 | `ErrorState` | Icon + message + retry button | All async screens |
-| `SyncStatusIndicator` | Animated sync icon in TopAppBar | VaultHome |
+| `SyncStatusIndicator` | Rounded sync affordance in the branded vault header | VaultHome |
 
 ---
 
