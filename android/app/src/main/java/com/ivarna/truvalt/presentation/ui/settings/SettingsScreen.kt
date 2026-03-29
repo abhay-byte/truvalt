@@ -87,6 +87,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showLockDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
@@ -244,6 +245,14 @@ fun SettingsScreen(
                     title = "Lock Vault",
                     subtitle = "Lock and return to login",
                     palette = palette,
+                    onClick = { showLockDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    title = "Sign Out",
+                    subtitle = "Sign out from Firebase on this device",
+                    palette = palette,
                     onClick = { showLogoutDialog = true }
                 )
             }
@@ -294,18 +303,40 @@ fun SettingsScreen(
         )
     }
 
-    if (showLogoutDialog) {
+    if (showLockDialog) {
         AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
+            onDismissRequest = { showLockDialog = false },
             title = { Text("Lock Vault") },
             text = { Text("Are you sure you want to lock your vault?") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.lockVault()
-                    showLogoutDialog = false
+                    showLockDialog = false
                     onNavigateToLogin()
                 }) {
                     Text("Lock")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLockDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Sign Out") },
+            text = { Text("Are you sure you want to sign out of your Firebase account on this device?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.logout()
+                    showLogoutDialog = false
+                    onNavigateToLogin()
+                }) {
+                    Text("Sign Out")
                 }
             },
             dismissButton = {

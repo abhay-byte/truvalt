@@ -55,8 +55,17 @@ fun MainScaffold(rootNavController: NavHostController) {
         BottomNavItem("settings_graph", "settings_graph", "SETTINGS", Icons.Filled.Settings, Icons.Outlined.Settings)
     )
 
-    Scaffold(
-        containerColor = Color.Transparent,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(palette.background, palette.backgroundAccent)
+                )
+            )
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
             Surface(
@@ -117,11 +126,14 @@ fun MainScaffold(rootNavController: NavHostController) {
                 }
             }
         }
-    ) { _ ->
+    ) { paddingValues ->
         NavHost(
             navController = tabNavController,
             startDestination = "vault_graph",
-            modifier = androidx.compose.ui.Modifier.fillMaxSize()
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
         ) {
             navigation(startDestination = Screen.VaultHome.route, route = "vault_graph") {
                 composable(Screen.VaultHome.route) {
@@ -300,4 +312,5 @@ fun MainScaffold(rootNavController: NavHostController) {
             }
         }
     }
+}
 }

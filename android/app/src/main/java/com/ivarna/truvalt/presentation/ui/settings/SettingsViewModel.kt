@@ -133,6 +133,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.lockVault()
+            firebaseAuth.signOut()
+            preferences.setBackendIdToken(null)
+            preferences.setBackendRefreshToken(null)
+            preferences.setBackendUserId(null)
+            preferences.setUserEmail(null)
+            preferences.setAuthKeyHash(null)
+            _uiState.value = _uiState.value.copy(accountProfile = null)
+        }
+    }
+
     fun deleteVault() {
         viewModelScope.launch {
             preferences.clearVaultData()
