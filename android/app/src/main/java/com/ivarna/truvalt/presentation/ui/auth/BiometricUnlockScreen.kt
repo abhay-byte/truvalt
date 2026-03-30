@@ -11,28 +11,45 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ivarna.truvalt.core.biometric.BiometricPromptManager
 
 @Composable
 fun BiometricUnlockScreen(
     onUnlockSuccess: () -> Unit,
     onFallbackToPin: () -> Unit,
+    viewModel: BiometricUnlockViewModel = hiltViewModel()
 ) {
     val activity = LocalContext.current as AppCompatActivity
     val biometricManager = remember { BiometricPromptManager(activity) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     LaunchedEffect(Unit) {
         biometricManager.results.collect { result ->
             when (result) {
-                is BiometricPromptManager.BiometricResult.Success -> onUnlockSuccess()
-                is BiometricPromptManager.BiometricResult.FallbackRequested -> onFallbackToPin()
-                is BiometricPromptManager.BiometricResult.NotEnrolled -> onFallbackToPin()
-                is BiometricPromptManager.BiometricResult.HardwareUnavailable -> onFallbackToPin()
-                else -> { /* Failed — prompt re-shows automatically */ }
+                is BiometricPromptManager.BiometricResult.Success -> viewModel.onBiometricSuccess()
+                is BiometricPromptManager.BiometricResult.Failed -> viewModel.onBiometricFailed()
+                is BiometricPromptManager.BiometricResult.FallbackRequested -> viewModel.onFallbackToPIN()
+                is BiometricPromptManager.BiometricResult.NotEnrolled -> viewModel.onFallbackToPIN()
+                is BiometricPromptManager.BiometricResult.HardwareUnavailable -> {
+                    viewModel.onBiometricFailed("Biometric hardware is unavailable.")
+                }
+                is BiometricPromptManager.BiometricResult.Error -> {
+                    viewModel.onBiometricFailed(result.message)
+                }
             }
         }
     }
     
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            BiometricUnlockState.Success -> onUnlockSuccess()
+            BiometricUnlockState.FallbackToPIN -> onFallbackToPin()
+            else -> Unit
+        }
+    }
+
     LaunchedEffect(Unit) {
         biometricManager.showPrompt()
     }
@@ -52,9 +69,15 @@ fun BiometricUnlockScreen(
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                "Touch the sensor to unlock",
+                when (val state = uiState) {
+                    is BiometricUnlockState.Error -> state.message
+                    else -> "Touch the sensor to unlock"
+                },
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = when (uiState) {
+                    is BiometricUnlockState.Error -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
             Spacer(Modifier.height(24.dp))
             OutlinedButton(onClick = { biometricManager.showPrompt() }) {

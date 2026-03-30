@@ -12,7 +12,7 @@ Status legend: 🔴 Not Started | 🟡 In Progress | 🟢 Complete | ⚫ Cancell
 | F-002 | Email + Password Login | Login flow with auth key derivation | Critical | 🔴 | v1.0 |
 | F-003 | TOTP 2FA Setup & Verify | Enroll authenticator app, verify at login | Critical | 🔴 | v1.0 |
 | F-004 | Passkey Login (WebAuthn) | FIDO2 passkey registration & login on web + Android | High | 🔴 | v1.1 |
-| F-005 | Biometric Unlock (Android) | Fingerprint/face unlock via Android Keystore | Critical | 🔴 | v1.0 |
+| F-005 | Biometric Unlock (Android) | Fingerprint/face unlock via Android Keystore with startup unlock routing and keystore-backed vault key restore | Critical | 🟢 | v1.0 |
 | F-006 | Auto-lock & Session Timeout | Configurable idle timeout, lock on background | Critical | 🔴 | v1.0 |
 | F-007 | Emergency Access | Trusted contact request + delay-based approval | Medium | 🔴 | v1.2 |
 | F-008 | Master Password Change | Re-derives key, re-encrypts all vault items | High | 🔴 | v1.0 |

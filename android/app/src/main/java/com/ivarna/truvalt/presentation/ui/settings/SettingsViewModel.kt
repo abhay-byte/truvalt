@@ -29,6 +29,7 @@ data class AccountProfileUiState(
 
 data class SettingsUiState(
     val isBiometricEnabled: Boolean = false,
+    val canUseBiometricUnlock: Boolean = false,
     val autoLockTimeout: Long = 300000L,
     val clipboardTimeout: Long = 30L,
     val themeMode: String = "system",
@@ -73,6 +74,7 @@ class SettingsViewModel @Inject constructor(
 
             _uiState.value = SettingsUiState(
                 isBiometricEnabled = preferences.isBiometricEnabled.first(),
+                canUseBiometricUnlock = preferences.encryptedVaultKey.first() != null,
                 autoLockTimeout = preferences.autoLockTimeout.first(),
                 clipboardTimeout = preferences.clipboardTimeout.first(),
                 themeMode = preferences.themeMode.first(),

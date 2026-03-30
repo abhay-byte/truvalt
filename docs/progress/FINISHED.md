@@ -5,6 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
+| 2026-03-30 | 1 |
 | 2026-03-29 | 10 |
 | 2026-03-23 | 8 |
 | 2026-03-22 | 2 |
@@ -20,6 +21,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-046 | Biometric unlock (Android) | 2026-03-30 | Fixed the startup routing so biometric unlock is actually honored when enabled, restored the encrypted vault key during biometric and PIN unlock after app relaunch/process death, tightened the Security Settings biometric toggle to only enable when a keystore-backed encrypted vault key exists, rebuilt the debug APK, and verified install/launch on the connected Android device |
 | UI-009 | Unified "Fortified Sanctuary" Design System | 2026-03-29 | Integrated Manrope variable font with tight letter tracking, rebuilt core Theme.kt to properly map the custom Vault dark mode natively to DarkColorScheme while maintaining LightColorScheme tokens, removed shadow elevations from Auth screens, and replaced the hardcoded VaultHomePalette with dynamic MaterialTheme components for true application-wide synchrony. |
 | UI-007 | Implement Material 3 Theme in Auth & Onboarding | 2026-03-29 | Removed hardcoded background and surface colors from OnboardingScreen and AuthUIComponents. Replaced them with Composable getters bound to MaterialTheme.colorScheme to ensure the gateway respected Dark/Light system modes correctly |
 | FIX-008 | Add account sign-out action in Settings | 2026-03-29 | Added a dedicated Settings sign-out action that signs out the current account session, clears cached backend auth tokens, locks the local vault, routes back to Login, and updated the Settings UI/docs before rebuilding and reinstalling the debug APK |

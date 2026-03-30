@@ -119,9 +119,9 @@ flowchart TD
 |---|---|
 | **Route/ID** | `biometric_unlock` |
 | **Purpose** | Unlock vault using fingerprint/face |
-| **UI Elements** | BiometricPrompt, Use password fallback button |
-| **States** | AwaitingBiometric, Success, Failed, FallbackToPassword |
-| **Navigation** | Success → VaultHome, Fallback → Login |
+| **UI Elements** | BiometricPrompt, retry button, PIN fallback button, inline error text when authentication fails |
+| **States** | AwaitingBiometric, Success, Failed, FallbackToPIN |
+| **Navigation** | Success → VaultHome, Fallback → PIN Unlock |
 
 ---
 

@@ -1,12 +1,15 @@
 package com.ivarna.truvalt.presentation.ui.auth
 
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.lock.AppLockManager
+import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
-import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,8 +25,10 @@ sealed class BiometricUnlockState {
 
 @HiltViewModel
 class BiometricUnlockViewModel @Inject constructor(
+    private val preferences: TruvaltPreferences,
+    private val cryptoManager: CryptoManager,
     private val vaultKeyManager: VaultKeyManager,
-    private val vaultRepository: VaultRepository,
+    private val vaultRepository: VaultRepositoryImpl,
     private val appLockManager: AppLockManager
 ) : ViewModel() {
     
@@ -32,20 +37,25 @@ class BiometricUnlockViewModel @Inject constructor(
     
     fun onBiometricSuccess() {
         viewModelScope.launch {
-            // Retrieve and set vault key
-            val vaultKey = vaultKeyManager.getInMemoryKey()
-            if (vaultKey != null) {
-                (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(vaultKey)
+            val encodedKey = preferences.encryptedVaultKey.first()
+            if (encodedKey == null) {
+                _uiState.value = BiometricUnlockState.Error("No encrypted vault key found for biometric unlock.")
+                return@launch
             }
+
+            val encryptedKey = Base64.decode(encodedKey, Base64.DEFAULT)
+            val vaultKey = cryptoManager.decryptWithKeystore(encryptedKey)
+            vaultKeyManager.setInMemoryKey(vaultKey)
+            vaultRepository.setVaultKey(vaultKey)
+            preferences.setVaultUnlocked(true)
             appLockManager.unlock()
-            
             _uiState.value = BiometricUnlockState.Success
         }
     }
-    
-    fun onBiometricFailed() {
+
+    fun onBiometricFailed(message: String = "Authentication failed. Please try again.") {
         viewModelScope.launch {
-            _uiState.value = BiometricUnlockState.Error("Authentication failed. Please try again.")
+            _uiState.value = BiometricUnlockState.Error(message)
         }
     }
     

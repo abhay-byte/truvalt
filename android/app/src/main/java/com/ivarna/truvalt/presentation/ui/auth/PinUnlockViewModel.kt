@@ -2,13 +2,16 @@ package com.ivarna.truvalt.presentation.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.lock.AppLockManager
 import com.ivarna.truvalt.core.pin.PinHasher
 import com.ivarna.truvalt.core.pin.PinStorage
+import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +31,8 @@ data class PinUnlockUiState(
 class PinUnlockViewModel @Inject constructor(
     private val pinHasher: PinHasher,
     private val pinStorage: PinStorage,
+    private val preferences: TruvaltPreferences,
+    private val cryptoManager: CryptoManager,
     private val vaultKeyManager: VaultKeyManager,
     private val vaultRepository: VaultRepository,
     private val appLockManager: AppLockManager
@@ -102,11 +107,18 @@ class PinUnlockViewModel @Inject constructor(
             if (pinHasher.verifyPin(pin, salt, storedHash)) {
                 pinStorage.resetFailCount()
                 
-                // Retrieve and set vault key
+                // Restore the vault key after process death/app relaunch before unlocking.
                 val vaultKey = vaultKeyManager.getInMemoryKey()
+                    ?: preferences.encryptedVaultKey.first()?.let { encodedKey ->
+                        val encryptedKey = android.util.Base64.decode(encodedKey, android.util.Base64.DEFAULT)
+                        cryptoManager.decryptWithKeystore(encryptedKey)
+                    }
+
                 if (vaultKey != null) {
+                    vaultKeyManager.setInMemoryKey(vaultKey)
                     (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(vaultKey)
                 }
+                preferences.setVaultUnlocked(true)
                 appLockManager.unlock()
                 
                 _uiState.value = _uiState.value.copy(

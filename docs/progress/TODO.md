@@ -48,7 +48,6 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-043 Favorites feature — Priority: Medium — Target: v1.0
 - [ ] TASK-044 Full-text search — Priority: Medium — Target: v1.0
 - [ ] TASK-045 Soft delete / Trash — Priority: Medium — Target: v1.0
-- [ ] TASK-046 Biometric unlock (Android) — Priority: Medium — Target: v1.0
 - [x] TASK-047 Dark / Light / AMOLED theme — Priority: Medium — Target: v1.0
 - [ ] TASK-048 Material You dynamic color (Android 12+) — Priority: Medium — Target: v1.0
 - [ ] TASK-049 Web vault UI (Laravel Blade) — Priority: Medium — Target: v1.0

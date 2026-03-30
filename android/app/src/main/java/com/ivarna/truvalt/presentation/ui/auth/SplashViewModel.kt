@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.lock.AppLockManager
+import com.ivarna.truvalt.core.pin.PinStorage
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,8 @@ class SplashViewModel @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val cryptoManager: CryptoManager,
     private val vaultKeyManager: VaultKeyManager,
-    private val vaultRepository: VaultRepositoryImpl
+    private val vaultRepository: VaultRepositoryImpl,
+    private val pinStorage: PinStorage
 ) : ViewModel() {
 
     private val _startupDestination = MutableStateFlow<SplashDestination?>(null)
@@ -47,10 +49,17 @@ class SplashViewModel @Inject constructor(
         if (isFirstLaunch) return SplashDestination.ONBOARDING
 
         val isLocalOnly = preferences.isLocalOnly.first()
+        val isBiometricEnabled = preferences.isBiometricEnabled.first()
+        val isPinEnabled = pinStorage.isEnabled()
         val hasWrappedLocalVault = preferences.wrappedVaultKey.first() != null
         val hasEncryptedVaultKey = preferences.encryptedVaultKey.first() != null
         val hasFirebaseSession = firebaseAuth.currentUser != null
         val hasKnownAccount = preferences.userEmail.first() != null || preferences.backendUserId.first() != null
+
+        if (hasEncryptedVaultKey) {
+            if (isBiometricEnabled) return SplashDestination.UNLOCK_BIOMETRIC
+            if (isPinEnabled) return SplashDestination.UNLOCK_PIN
+        }
 
         if (hasFirebaseSession && restoreCloudVaultIfPossible()) {
             return SplashDestination.VAULT_HOME

@@ -22,6 +22,8 @@ fun SecuritySettingsScreen(
     val biometricStatus = remember { viewModel.biometricHelper.canAuthenticate() }
     val isPinEnabled = remember { viewModel.pinStorage.isEnabled() }
     var showAutoLockDialog by remember { mutableStateOf(false) }
+    val biometricToggleEnabled =
+        biometricStatus == BiometricStatus.AVAILABLE && uiState.canUseBiometricUnlock
     
     Scaffold(
         topBar = {
@@ -58,7 +60,13 @@ fun SecuritySettingsScreen(
                             Text("Biometric Unlock", style = MaterialTheme.typography.bodyLarge)
                             Text(
                                 text = when (biometricStatus) {
-                                    BiometricStatus.AVAILABLE -> "Use fingerprint or face"
+                                    BiometricStatus.AVAILABLE -> {
+                                        if (uiState.canUseBiometricUnlock) {
+                                            "Use fingerprint or face"
+                                        } else {
+                                            "Unavailable until a keystore-backed vault key is set up"
+                                        }
+                                    }
                                     BiometricStatus.NONE_ENROLLED -> "No biometric credentials enrolled on this device"
                                     BiometricStatus.UNAVAILABLE -> "Not available on this device"
                                 },
@@ -69,7 +77,7 @@ fun SecuritySettingsScreen(
                         Switch(
                             checked = uiState.isBiometricEnabled,
                             onCheckedChange = { viewModel.setBiometricEnabled(it) },
-                            enabled = biometricStatus == BiometricStatus.AVAILABLE
+                            enabled = biometricToggleEnabled
                         )
                     }
                 }
