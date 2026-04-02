@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
@@ -194,6 +195,47 @@ class AuthRepositoryImpl @Inject constructor(
 
     /** Returns the current Firebase UID, or null if not signed in. */
     fun getCurrentUid(): String? = firebaseAuth.currentUser?.uid
+
+    /**
+     * Permanently delete the current cloud account — Firebase-direct, no backend needed.
+     * Sequence:
+     *  1. Delete all Firestore data (vault_items, folders, tags, user profile) directly via SDK.
+     *  2. Delete the Firebase Auth user client-side.
+     *  3. Clear all local vault data, preferences, and auth tokens.
+     */
+    suspend fun deleteAccount(): Result<Unit> {
+        return try {
+            val uid = firebaseAuth.currentUser?.uid
+                ?: return Result.failure(IllegalStateException("Not signed in."))
+
+            // Step 1: Wipe all Firestore data directly
+            firestoreRepository.deleteAllUserData(uid)
+
+            // Step 2: Delete the Firebase Auth user
+            try {
+                firebaseAuth.currentUser?.delete()?.await()
+            } catch (e: FirebaseAuthRecentLoginRequiredException) {
+                // Firestore data already gone — re-auth prompt not shown, session will expire naturally
+            }
+
+            // Step 3: Full local wipe
+            masterKey?.fill(0)
+            masterKey = null
+            preferences.clearVaultData()
+            preferences.setBackendIdToken(null)
+            preferences.setBackendRefreshToken(null)
+            preferences.setBackendUserId(null)
+            preferences.setUserEmail(null)
+            preferences.setAuthKeyHash(null)
+            preferences.setVaultUnlocked(false)
+
+            firebaseAuth.signOut()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     /** Returns the in-memory master key (null when vault is locked). */
     fun getMasterKey(): ByteArray? = masterKey

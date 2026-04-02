@@ -13,6 +13,7 @@ import com.ivarna.truvalt.data.remote.dto.BackendTagRequest
 import com.ivarna.truvalt.data.remote.dto.BackendUserDto
 import com.ivarna.truvalt.data.remote.dto.BackendVaultItemDto
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -78,4 +79,7 @@ interface TruvaltApiService {
         @Header("Authorization") bearerToken: String,
         @Body request: BackendSyncRequest
     ): BackendSyncResponse
+
+    @DELETE("api/account")
+    suspend fun deleteAccount(@Header("Authorization") bearerToken: String): Unit
 }

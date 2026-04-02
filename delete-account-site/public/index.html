@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Your Truvalt Account</title>
+  <meta name="description" content="Learn how to permanently delete your Truvalt account and all associated data, including vault items, folders, tags, and cloud credentials." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161d;
+      --surface-2: #1a1e28;
+      --border: rgba(255,255,255,0.07);
+      --primary: #6c8ef7;
+      --primary-glow: rgba(108,142,247,0.15);
+      --error: #f06b6b;
+      --error-glow: rgba(240,107,107,0.12);
+      --text: #e8eaf2;
+      --muted: #8892a4;
+      --accent: #a78bfa;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Manrope', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(13,15,20,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 72px 24px 48px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--error-glow);
+      border: 1px solid rgba(240,107,107,0.25);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--error);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 16px;
+    }
+
+    /* ── Sections ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 96px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 14px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      list-style: none;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s ease;
+    }
+
+    .step:last-child { border-bottom: none; }
+    .step:hover { background: rgba(255,255,255,0.02); }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .path {
+      display: inline-block;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12.5px;
+      color: var(--primary);
+      margin-top: 6px;
+    }
+
+    /* ── Data Table ── */
+    .data-grid {
+      display: grid;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    .data-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px 24px;
+      background: var(--surface);
+    }
+
+    .data-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .data-icon.deleted { background: var(--error-glow); }
+    .data-icon.retained { background: rgba(108,142,247,0.1); }
+
+    .data-content { flex: 1; }
+    .data-content strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .data-content p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .tag.deleted { background: var(--error-glow); border: 1px solid rgba(240,107,107,0.25); color: var(--error); }
+    .tag.retained { background: var(--primary-glow); border: 1px solid rgba(108,142,247,0.25); color: var(--primary); }
+
+    /* ── Warning Card ── */
+    .warning-card {
+      background: var(--error-glow);
+      border: 1px solid rgba(240,107,107,0.2);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+
+    .warning-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .warning-card p {
+      font-size: 14px;
+      color: #f8b4b4;
+      line-height: 1.6;
+    }
+
+    .warning-card strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--error);
+      margin-bottom: 6px;
+    }
+
+    /* ── Alternatives ── */
+    .alt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .alt-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .alt-card:hover {
+      border-color: rgba(108,142,247,0.3);
+      transform: translateY(-2px);
+    }
+
+    .alt-emoji { font-size: 24px; margin-bottom: 10px; }
+    .alt-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .alt-card p { font-size: 13px; color: var(--muted); }
+
+    /* ── Contact ── */
+    .contact-card {
+      background: linear-gradient(135deg, rgba(108,142,247,0.08) 0%, rgba(167,139,250,0.08) 100%);
+      border: 1px solid rgba(108,142,247,0.2);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .contact-card h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .contact-card p {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .email-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid rgba(108,142,247,0.3);
+      border-radius: 12px;
+      padding: 12px 24px;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .email-link:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 48px 24px 32px; }
+      .data-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-mark">T</div>
+    <span class="header-title">Truvalt</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="badge">⚠️ Account Deletion</div>
+  <h1>Delete Your Truvalt Account</h1>
+  <p>This page explains how to permanently delete your Truvalt account and all associated data. This action is irreversible.</p>
+</div>
+
+<main>
+
+  <!-- Warning -->
+  <div class="warning-card">
+    <div class="warning-icon">⛔</div>
+    <div>
+      <strong>This cannot be undone</strong>
+      <p>Deleting your account permanently erases all vault items, credentials, and cloud data. There is no recovery option. Make sure to export any data you want to keep before proceeding.</p>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="section">
+    <div class="section-label">How to delete your account</div>
+    <div class="card">
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Open Truvalt on your device</strong>
+            <p>Make sure you are signed in with the account you want to delete.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Go to Settings</strong>
+            <p>Tap the <strong>Settings</strong> icon in the bottom navigation bar of the app.</p>
+            <span class="path">Bottom Nav → Settings</span>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Scroll to Danger Zone</strong>
+            <p>Scroll to the bottom of the Settings page to find the <strong>Danger Zone</strong> section.</p>
+            <span class="path">Settings → Danger Zone</span>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Tap "Delete Account"</strong>
+            <p>Tap the <strong>Delete Account</strong> option. This button is only visible when you are signed in to a cloud account (not in offline/local-only mode).</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Read the warning and confirm</strong>
+            <p>A warning dialog will list everything that will be deleted. Tap <strong>Continue</strong> to proceed to the confirmation step.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <strong>Type DELETE to confirm</strong>
+            <p>In the confirmation dialog, type the word <strong>DELETE</strong> (all caps) in the text field, then tap <strong>Delete My Account</strong>. Your account and all data will be permanently erased.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- What gets deleted -->
+  <div class="section">
+    <div class="section-label">What gets deleted &amp; what is retained</div>
+    <div class="card">
+      <div class="data-grid">
+        <div class="data-row">
+          <div class="data-icon deleted">🔐</div>
+          <div class="data-content">
+            <strong>All vault items <span class="tag deleted">Deleted</span></strong>
+            <p>Passwords, login credentials, credit cards, secure notes, and any other items stored in your vault.</p>
+          </div>
+        </div>
+        <div class="data-row">
+          <div class="data-icon deleted">📁</div>
+          <div class="data-content">
+            <strong>Folders &amp; tags <span class="tag deleted">Deleted</span></strong>
+            <p>All organizational structures including folders and tags associated with your account.</p>
+          </div>
+        </div>
+        <div class="data-row">
+          <div class="data-icon deleted">☁️</div>
+          <div class="data-content">
+            <strong>Cloud profile &amp; credentials <span class="tag deleted">Deleted</span></strong>
+            <p>Your Firebase Authentication account, stored email, and all Firestore profile data.</p>
+          </div>
+        </div>
+        <div class="data-row">
+          <div class="data-icon deleted">📱</div>
+          <div class="data-content">
+            <strong>Local device data <span class="tag deleted">Deleted</span></strong>
+            <p>All locally encrypted vault data, auth tokens, and preferences stored on your device.</p>
+          </div>
+        </div>
+        <div class="data-row">
+          <div class="data-icon retained">📋</div>
+          <div class="data-content">
+            <strong>Aggregate analytics <span class="tag retained">May be retained 90 days</span></strong>
+            <p>Anonymized, non-identifiable analytics or logs may be retained up to 90 days for security auditing purposes, after which they are automatically purged.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alternatives -->
+  <div class="section">
+    <div class="section-label">Alternatives to full deletion</div>
+    <div class="alt-grid">
+      <div class="alt-card">
+        <div class="alt-emoji">🔒</div>
+        <h3>Lock Vault</h3>
+        <p>Temporarily lock your vault without losing any data. You can unlock it again any time with your master password.</p>
+      </div>
+      <div class="alt-card">
+        <div class="alt-emoji">📴</div>
+        <h3>Switch to Offline Mode</h3>
+        <p>Enable Local-only Mode in Settings to stop cloud sync. Your data stays on-device without touching the cloud.</p>
+      </div>
+      <div class="alt-card">
+        <div class="alt-emoji">📤</div>
+        <h3>Export First</h3>
+        <p>Before deleting, use Settings → Export to save your vault to a JSON or CSV file for use in other password managers.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="contact-card">
+    <h2>Need help or want manual deletion?</h2>
+    <p>If you're unable to access the app, or want to request deletion of specific data without deleting your full account, contact us and we'll process your request within 30 days.</p>
+    <a href="mailto:support@truvalt.app?subject=Account%20Deletion%20Request" class="email-link">
+      ✉️ support@truvalt.app
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  <p>&copy; 2025 Truvalt · <a href="mailto:support@truvalt.app" style="color:var(--primary);text-decoration:none;">support@truvalt.app</a></p>
+</footer>
+
+</body>
+</html>

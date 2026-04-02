@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
+import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
 import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +52,13 @@ data class SettingsUiState(
         }
 }
 
+sealed interface DeleteAccountState {
+    data object Idle : DeleteAccountState
+    data object Loading : DeleteAccountState
+    data object Success : DeleteAccountState
+    data class Error(val message: String) : DeleteAccountState
+}
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val preferences: TruvaltPreferences,
@@ -63,6 +71,9 @@ class SettingsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private val _deleteAccountState = MutableStateFlow<DeleteAccountState>(DeleteAccountState.Idle)
+    val deleteAccountState: StateFlow<DeleteAccountState> = _deleteAccountState.asStateFlow()
 
     init {
         loadSettings()
@@ -146,6 +157,29 @@ class SettingsViewModel @Inject constructor(
             preferences.setAuthKeyHash(null)
             _uiState.value = _uiState.value.copy(accountProfile = null)
         }
+    }
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _deleteAccountState.value = DeleteAccountState.Loading
+            val repo = authRepository as? AuthRepositoryImpl
+                ?: run {
+                    _deleteAccountState.value = DeleteAccountState.Error("Account deletion is only available in cloud mode.")
+                    return@launch
+                }
+            repo.deleteAccount()
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(accountProfile = null)
+                    _deleteAccountState.value = DeleteAccountState.Success
+                }
+                .onFailure { e ->
+                    _deleteAccountState.value = DeleteAccountState.Error(e.message ?: "Account deletion failed. Please try again.")
+                }
+        }
+    }
+
+    fun resetDeleteAccountState() {
+        _deleteAccountState.value = DeleteAccountState.Idle
     }
 
     fun deleteVault() {

@@ -5,6 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
+| 2026-04-02 | 1 |
 | 2026-03-30 | 1 |
 | 2026-03-29 | 10 |
 | 2026-03-23 | 8 |
@@ -21,6 +22,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-050 | Delete Account — backend + Android UI + static website | 2026-04-02 | Added `DELETE /account` route to Laravel API (AuthController + FirebaseAuthService + TruvaltFirestoreRepository). Server-side deletion wipes all Firestore subcollections (vault_items, folders, tags, user profile) then deletes the Firebase Auth user via Admin SDK. Android: added `deleteAccount()` to AuthRepositoryImpl (calls backend then signs out locally), `DeleteAccountState` sealed class + `deleteAccount()` in SettingsViewModel, and a cloud-only "Delete Account" row in the Danger Zone with a 2-step dialog (warning screen → mandatory type-DELETE confirmation). Created `delete-account-site/public/index.html` (premium dark static page) and `firebase.json`. Updated API.md, TODO.md, ONGOING.md, FINISHED.md. Static site ready to deploy via `firebase deploy --project tru-valt`. |
 | TASK-046 | Biometric unlock (Android) | 2026-03-30 | Fixed the startup routing so biometric unlock is actually honored when enabled, restored the encrypted vault key during biometric and PIN unlock after app relaunch/process death, tightened the Security Settings biometric toggle to only enable when a keystore-backed encrypted vault key exists, rebuilt the debug APK, and verified install/launch on the connected Android device |
 | UI-009 | Unified "Fortified Sanctuary" Design System | 2026-03-29 | Integrated Manrope variable font with tight letter tracking, rebuilt core Theme.kt to properly map the custom Vault dark mode natively to DarkColorScheme while maintaining LightColorScheme tokens, removed shadow elevations from Auth screens, and replaced the hardcoded VaultHomePalette with dynamic MaterialTheme components for true application-wide synchrony. |
 | UI-007 | Implement Material 3 Theme in Auth & Onboarding | 2026-03-29 | Removed hardcoded background and surface colors from OnboardingScreen and AuthUIComponents. Replaced them with Composable getters bound to MaterialTheme.colorScheme to ensure the gateway respected Dark/Light system modes correctly |

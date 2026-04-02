@@ -56,17 +56,18 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 ## 🟢 Low Priority
 
-- [ ] TASK-050 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
-- [ ] TASK-051 Passkey storage — Priority: Low — Target: v1.1
-- [ ] TASK-052 Credit card storage — Priority: Low — Target: v1.1
-- [ ] TASK-053 Identity storage — Priority: Low — Target: v1.1
-- [ ] TASK-054 Generator history (session-only) — Priority: Low — Target: v1.1
-- [ ] TASK-055 Import 1Password 1PUX — Priority: Low — Target: v1.1
-- [ ] TASK-056 Import KeePass XML — Priority: Low — Target: v1.1
-- [ ] TASK-057 Encrypted share link — Priority: Low — Target: v1.1
-- [ ] TASK-058 View-count limit for share links — Priority: Low — Target: v1.1
-- [ ] TASK-059 Custom item type — Priority: Low — Target: v1.2
-- [ ] TASK-060 Emergency access — Priority: Low — Target: v1.2
+- [x] TASK-050 Delete Account — backend + Android UI + static delete-account website — Priority: High — Target: v1.0
+- [ ] TASK-051 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
+- [ ] TASK-052 Passkey storage — Priority: Low — Target: v1.1
+- [ ] TASK-053 Credit card storage — Priority: Low — Target: v1.1
+- [ ] TASK-054 Identity storage — Priority: Low — Target: v1.1
+- [ ] TASK-055 Generator history (session-only) — Priority: Low — Target: v1.1
+- [ ] TASK-056 Import 1Password 1PUX — Priority: Low — Target: v1.1
+- [ ] TASK-057 Import KeePass XML — Priority: Low — Target: v1.1
+- [ ] TASK-058 Encrypted share link — Priority: Low — Target: v1.1
+- [ ] TASK-059 View-count limit for share links — Priority: Low — Target: v1.1
+- [ ] TASK-060 Custom item type — Priority: Low — Target: v1.2
+- [ ] TASK-066 Emergency access — Priority: Low — Target: v1.2
 
 ---
 

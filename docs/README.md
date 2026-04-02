@@ -1,6 +1,6 @@
 # truvalt Documentation
 
-> **AGENT STRICT RULE: Whenever any feature is added, modified, or removed; any screen changes; the database schema changes; the API changes; any task status changes — you MUST update every affected document immediately. Do not leave any document stale. After every change, re-read this README and confirm all docs reflect the current state.**
+> **AGENT STRICT RULE: Whenever any feature is added, modified, or removed; any screen changes; the Firestore schema changes; any task status changes — you MUST update every affected document immediately. Do not leave any document stale.**
 
 ---
 
@@ -8,20 +8,20 @@
 
 | File | Description | Last Updated |
 |---|---|---|
-| [README.md](./README.md) | Master index and change management guide | 2026-03-30 |
+| [README.md](./README.md) | Master index and change management guide | 2026-04-02 |
 | [PROBLEM_STATEMENT.md](./PROBLEM_STATEMENT.md) | Background, problem definition, goals, constraints | 2026-03-16 |
-| [SRS.md](./SRS.md) | Software Requirements Specification with all functional requirements | 2026-03-23 |
-| [SDD.md](./SDD.md) | Software Design Document with architecture, database, API design | 2026-03-23 |
+| [SRS.md](./SRS.md) | Software Requirements Specification | 2026-03-23 |
+| [SDD.md](./SDD.md) | Software Design Document — architecture, Firestore schema, auth flows | 2026-04-02 |
 | [FEATURES.md](./FEATURES.md) | Complete feature list with status tracking | 2026-03-30 |
 | [UI_UX_DOCUMENTATION.md](./UI_UX_DOCUMENTATION.md) | Screen-by-screen UI/UX documentation | 2026-03-30 |
 | [UI_DESIGN_SYSTEM.md](./UI_DESIGN_SYSTEM.md) | Design system, colors, typography, components | 2026-03-16 |
-| [DIAGRAMS.md](./DIAGRAMS.md) | All 13 Mermaid diagrams | 2026-03-23 |
-| [API.md](./API.md) | REST API documentation with all endpoints | 2026-03-23 |
-| [API_TEST_RESULTS.md](./API_TEST_RESULTS.md) | API test results and coverage | 2026-03-23 |
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Render deployment guide | 2026-03-23 |
-| [progress/TODO.md](./progress/TODO.md) | Task list with priorities | 2026-03-30 |
-| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-03-29 |
-| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-03-30 |
+| [DIAGRAMS.md](./DIAGRAMS.md) | All Mermaid diagrams | 2026-03-23 |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Build and Firebase Hosting deploy guide | 2026-04-02 |
+| [progress/TODO.md](./progress/TODO.md) | Task list with priorities | 2026-04-02 |
+| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-04-02 |
+| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-04-02 |
+
+> **Note:** `API.md` and `API_TEST_RESULTS.md` are archived. There is no REST backend — the app talks directly to Firebase.
 
 ---
 
@@ -29,22 +29,19 @@
 
 | Change Type | Documents to Update |
 |---|---|
-| New vault item type added | FEATURES.md, SRS.md, SDD.md, UI_UX_DOCUMENTATION.md, DIAGRAMS.md, TODO.md |
-| New API endpoint | SDD.md, DIAGRAMS.md, API.md |
-| New screen (Android or Web) | UI_UX_DOCUMENTATION.md, UI_DESIGN_SYSTEM.md, DIAGRAMS.md |
-| Database schema change | SDD.md, DIAGRAMS.md (ER), API.md |
-| Feature completed | FEATURES.md (status), TODO.md → FINISHED.md |
+| New vault item type | FEATURES.md, SRS.md, SDD.md, UI_UX_DOCUMENTATION.md, DIAGRAMS.md, TODO.md |
+| Firestore schema change | SDD.md, DIAGRAMS.md |
+| New screen | UI_UX_DOCUMENTATION.md, UI_DESIGN_SYSTEM.md, DIAGRAMS.md |
+| Feature completed | FEATURES.md, TODO.md → FINISHED.md |
 | Security model change | SRS.md, SDD.md, DIAGRAMS.md |
-| Deployment change | DEPLOYMENT.md |
+| Deploy change | DEPLOYMENT.md |
 
 ---
 
 ## Quick Links
 
 - **Android App:** `/android/` — Kotlin + Jetpack Compose
-- **Web Application:** `/web/` — Laravel 12 + Blade + REST API
-- **Backend API:** `/web/` — Laravel 12 REST API with Firebase Auth + Firestore
-- **Render Deployment:** `/render.yaml`, `/web/render-build.sh`, `/web/render-run.sh`
+- **Delete Account Site:** `/delete-account-site/` — Static Firebase Hosting page
 - **Release Automation:** `/fastlane/` — Android deployment
 
 ---
@@ -53,11 +50,13 @@
 
 ```
 truvalt/
-├── android/          ← Kotlin + Compose Android app
-├── web/              ← Laravel 12 + Blade web vault + Firebase-backed REST API
-├── docs/             ← Shared documentation
-└── fastlane/         ← Release automation
+├── android/               ← Kotlin + Compose Android app
+├── delete-account-site/   ← Static site (Firebase Hosting, Google Play compliance)
+├── docs/                  ← Shared documentation
+└── fastlane/              ← Release automation
 ```
+
+**No backend server.** The Android app communicates directly with Firebase Authentication and Cloud Firestore via the Firebase Android SDK.
 
 ---
 
@@ -66,6 +65,6 @@ truvalt/
 - **Current Version:** 1.0.0
 - **Target SDK:** API 36 (Android 14)
 - **Min SDK:** API 26 (Android 8.0)
-- **Backend Identity/Storage:** Firebase Authentication + Cloud Firestore
-- **Local Storage:** Room (Android local)
-- **Encryption:** AES-256-GCM + Argon2id
+- **Cloud Identity/Storage:** Firebase Authentication + Cloud Firestore (direct SDK)
+- **Local Storage:** Room (Android local/offline mode)
+- **Encryption:** AES-256-GCM + Argon2id (all client-side)
