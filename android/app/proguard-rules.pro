@@ -5,6 +5,12 @@
 -keep class org.bouncycastle.** { *; }
 -dontwarn org.bouncycastle.**
 
+# Suppress missing javax.imageio SPI classes (jai-imageio transitive dep, not available on Android)
+-dontwarn javax.imageio.spi.ImageInputStreamSpi
+-dontwarn javax.imageio.spi.ImageOutputStreamSpi
+-dontwarn javax.imageio.spi.ImageReaderSpi
+-dontwarn javax.imageio.spi.ImageWriterSpi
+
 # Keep SQLCipher
 -keep class net.sqlcipher.** { *; }
 -dontwarn net.sqlcipher.**

@@ -56,7 +56,8 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 ## 🟢 Low Priority
 
-- [x] TASK-050 Delete Account — backend + Android UI + static delete-account website — Priority: High — Target: v1.0
+- [x] TASK-050 Delete Account — backend + Android UI + static delete-account website (TASK-050)
+- [x] TASK-067 Auth Animations & Theme Contrast (TASK-051)
 - [ ] TASK-051 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
 - [ ] TASK-052 Passkey storage — Priority: Low — Target: v1.1
 - [ ] TASK-053 Credit card storage — Priority: Low — Target: v1.1

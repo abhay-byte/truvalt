@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -374,6 +375,38 @@ fun BrandIconHeader(modifier: Modifier = Modifier) {
                     painter = androidx.compose.ui.res.painterResource(id = com.ivarna.truvalt.R.drawable.truvalt_icon),
                     contentDescription = "Truvalt Logo",
                     modifier = Modifier.size(42.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Full-screen loading overlay to prevent the app from feeling "stuck"
+ * during high-latency operations like Google OAuth sign-in.
+ */
+@Composable
+fun AuthLoadingOverlay(isLoading: Boolean) {
+    if (!isLoading) return
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.45f))
+            .pointerInput(Unit) { /* Intercept all touches */ },
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(100.dp),
+            color = AuthSurfaceContainerLowest,
+            shape = RoundedCornerShape(20.dp),
+            shadowElevation = 8.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(40.dp),
+                    color = AuthPrimary,
+                    strokeWidth = 4.dp
                 )
             }
         }

@@ -60,14 +60,15 @@ fun LoginScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             Spacer(Modifier.height(24.dp))
 
             // Brand Header
@@ -219,5 +220,8 @@ fun LoginScreen(
 
             Spacer(Modifier.height(48.dp))
         }
+
+        AuthLoadingOverlay(isLoading = uiState.isLoading)
     }
+}
 }
