@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "context-mode": {
+      "command": "context-mode"
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    }
+  },
+  "$version": 3,
+  "permissions": {
+    "allow": [
+      "Bash(npx *)"
+    ]
+  }
+}
