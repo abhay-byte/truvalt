@@ -8,7 +8,7 @@
 
 | File | Description | Last Updated |
 |---|---|---|
-| [README.md](./README.md) | Master index and change management guide | 2026-04-06 |
+| [README.md](./README.md) | Master index and change management guide | 2026-04-07 |
 | [PROBLEM_STATEMENT.md](./PROBLEM_STATEMENT.md) | Background, problem definition, goals, constraints | 2026-03-16 |
 | [SRS.md](./SRS.md) | Software Requirements Specification | 2026-03-23 |
 | [SDD.md](./SDD.md) | Software Design Document — architecture, Firestore schema, auth flows | 2026-04-02 |
@@ -18,8 +18,8 @@
 | [DIAGRAMS.md](./DIAGRAMS.md) | All Mermaid diagrams | 2026-03-23 |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Build and Firebase Hosting deploy guide | 2026-04-02 |
 | [progress/TODO.md](./progress/TODO.md) | Task list with priorities | 2026-04-06 |
-| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-04-06 |
-| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-04-06 |
+| [progress/ONGOING.md](./progress/ONGOING.md) | Currently active tasks | 2026-04-07 |
+| [progress/FINISHED.md](./progress/FINISHED.md) | Completed tasks | 2026-04-07 |
 
 > **Note:** `API.md` and `API_TEST_RESULTS.md` are archived. There is no REST backend — the app talks directly to Firebase.
 

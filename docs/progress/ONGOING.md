@@ -10,4 +10,4 @@
 
 ## 🟢 Low Priority
 
-- [x] TASK-051 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
+- [ ] TASK-R2-09 Build and run APK on device — Priority: Low — Target: v1.0 — Started: 2026-04-07

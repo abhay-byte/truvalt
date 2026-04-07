@@ -1,3 +1,5 @@
+Command finished with exit code 0.
+Command output:
 # FINISHED - Completed Tasks
 
 ---
@@ -23,7 +25,6 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
-| TASK-R2-09 | Build and run APK on device | 2026-04-07 | Connected to device 192.168.137.114:44049, fixed missing Log import in SyncRepositoryImpl.kt, built and installed APK. |
 | TASK-019 | Delta sync with timestamps | 2026-04-06 | Implemented true delta-based synchronization for vault items, folders, and tags. The app now tracks `updated_at` and `deleted_at` timestamps for all entities, fetching only modified records since the last sync. This reduces bandwidth and improves performance. |
 | TASK-020 | Conflict resolution (last-write-wins) | 2026-04-06 | Implemented Last-Write-Wins (LWW) conflict resolution logic in `SyncRepositoryImpl`. During the push phase, local changes are only applied if they are newer than the server version. During the pull phase, remote changes updated after `lastSyncTime` are merged into Room, ensuring the latest version prevails across all devices. |
 | TASK-051 | Passkey login (WebAuthn FIDO2) | 2026-04-02 | Implemented WebAuthn FIDO2 passkey login flow for Android, allowing users to sign in using biometric or device security instead of passwords. |

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Base64
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.data.local.dao.FolderDao
 import com.ivarna.truvalt.data.local.dao.TagDao
