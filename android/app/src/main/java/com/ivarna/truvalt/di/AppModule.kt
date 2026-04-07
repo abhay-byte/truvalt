@@ -33,7 +33,9 @@ object DatabaseModule {
             context,
             TruvaltDatabase::class.java,
             "truvalt_vault.db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides

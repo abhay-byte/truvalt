@@ -19,7 +19,7 @@ import com.ivarna.truvalt.data.local.entity.VaultItemTagEntity
         VaultItemTagEntity::class,
         SyncMetadataEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TruvaltDatabase : RoomDatabase() {
