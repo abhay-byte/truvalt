@@ -61,14 +61,21 @@ data class FolderEntity(
     val name: String,
     val icon: String?,
     val parentId: String?,
-    val updatedAt: Long
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long?,
+    val syncStatus: String
 )
 
 @Entity(tableName = "tags")
 data class TagEntity(
     @PrimaryKey
     val id: String,
-    val name: String
+    val name: String,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long?,
+    val syncStatus: String
 )
 
 @Entity(

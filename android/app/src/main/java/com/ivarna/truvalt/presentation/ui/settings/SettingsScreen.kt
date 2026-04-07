@@ -113,7 +113,9 @@ fun SettingsScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -223,19 +225,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Security,
                     title = "Security Settings",
                     subtitle = "Biometric, PIN, and lock settings",
-                    onClick = onNavigateToSecuritySettings
-                )
-                SettingsRowItem(
-                    icon = Icons.Default.Timer,
-                    title = "Auto-lock",
-                    subtitle = uiState.autoLockLabel,
-                    onClick = {}
-                )
-                SettingsRowItem(
-                    icon = Icons.Default.Timer,
-                    title = "Clipboard Timeout",
-                    subtitle = "${uiState.clipboardTimeout} seconds",
-                    onClick = {},
+                    onClick = onNavigateToSecuritySettings,
                     isLast = true
                 )
             }
@@ -248,7 +238,13 @@ fun SettingsScreen(
                     icon = Icons.Default.Brightness4,
                     title = "Theme",
                     subtitle = uiState.themeMode.replaceFirstChar { it.uppercase() },
-                    onClick = { showThemeDialog = true },
+                    onClick = { showThemeDialog = true }
+                )
+                SettingsRowItem(
+                    icon = Icons.Default.Timer,
+                    title = "Clipboard Timeout",
+                    subtitle = "${uiState.clipboardTimeout} seconds",
+                    onClick = {},
                     isLast = true
                 )
             }

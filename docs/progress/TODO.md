@@ -6,6 +6,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 ## 🔴 High Priority
 
+- [x] TASK-069 Rehaul Security Settings & UI Cleanup — Priority: High — Target: v1.0
 - [x] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Retrofit) — Priority: High — Target: v1.0
 - [x] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
 - [x] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
@@ -16,8 +17,8 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-010 Create vault item (all types) — Priority: High — Target: v1.0
 - [x] TASK-011 Read vault items list — Priority: High — Target: v1.0
 - [x] TASK-017 Local-only mode (no network) — Priority: High — Target: v1.0
-- [ ] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
-- [ ] TASK-020 Conflict resolution (last-write-wins) — Priority: High — Target: v1.0
+- [x] TASK-019 Delta sync with timestamps — Priority: High — Target: v1.0
+- [x] TASK-020 Conflict resolution (last-write-wins) — Priority: High — Target: v1.0
 - [x] TASK-021 Import from Bitwarden JSON — Priority: High — Target: v1.0
 - [x] TASK-022 Import from LastPass CSV — Priority: High — Target: v1.0
 - [x] TASK-023 Import from Chrome/Firefox CSV — Priority: High — Target: v1.0
@@ -32,6 +33,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-032 Master password change — Priority: High — Target: v1.0
 - [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
 - [x] TASK-034 Clipboard timeout setting — Priority: High — Target: v1.0
+- [x] TASK-070 Opaque TopBars for Scrolled Screens — Priority: High — Target: v1.0
 
 ---
 
@@ -58,7 +60,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 - [x] TASK-050 Delete Account — backend + Android UI + static delete-account website (TASK-050)
 - [x] TASK-067 Auth Animations & Theme Contrast (TASK-051)
-- [ ] TASK-051 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
+- [x] TASK-051 Passkey login (WebAuthn FIDO2) — Priority: Low — Target: v1.1
 - [ ] TASK-052 Passkey storage — Priority: Low — Target: v1.1
 - [ ] TASK-053 Credit card storage — Priority: Low — Target: v1.1
 - [ ] TASK-054 Identity storage — Priority: Low — Target: v1.1

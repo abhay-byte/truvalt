@@ -1,6 +1,7 @@
 package com.ivarna.truvalt.presentation.ui.auth
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ivarna.truvalt.R
 import coil.compose.AsyncImage
 
 private enum class AuthIntent {
@@ -233,7 +236,6 @@ fun ServerSetupScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Graphic Detail Card
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,8 +243,8 @@ fun ServerSetupScreen(
                     .clip(RoundedCornerShape(32.dp))
                     .background(AuthSurfaceContainerLow)
             ) {
-                AsyncImage(
-                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuDgQEJobdZ7Bi7w9hjSRwZrW7B2J1ppYvdBIdbIaQzH6Yftt8gxN-cEUpv9z_EEpNxgJKReAB8VCk5FpPHl1ys2EQSaoqESgKKWXokvwM90_S2HdNNB-CA8TdlyuLginYgJyjKzmvmpkwwpSr_11LKPmjzAWIjpupfH0GxSFRxs0WlwCPZ4SZlwulJH4Sdpb6F89yrizBpMtDj4RobUb0Bsyj04Ll2hwbIr7RPCUyKacfprSfzTdWjeJyAlKMOF-ARPyWo8idH3OxE",
+                Image(
+                    painter = painterResource(id = R.drawable.server_setup_bg),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().alpha(0.4f),
                     contentScale = ContentScale.Crop

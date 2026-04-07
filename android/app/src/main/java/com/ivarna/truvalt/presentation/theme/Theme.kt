@@ -74,7 +74,7 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerLowest = Color(0xFF141E35),
     surfaceContainerHighest = Color(0xFF161F34),
     surfaceBright = Color(0xFF0B1326),
-    outline = Color(0xFF313B58),
+    outline = Color(0xFF8E99B3),
     outlineVariant = Color(0xFF1C2744) // Ghost border equivalent for dark mode
 )
 

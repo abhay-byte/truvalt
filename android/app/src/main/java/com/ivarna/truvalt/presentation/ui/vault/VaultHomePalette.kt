@@ -52,7 +52,7 @@ fun rememberVaultPalette(): VaultHomePalette {
             iconTileSurface = scheme.surfaceContainerHighest,
             title = scheme.onSurface,
             body = scheme.onSurfaceVariant,
-            muted = scheme.outline,
+            muted = scheme.onSurfaceVariant.copy(alpha = 0.7f),
             brand = scheme.primary,
             brandStrong = scheme.primaryContainer,
             chipSelectedSurface = scheme.primaryContainer,

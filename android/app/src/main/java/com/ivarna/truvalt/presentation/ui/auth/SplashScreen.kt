@@ -55,20 +55,27 @@ fun SplashScreen(
         }
     }
 
-    val truvaltSurface = Color(0xFF0E0050)
-    val truvaltPrimary = Color(0xFFC5C0FF)
-    val truvaltPrimaryContainer = Color(0xFF534AB7)
-    val truvaltSurfaceContainerHighest = Color(0xFF30277C)
-    val truvaltOnSurface = Color(0xFFE4DFFF)
-    val truvaltOnSurfaceVariant = Color(0xFFC8C4D5)
+    val colorScheme = MaterialTheme.colorScheme
     
-    // Background Radial Gradient
-    val radialGradient = Brush.radialGradient(
+    // Design System strategy: The Fortified Sanctuary
+    // Base surface: #fcf8fe
+    // Level 1: surface-container-low (#f6f2fa)
+    // Level 2: surface-container-lowest (#ffffff)
+    // Primary: #5850bd
+    // Primary Container: #958dff
+
+    // Background Gradient following "The Fortified Sanctuary" (tonal variations)
+    val backgroundGradient = Brush.radialGradient(
         colors = listOf(
-            Color(0x26534AB7), // 15% opacity of #534ab7
-            Color(0x000E0050)  // 0% opacity of #0e0050
+            colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            colorScheme.surface
         ),
         radius = 1200f
+    )
+
+    // Signature Texture: Linear gradient from primary to primary-container for the logo
+    val signatureGradient = Brush.linearGradient(
+        colors = listOf(colorScheme.primary, colorScheme.primaryContainer)
     )
 
     // Animation for spinner
@@ -140,8 +147,8 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(truvaltSurface)
-            .background(radialGradient)
+            .background(colorScheme.surface)
+            .background(backgroundGradient)
             .statusBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
@@ -164,14 +171,7 @@ fun SplashScreen(
                     modifier = Modifier
                         .size(132.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF190968))
-                        .border(1.dp, truvaltPrimary.copy(alpha = 0.1f), CircleShape)
-                        .shadow(
-                            elevation = 50.dp,
-                            shape = CircleShape,
-                            ambientColor = truvaltPrimary,
-                            spotColor = truvaltPrimary
-                        )
+                        .background(colorScheme.surfaceContainerLowest) // Level 2: Interactive Card background
                         .graphicsLayer {
                             translationY = logoFloat
                             scaleX = logoPulse
@@ -179,6 +179,7 @@ fun SplashScreen(
                         },
                     contentAlignment = Alignment.Center
                 ) {
+                    // Soft glow from primary color
                     Box(
                         modifier = Modifier
                             .size(110.dp)
@@ -186,24 +187,19 @@ fun SplashScreen(
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        truvaltPrimary.copy(alpha = 0.16f),
+                                        colorScheme.primary.copy(alpha = 0.08f),
                                         Color.Transparent
                                     )
                                 )
                             )
-                            .blur(8.dp)
+                            .blur(20.dp)
                     )
 
                     Box(
                         modifier = Modifier
                             .size(98.dp)
                             .clip(RoundedCornerShape(30.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(truvaltPrimary, truvaltPrimaryContainer)
-                                )
-                            )
-                            .shadow(24.dp, shape = RoundedCornerShape(30.dp))
+                            .background(signatureGradient) // Signature Texture (Jewel-like FAB)
                             .graphicsLayer {
                                 rotationZ = logoTilt
                             },
@@ -222,19 +218,18 @@ fun SplashScreen(
 
                 Text(
                     text = "Truvalt",
-                    fontSize = 50.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = truvaltOnSurface,
-                    letterSpacing = (-1.8).sp
+                    style = MaterialTheme.typography.displayLarge,
+                    color = colorScheme.onSurface,
+                    letterSpacing = (-1.8).sp,
+                    fontWeight = FontWeight.ExtraBold
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "Your vault, zero knowledge",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = truvaltOnSurfaceVariant.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = colorScheme.onSurfaceVariant,
                     letterSpacing = 0.5.sp
                 )
             }
@@ -255,7 +250,7 @@ fun SplashScreen(
                 ) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawCircle(
-                            color = truvaltSurfaceContainerHighest,
+                            color = colorScheme.surfaceContainerHighest,
                             style = Stroke(width = 3.dp.toPx())
                         )
                     }
@@ -270,7 +265,7 @@ fun SplashScreen(
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             drawArc(
-                                color = truvaltPrimary,
+                                color = colorScheme.primary,
                                 startAngle = 0f,
                                 sweepAngle = loaderSweep,
                                 useCenter = false,
@@ -287,10 +282,10 @@ fun SplashScreen(
                 
                 Text(
                     text = "ESTABLISHING SECURE LINK",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = truvaltOnSurfaceVariant.copy(alpha = 0.4f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     letterSpacing = 2.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -306,7 +301,7 @@ fun SplashScreen(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(truvaltPrimary.copy(alpha = alpha))
+                                .background(colorScheme.primary.copy(alpha = alpha))
                         )
                     }
                 }

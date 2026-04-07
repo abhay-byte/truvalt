@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TagDao {
 
-    @Query("SELECT * FROM tags ORDER BY name ASC")
+    @Query("SELECT * FROM tags WHERE deletedAt IS NULL ORDER BY name ASC")
     fun getAllTags(): Flow<List<TagEntity>>
 
-    @Query("SELECT * FROM tags ORDER BY name ASC")
+    @Query("SELECT * FROM tags WHERE deletedAt IS NULL ORDER BY name ASC")
     suspend fun getAllTagsNow(): List<TagEntity>
 
     @Query("SELECT * FROM tags WHERE id = :id")
@@ -35,6 +35,15 @@ interface TagDao {
 
     @Query("DELETE FROM tags WHERE id = :id")
     suspend fun deleteTagById(id: String)
+
+    @Query("SELECT * FROM tags WHERE syncStatus = :status")
+    suspend fun getTagsBySyncStatus(status: String): List<TagEntity>
+
+    @Query("UPDATE tags SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
+    @Query("UPDATE tags SET deletedAt = :deletedAt, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    suspend fun softDeleteTag(id: String, deletedAt: Long)
 
     @Query("SELECT tags.* FROM tags INNER JOIN vault_item_tags ON tags.id = vault_item_tags.tagId WHERE vault_item_tags.itemId = :itemId")
     fun getTagsForItem(itemId: String): Flow<List<TagEntity>>

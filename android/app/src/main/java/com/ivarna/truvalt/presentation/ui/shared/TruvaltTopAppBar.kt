@@ -35,61 +35,69 @@ fun TruvaltTopAppBar(
     photoUrl: String? = null,
     profileFallback: String = "U"
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = palette.background,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Transparent),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.truvalt_icon),
-                    contentDescription = "Truvalt Logo",
-                    modifier = Modifier.size(26.dp),
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(palette.title)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Transparent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.truvalt_icon),
+                        contentDescription = "Truvalt Logo",
+                        modifier = Modifier.size(26.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(palette.title)
+                    )
+                }
+                Text(
+                    text = title,
+                    color = palette.title,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
             }
-            Text(
-                text = title,
-                color = palette.title,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
-            )
-        }
 
-        Surface(
-            modifier = Modifier.size(42.dp),
-            shape = CircleShape,
-            color = palette.mutedSurface,
-            border = androidx.compose.foundation.BorderStroke(1.dp, palette.cardBorder.copy(alpha = 0.2f))
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                if (!photoUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = photoUrl,
-                        contentDescription = "Profile",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Text(
-                        text = profileFallback,
-                        color = palette.brand,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = palette.mutedSurface,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    palette.cardBorder.copy(alpha = 0.2f)
+                )
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (!photoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = "Profile",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = profileFallback,
+                            color = palette.brand,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }

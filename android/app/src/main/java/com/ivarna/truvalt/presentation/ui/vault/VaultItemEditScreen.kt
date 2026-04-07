@@ -1,7 +1,10 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,15 +13,83 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ivarna.truvalt.domain.model.*
 import com.ivarna.truvalt.presentation.ui.shared.PasswordGeneratorDialog
 import com.ivarna.truvalt.presentation.ui.shared.QRScannerDialog
+
+@Composable
+fun SanctuaryTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = Int.MAX_VALUE,
+    isError: Boolean = false,
+    supportingText: @Composable (() -> Unit)? = null
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val colorScheme = MaterialTheme.colorScheme
+
+    Column(modifier = modifier) {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isError) colorScheme.error else colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+            modifier = Modifier.padding(start = 2.dp, bottom = 6.dp),
+            letterSpacing = 1.1.sp
+        )
+        
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { isFocused = it.isFocused }
+                .border(
+                    width = 2.dp,
+                    color = if (isFocused) colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+                    shape = RoundedCornerShape(2.dp)
+                ),
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
+            visualTransformation = visualTransformation,
+            singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
+            isError = isError,
+            supportingText = supportingText,
+            shape = RoundedCornerShape(2.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = colorScheme.surfaceContainerHighest,
+                unfocusedContainerColor = colorScheme.surfaceContainerHighest,
+                errorContainerColor = colorScheme.surfaceContainerHighest,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                errorIndicatorColor = Color.Transparent,
+                focusedTextColor = colorScheme.onSurface,
+                unfocusedTextColor = colorScheme.onSurface,
+                focusedLabelColor = colorScheme.primary,
+                unfocusedLabelColor = colorScheme.onSurfaceVariant
+            )
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,66 +129,140 @@ fun VaultItemEditScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(
-                title = { Text(if (itemId != null) "Edit ${selectedType.displayName}" else "Add ${selectedType.displayName}") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.toggleFavorite() }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp, start = 12.dp, end = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.size(48.dp)
+                    ) {
                         Icon(
-                            if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            "Favorite",
-                            tint = if (isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.onSurfaceVariant
+                            Icons.AutoMirrored.Filled.ArrowBack, 
+                            "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    if (itemId != null) {
-                        IconButton(onClick = { viewModel.deleteItem(itemId) }) {
-                            Icon(Icons.Default.Delete, "Delete")
+                    Row {
+                        IconButton(onClick = { viewModel.toggleFavorite() }) {
+                            Icon(
+                                if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                "Favorite",
+                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (itemId != null) {
+                            IconButton(onClick = { viewModel.deleteItem(itemId) }) {
+                                Icon(
+                                    Icons.Default.DeleteOutline, 
+                                    "Delete",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
-            )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = if (itemId != null) "Edit Entry" else "New Entry",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1).sp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                
+                Text(
+                    text = selectedType.displayName,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                OutlinedButton(
-                    onClick = onNavigateBack,
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Cancel")
-                }
-                Button(
-                    onClick = {
-                        validationErrors = viewModel.validateForm()
-                        if (validationErrors.isEmpty()) {
-                            viewModel.saveItem()
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    enabled = !uiState.isSaving
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
+                    TextButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            "Cancel", 
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    } else {
-                        Text("Save")
+                    }
+                    
+                    val signatureGradient = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primaryContainer
+                        )
+                    )
+                    
+                    Button(
+                        onClick = {
+                            validationErrors = viewModel.validateForm()
+                            if (validationErrors.isEmpty()) {
+                                viewModel.saveItem()
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1.6f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(signatureGradient),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f)
+                        ),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !uiState.isSaving
+                    ) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                "Secure Save", 
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
@@ -138,17 +283,23 @@ fun VaultItemEditScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 if (validationErrors.isNotEmpty()) {
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "Please correct the following:",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                             validationErrors.forEach { error ->
                                 Text(
                                     "• $error",
@@ -160,35 +311,43 @@ fun VaultItemEditScreen(
                     }
                 }
 
-                OutlinedTextField(
-                    value = itemName,
-                    onValueChange = { viewModel.updateItemName(it) },
-                    label = { Text("Item Name *") },
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    singleLine = true
-                )
-
-                when (selectedType) {
-                    is VaultItemType.Login -> LoginItemFields(viewModel)
-                    is VaultItemType.Passphrase -> PassphraseItemFields(viewModel)
-                    is VaultItemType.SecureNote -> SecureNoteItemFields(viewModel)
-                    is VaultItemType.SecurityCode -> SecurityCodeItemFields(viewModel)
-                    is VaultItemType.CreditCard -> CreditCardItemFields(viewModel)
-                    is VaultItemType.Identity -> IdentityItemFields(viewModel)
-                    is VaultItemType.Passkey -> PasskeyItemFields(viewModel)
-                    else -> {
-                        Text(
-                            "Additional fields for ${selectedType.displayName} coming soon",
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        SanctuaryTextField(
+                            value = itemName,
+                            onValueChange = { viewModel.updateItemName(it) },
+                            label = "Item Name",
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        when (selectedType) {
+                            is VaultItemType.Login -> LoginItemFields(viewModel)
+                            is VaultItemType.Passphrase -> PassphraseItemFields(viewModel)
+                            is VaultItemType.SecureNote -> SecureNoteItemFields(viewModel)
+                            is VaultItemType.SecurityCode -> SecurityCodeItemFields(viewModel)
+                            is VaultItemType.CreditCard -> CreditCardItemFields(viewModel)
+                            is VaultItemType.Identity -> IdentityItemFields(viewModel)
+                            is VaultItemType.Passkey -> PasskeyItemFields(viewModel)
+                            else -> {
+                                Text(
+                                    "Additional fields for ${selectedType.displayName} coming soon",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
@@ -201,78 +360,72 @@ fun LoginItemFields(viewModel: VaultItemEditViewModel) {
     var showPasswordGenerator by remember { mutableStateOf(false) }
     var showQRScanner by remember { mutableStateOf(false) }
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = loginData.url,
             onValueChange = { viewModel.updateLoginData(loginData.copy(url = it)) },
-            label = { Text("Website URL") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Language, null) }
+            label = "Website URL",
+            leadingIcon = { Icon(Icons.Default.Language, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = loginData.username,
             onValueChange = { viewModel.updateLoginData(loginData.copy(username = it)) },
-            label = { Text("Username / Email *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Person, null) }
+            label = "Username / Email",
+            leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
-            value = loginData.password,
-            onValueChange = { viewModel.updateLoginData(loginData.copy(password = it)) },
-            label = { Text("Password *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-            leadingIcon = { Icon(Icons.Default.VpnKey, null) },
-            trailingIcon = {
-                Row {
-                    IconButton(onClick = { showPasswordGenerator = true }) {
-                        Icon(Icons.Default.AutoAwesome, "Generate")
-                    }
-                    IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(
-                            if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            null
-                        )
+        Column {
+            SanctuaryTextField(
+                value = loginData.password,
+                onValueChange = { viewModel.updateLoginData(loginData.copy(password = it)) },
+                label = "Password",
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                leadingIcon = { Icon(Icons.Default.VpnKey, null, tint = MaterialTheme.colorScheme.primary) },
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = { showPasswordGenerator = true }) {
+                            Icon(Icons.Default.AutoAwesome, "Generate", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(
+                                if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
+            )
+            
+            if (loginData.password.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                PasswordStrengthBar(password = loginData.password)
+            }
+        }
+
+        SanctuaryTextField(
+            value = loginData.totpSeed ?: "",
+            onValueChange = { viewModel.updateLoginData(loginData.copy(totpSeed = it.ifBlank { null })) },
+            label = "TOTP Seed",
+            trailingIcon = {
+                IconButton(onClick = { showQRScanner = true }) {
+                    Icon(Icons.Default.QrCodeScanner, "Scan QR", tint = MaterialTheme.colorScheme.primary)
+                }
+            },
+            leadingIcon = { Icon(Icons.Default.AccessTime, null, tint = MaterialTheme.colorScheme.primary) },
+            supportingText = { 
+                Text(
+                    "Optional: For 2FA/authenticator app codes",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                ) 
             }
         )
 
-        OutlinedTextField(
-            value = loginData.totpSeed ?: "",
-            onValueChange = { viewModel.updateLoginData(loginData.copy(totpSeed = it.ifBlank { null })) },
-            label = { Text("TOTP Seed (Base32)") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            trailingIcon = {
-                IconButton(onClick = { showQRScanner = true }) {
-                    Icon(Icons.Default.QrCodeScanner, "Scan QR")
-                }
-            },
-            leadingIcon = { Icon(Icons.Default.AccessTime, null) },
-            supportingText = { Text("Optional: For 2FA/authenticator app codes") }
-        )
-
-        OutlinedTextField(
+        SanctuaryTextField(
             value = loginData.notes,
             onValueChange = { viewModel.updateLoginData(loginData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 3,
             maxLines = 5
         )
@@ -303,26 +456,20 @@ fun LoginItemFields(viewModel: VaultItemEditViewModel) {
 fun PassphraseItemFields(viewModel: VaultItemEditViewModel) {
     val passphraseData by viewModel.passphraseData.collectAsState()
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = passphraseData.passphrase,
             onValueChange = { viewModel.updatePassphraseData(passphraseData.copy(passphrase = it)) },
-            label = { Text("Passphrase *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Passphrase",
             minLines = 3,
             maxLines = 6,
-            leadingIcon = { Icon(Icons.Default.TextFields, null) }
+            leadingIcon = { Icon(Icons.Default.TextFields, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = passphraseData.notes,
             onValueChange = { viewModel.updatePassphraseData(passphraseData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 2,
             maxLines = 4
         )
@@ -333,16 +480,13 @@ fun PassphraseItemFields(viewModel: VaultItemEditViewModel) {
 fun SecureNoteItemFields(viewModel: VaultItemEditViewModel) {
     val secureNoteData by viewModel.secureNoteData.collectAsState()
 
-    OutlinedTextField(
+    SanctuaryTextField(
         value = secureNoteData.content,
         onValueChange = { viewModel.updateSecureNoteData(secureNoteData.copy(content = it)) },
-        label = { Text("Note Content *") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        minLines = 5,
-        maxLines = 10,
-        leadingIcon = { Icon(Icons.Default.Note, null) }
+        label = "Note Content",
+        minLines = 8,
+        maxLines = 15,
+        leadingIcon = { Icon(Icons.Default.Note, null, tint = MaterialTheme.colorScheme.primary) }
     )
 }
 
@@ -350,47 +494,30 @@ fun SecureNoteItemFields(viewModel: VaultItemEditViewModel) {
 fun SecurityCodeItemFields(viewModel: VaultItemEditViewModel) {
     val securityCodeData by viewModel.securityCodeData.collectAsState()
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = securityCodeData.code,
             onValueChange = { viewModel.updateSecurityCodeData(securityCodeData.copy(code = it)) },
-            label = { Text("Security Code *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.VerifiedUser, null) }
+            label = "Security Code",
+            leadingIcon = { Icon(Icons.Default.VerifiedUser, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = securityCodeData.codeType,
             onValueChange = { viewModel.updateSecurityCodeData(securityCodeData.copy(codeType = it)) },
-            label = { Text("Code Type") },
-            placeholder = { Text("e.g., Recovery, Backup") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Code Type"
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = securityCodeData.issuer,
             onValueChange = { viewModel.updateSecurityCodeData(securityCodeData.copy(issuer = it)) },
-            label = { Text("Issuer") },
-            placeholder = { Text("e.g., Google, GitHub") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Issuer"
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = securityCodeData.notes,
             onValueChange = { viewModel.updateSecurityCodeData(securityCodeData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 2,
             maxLines = 4
         )
@@ -402,77 +529,60 @@ fun CreditCardItemFields(viewModel: VaultItemEditViewModel) {
     val creditCardData by viewModel.creditCardData.collectAsState()
     var showCvv by remember { mutableStateOf(false) }
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = creditCardData.cardNumber,
             onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(cardNumber = it)) },
-            label = { Text("Card Number *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.CreditCard, null) }
+            label = "Card Number",
+            leadingIcon = { Icon(Icons.Default.CreditCard, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = creditCardData.cardholderName,
             onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(cardholderName = it)) },
-            label = { Text("Cardholder Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Cardholder Name"
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
+            SanctuaryTextField(
                 value = creditCardData.expiryMonth?.toString() ?: "",
                 onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(expiryMonth = it.toIntOrNull())) },
-                label = { Text("Month") },
-                placeholder = { Text("MM") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = "Month",
+                modifier = Modifier.weight(1f)
             )
 
-            OutlinedTextField(
+            SanctuaryTextField(
                 value = creditCardData.expiryYear?.toString() ?: "",
                 onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(expiryYear = it.toIntOrNull())) },
-                label = { Text("Year") },
-                placeholder = { Text("YYYY") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                label = "Year",
+                modifier = Modifier.weight(1f)
             )
 
-            OutlinedTextField(
+            SanctuaryTextField(
                 value = creditCardData.cvv,
                 onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(cvv = it)) },
-                label = { Text("CVV") },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
+                label = "CVV",
+                modifier = Modifier.weight(1.2f),
                 visualTransformation = if (showCvv) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(onClick = { showCvv = !showCvv }) {
                         Icon(
                             if (showCvv) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            null
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             )
         }
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = creditCardData.notes,
             onValueChange = { viewModel.updateCreditCardData(creditCardData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 2,
             maxLines = 4
         )
@@ -483,69 +593,47 @@ fun CreditCardItemFields(viewModel: VaultItemEditViewModel) {
 fun IdentityItemFields(viewModel: VaultItemEditViewModel) {
     val identityData by viewModel.identityData.collectAsState()
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = identityData.firstName,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(firstName = it)) },
-            label = { Text("First Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Person, null) }
+            label = "First Name",
+            leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = identityData.lastName,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(lastName = it)) },
-            label = { Text("Last Name") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Last Name"
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = identityData.email,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(email = it)) },
-            label = { Text("Email") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Email, null) }
+            label = "Email",
+            leadingIcon = { Icon(Icons.Default.Email, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = identityData.phone,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(phone = it)) },
-            label = { Text("Phone") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Phone, null) }
+            label = "Phone",
+            leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = identityData.address,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(address = it)) },
-            label = { Text("Address") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Address",
             minLines = 3,
             maxLines = 5,
-            leadingIcon = { Icon(Icons.Default.Home, null) }
+            leadingIcon = { Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = identityData.notes,
             onValueChange = { viewModel.updateIdentityData(identityData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 2,
             maxLines = 4
         )
@@ -556,46 +644,30 @@ fun IdentityItemFields(viewModel: VaultItemEditViewModel) {
 fun PasskeyItemFields(viewModel: VaultItemEditViewModel) {
     val passkeyData by viewModel.passkeyData.collectAsState()
 
-    Column {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SanctuaryTextField(
             value = passkeyData.credentialId,
             onValueChange = { viewModel.updatePasskeyData(passkeyData.copy(credentialId = it)) },
-            label = { Text("Credential ID") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.PhoneAndroid, null) }
+            label = "Credential ID",
+            leadingIcon = { Icon(Icons.Default.PhoneAndroid, null, tint = MaterialTheme.colorScheme.primary) }
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = passkeyData.rpId,
             onValueChange = { viewModel.updatePasskeyData(passkeyData.copy(rpId = it)) },
-            label = { Text("Relying Party ID") },
-            placeholder = { Text("e.g., example.com") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Relying Party ID"
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = passkeyData.username,
             onValueChange = { viewModel.updatePasskeyData(passkeyData.copy(username = it)) },
-            label = { Text("Username") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            singleLine = true
+            label = "Username"
         )
 
-        OutlinedTextField(
+        SanctuaryTextField(
             value = passkeyData.notes,
             onValueChange = { viewModel.updatePasskeyData(passkeyData.copy(notes = it)) },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            label = "Notes",
             minLines = 2,
             maxLines = 4
         )

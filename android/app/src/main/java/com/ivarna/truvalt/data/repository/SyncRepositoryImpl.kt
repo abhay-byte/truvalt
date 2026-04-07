@@ -41,14 +41,18 @@ class SyncRepositoryImpl @Inject constructor(
 
         return try {
             withContext(Dispatchers.IO) {
+                // 1. Push local changes
                 pushFolders(uid)
                 pushTags(uid)
                 pushVaultItems(uid)
+
+                // 2. Pull remote changes
                 pullRemoteState(uid)
             }
             preferences.setLastSyncTime(System.currentTimeMillis())
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("SyncRepository", "Sync failed", e)
             Result.failure(e)
         }
     }
@@ -76,56 +80,69 @@ class SyncRepositoryImpl @Inject constructor(
     // ── Push local folders → Firestore ────────────────────────────────────────
 
     private suspend fun pushFolders(uid: String) {
-        val remoteFolderIds = firestoreRepository.getFolders(uid).map { it["id"] as String }.toSet()
-        val localFolders = folderDao.getAllFoldersNow()
+        val pending = folderDao.getFoldersBySyncStatus("PENDING_UPLOAD")
+        if (pending.isEmpty()) return
 
-        localFolders.forEach { folder ->
-            firestoreRepository.saveFolder(
-                uid = uid,
-                folder = mapOf(
-                    "id" to folder.id,
-                    "name" to folder.name,
-                    "icon" to folder.icon,
-                    "parent_id" to folder.parentId,
-                )
+        val payload = pending.map { folder ->
+            mapOf(
+                "id" to folder.id,
+                "name" to folder.name,
+                "icon" to folder.icon,
+                "parent_id" to folder.parentId,
+                "created_at" to toSeconds(folder.createdAt),
+                "updated_at" to toSeconds(folder.updatedAt),
+                "deleted_at" to folder.deletedAt?.let(::toSeconds),
             )
         }
 
-        // Pull back authoritative remote list into Room
-        val remoteFolders = firestoreRepository.getFolders(uid).map { remote ->
-            FolderEntity(
-                id = remote["id"] as String,
-                name = remote["name"] as? String ?: "",
-                icon = remote["icon"] as? String,
-                parentId = remote["parent_id"] as? String,
-                updatedAt = ((remote["updated_at"] as? Number)?.toLong() ?: 0L) * 1000L,
-            )
+        // Batch sync folders (similar to vault items)
+        for (data in payload) {
+            val folderId = data["id"] as String
+            val incoming = (data["updated_at"] as Long)
+            val existing = firestoreRepository.getFolder(uid, folderId)
+
+            if (existing != null) {
+                val serverUpdatedAt = ((existing["updated_at"] as? Number)?.toLong() ?: 0L)
+                if (serverUpdatedAt > incoming) {
+                    // Conflict: Server is newer. Will be updated during pull phase.
+                    continue
+                }
+            }
+            firestoreRepository.saveFolder(uid, data)
+            folderDao.updateSyncStatus(folderId, "SYNCED")
         }
-        if (remoteFolders.isNotEmpty()) folderDao.insertFolders(remoteFolders)
     }
 
     // ── Push local tags → Firestore ───────────────────────────────────────────
 
     private suspend fun pushTags(uid: String) {
-        val remoteTagIds = firestoreRepository.getTags(uid).map { it["id"] as String }.toSet()
-        val localTags = tagDao.getAllTagsNow()
+        val pending = tagDao.getTagsBySyncStatus("PENDING_UPLOAD")
+        if (pending.isEmpty()) return
 
-        localTags.forEach { tag ->
-            if (!remoteTagIds.contains(tag.id)) {
-                firestoreRepository.saveTag(
-                    uid = uid,
-                    tag = mapOf("id" to tag.id, "name" to tag.name)
-                )
-            }
-        }
-
-        val remoteTags = firestoreRepository.getTags(uid).map { remote ->
-            TagEntity(
-                id = remote["id"] as String,
-                name = remote["name"] as? String ?: "",
+        val payload = pending.map { tag ->
+            mapOf(
+                "id" to tag.id,
+                "name" to tag.name,
+                "created_at" to toSeconds(tag.createdAt),
+                "updated_at" to toSeconds(tag.updatedAt),
+                "deleted_at" to tag.deletedAt?.let(::toSeconds),
             )
         }
-        if (remoteTags.isNotEmpty()) tagDao.insertTags(remoteTags)
+
+        for (data in payload) {
+            val tagId = data["id"] as String
+            val incoming = (data["updated_at"] as Long)
+            val existing = firestoreRepository.getTags(uid).find { it["id"] == tagId } // No getTagById for tags in repo yet, using list
+
+            if (existing != null) {
+                val serverUpdatedAt = ((existing["updated_at"] as? Number)?.toLong() ?: 0L)
+                if (serverUpdatedAt > incoming) {
+                    continue
+                }
+            }
+            firestoreRepository.saveTag(uid, data)
+            tagDao.updateSyncStatus(tagId, "SYNCED")
+        }
     }
 
     // ── Push pending vault items → Firestore (batch sync) ────────────────────
@@ -165,13 +182,34 @@ class SyncRepositoryImpl @Inject constructor(
         val lastSyncMs = preferences.lastSyncTime.first()
         val updatedAfterSeconds = if (lastSyncMs > 0L) toSeconds(lastSyncMs) else null
 
+        // 1. Sync Vault Items
         val activeItems = firestoreRepository.getVaultItems(uid, updatedAfterSeconds)
         val trashItems = firestoreRepository.getTrashedItems(uid)
-        val allRemote = (activeItems + trashItems).distinctBy { it["id"] }
+        val allRemoteItems = (activeItems + trashItems).distinctBy { it["id"] }
 
-        if (allRemote.isNotEmpty()) {
-            vaultItemDao.insertItems(allRemote.map { it.toEntity() })
-            allRemote.forEach { vaultItemDao.updateSyncStatus(it["id"] as String, "SYNCED") }
+        if (allRemoteItems.isNotEmpty()) {
+            vaultItemDao.insertItems(allRemoteItems.map { it.toEntity() })
+            allRemoteItems.forEach { vaultItemDao.updateSyncStatus(it["id"] as String, "SYNCED") }
+        }
+
+        // 2. Sync Folders
+        val activeFolders = firestoreRepository.getFolders(uid, updatedAfterSeconds)
+        val trashFolders = firestoreRepository.getTrashedFolders(uid)
+        val allRemoteFolders = (activeFolders + trashFolders).distinctBy { it["id"] }
+
+        if (allRemoteFolders.isNotEmpty()) {
+            folderDao.insertFolders(allRemoteFolders.map { it.toFolderEntity() })
+            allRemoteFolders.forEach { folderDao.updateSyncStatus(it["id"] as String, "SYNCED") }
+        }
+
+        // 3. Sync Tags
+        val activeTags = firestoreRepository.getTags(uid, updatedAfterSeconds)
+        val trashTags = firestoreRepository.getTrashedTags(uid)
+        val allRemoteTags = (activeTags + trashTags).distinctBy { it["id"] }
+
+        if (allRemoteTags.isNotEmpty()) {
+            tagDao.insertTags(allRemoteTags.map { it.toTagEntity() })
+            allRemoteTags.forEach { tagDao.updateSyncStatus(it["id"] as String, "SYNCED") }
         }
     }
 
@@ -180,6 +218,30 @@ class SyncRepositoryImpl @Inject constructor(
     private fun toSeconds(ms: Long): Long = ms / 1000L
 
     private fun fromSeconds(seconds: Long): Long = seconds * 1000L
+
+    private fun Map<String, Any?>.toTagEntity(): TagEntity {
+        return TagEntity(
+            id = this["id"] as String,
+            name = this["name"] as? String ?: "",
+            createdAt = fromSeconds((this["created_at"] as? Number)?.toLong() ?: 0L),
+            updatedAt = fromSeconds((this["updated_at"] as? Number)?.toLong() ?: 0L),
+            deletedAt = (this["deleted_at"] as? Number)?.toLong()?.let(::fromSeconds),
+            syncStatus = "SYNCED",
+        )
+    }
+
+    private fun Map<String, Any?>.toFolderEntity(): FolderEntity {
+        return FolderEntity(
+            id = this["id"] as String,
+            name = this["name"] as? String ?: "",
+            icon = this["icon"] as? String,
+            parentId = this["parent_id"] as? String,
+            createdAt = fromSeconds((this["created_at"] as? Number)?.toLong() ?: 0L),
+            updatedAt = fromSeconds((this["updated_at"] as? Number)?.toLong() ?: 0L),
+            deletedAt = (this["deleted_at"] as? Number)?.toLong()?.let(::fromSeconds),
+            syncStatus = "SYNCED",
+        )
+    }
 
     private fun Map<String, Any?>.toEntity(): VaultItemEntity {
         val encryptedDataStr = this["encrypted_data"] as? String ?: ""

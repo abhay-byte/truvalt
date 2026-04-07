@@ -105,7 +105,11 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveItem(item: VaultItem) {
-        val entity = item.toEntity()
+        val updatedItem = item.copy(
+            updatedAt = System.currentTimeMillis(),
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        val entity = updatedItem.toEntity()
         vaultItemDao.insertItem(entity)
     }
 
@@ -142,11 +146,15 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveFolder(folder: Folder) {
-        folderDao.insertFolder(folder.toEntity())
+        val updatedFolder = folder.copy(
+            updatedAt = System.currentTimeMillis(),
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        folderDao.insertFolder(updatedFolder.toEntity())
     }
 
     override suspend fun deleteFolder(id: String) {
-        folderDao.deleteFolderById(id)
+        folderDao.softDeleteFolder(id, System.currentTimeMillis())
     }
 
     override fun getAllTags(): Flow<List<Tag>> {
@@ -156,11 +164,15 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveTag(tag: Tag) {
-        tagDao.insertTag(tag.toEntity())
+        val updatedTag = tag.copy(
+            updatedAt = System.currentTimeMillis(),
+            syncStatus = SyncStatus.PENDING_UPLOAD
+        )
+        tagDao.insertTag(updatedTag.toEntity())
     }
 
     override suspend fun deleteTag(id: String) {
-        tagDao.deleteTagById(id)
+        tagDao.softDeleteTag(id, System.currentTimeMillis())
     }
 
     override suspend fun addTagToItem(itemId: String, tagId: String) {
@@ -226,7 +238,10 @@ class VaultRepositoryImpl @Inject constructor(
         name = name,
         icon = icon,
         parentId = parentId,
-        updatedAt = updatedAt
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        deletedAt = deletedAt,
+        syncStatus = SyncStatus.valueOf(syncStatus)
     )
 
     private fun Folder.toEntity(): FolderEntity = FolderEntity(
@@ -234,16 +249,27 @@ class VaultRepositoryImpl @Inject constructor(
         name = name,
         icon = icon,
         parentId = parentId,
-        updatedAt = updatedAt
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        deletedAt = deletedAt,
+        syncStatus = syncStatus.name
     )
 
     private fun TagEntity.toDomain(): Tag = Tag(
         id = id,
-        name = name
+        name = name,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        deletedAt = deletedAt,
+        syncStatus = SyncStatus.valueOf(syncStatus)
     )
 
     private fun Tag.toEntity(): TagEntity = TagEntity(
         id = id,
-        name = name
+        name = name,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        deletedAt = deletedAt,
+        syncStatus = syncStatus.name
     )
 }

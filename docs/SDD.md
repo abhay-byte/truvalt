@@ -105,6 +105,30 @@ The Android app reads and writes Firestore directly using the Firebase SDK:
 | `updated_at` | int | Unix timestamp |
 | `deleted_at` | int/null | Soft-delete marker |
 
+### 4.5 Folder Document
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Client UUID preserved |
+| `user_id` | string | Firebase UID |
+| `name` | string | Folder name |
+| `icon` | string/null | Material icon name |
+| `parent_id` | string/null | Parent folder ID |
+| `created_at` | int | Unix timestamp |
+| `updated_at` | int | Unix timestamp |
+| `deleted_at` | int/null | Soft-delete marker |
+
+### 4.6 Tag Document
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Client UUID preserved |
+| `user_id` | string | Firebase UID |
+| `name` | string | Tag name |
+| `created_at` | int | Unix timestamp |
+| `updated_at` | int | Unix timestamp |
+| `deleted_at` | int/null | Soft-delete marker |
+
 ---
 
 ## 5. Auth Flow
@@ -133,10 +157,13 @@ The Android app reads and writes Firestore directly using the Firebase SDK:
 
 ## 6. Sync / Conflict Logic
 
-- Vault items carry integer `updated_at` timestamps.
-- `FirestoreVaultRepository.syncVaultItems()` uses last-write-wins: incoming items with an older `updated_at` than the Firestore copy yield a conflict rather than an overwrite.
-- Android pushes folders, tags, and pending vault items before pulling active and trashed items back into Room.
-- Folder/tag deletion tombstones are not yet propagated in the current sync pass.
+- All entities (vault items, folders, tags) carry integer `updated_at` and `deleted_at` timestamps.
+- Delta sync uses `updated_at` to fetch only modified items since the last successful sync.
+- Conflict resolution follows Last-Write-Wins: if the server's `updated_at` is newer than the incoming item's, the server's state is preserved.
+- Android performs a two-phase sync:
+    1. **Push**: Local changes with `PENDING_UPLOAD` or `PENDING_DELETE` status are uploaded to Firestore.
+    2. **Pull**: Remote changes updated after `lastSyncTime` are fetched and merged into the local Room database.
+- Soft deletes (`deleted_at` != null) ensure that deletions are correctly propagated across devices during sync.
 
 ---
 

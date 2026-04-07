@@ -145,14 +145,25 @@ class FirestoreVaultRepository @Inject constructor(
     }
 
     // ── Folders ───────────────────────────────────────────────────────────────
+    suspend fun getFolders(uid: String, updatedAfterSeconds: Long? = null): List<Map<String, Any?>> {
+        var query = firestore.collection("users").document(uid)
+            .collection("folders")
+            .whereEqualTo("deleted_at", null)
 
-    suspend fun getFolders(uid: String): List<Map<String, Any?>> {
-        return firestore.collection("users").document(uid)
+        if (updatedAfterSeconds != null) {
+            query = query.whereGreaterThan("updated_at", updatedAfterSeconds)
+        }
+
+        return query.get().await().documents.mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+    }
+
+    suspend fun getTrashedFolders(uid: String): List<Map<String, Any?>> {
+        val snapshot = firestore.collection("users").document(uid)
             .collection("folders")
             .get().await()
-            .documents
-            .mapNotNull { it.data?.plus(mapOf("id" to it.id)) }
-            .sortedBy { it["name"] as? String ?: "" }
+        return snapshot.documents
+            .mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+            .filter { it["deleted_at"] != null }
     }
 
     suspend fun getFolder(uid: String, folderId: String): Map<String, Any?>? {
@@ -167,12 +178,26 @@ class FirestoreVaultRepository @Inject constructor(
             ?: error("folder must have an id")
         val ref = firestore.collection("users").document(uid)
             .collection("folders").document(folderId)
+        val existing = ref.get().await()
         val now = System.currentTimeMillis() / 1000L
         val data = mutableMapOf<String, Any?>()
         data.putAll(folder)
         data["user_id"] = uid
-        data["updated_at"] = now
+        data["updated_at"] = folder["updated_at"] ?: now
+        if (!existing.exists()) {
+            data["created_at"] = folder["created_at"] ?: now
+        }
         ref.set(data, com.google.firebase.firestore.SetOptions.merge()).await()
+    }
+
+    /**
+     * Soft-delete folder: sets deleted_at to current timestamp.
+     */
+    suspend fun softDeleteFolder(uid: String, folderId: String) {
+        val now = System.currentTimeMillis() / 1000L
+        val ref = firestore.collection("users").document(uid)
+            .collection("folders").document(folderId)
+        ref.update(mapOf("deleted_at" to now, "updated_at" to now)).await()
     }
 
     suspend fun deleteFolder(uid: String, folderId: String) {
@@ -182,14 +207,25 @@ class FirestoreVaultRepository @Inject constructor(
     }
 
     // ── Tags ──────────────────────────────────────────────────────────────────
+    suspend fun getTags(uid: String, updatedAfterSeconds: Long? = null): List<Map<String, Any?>> {
+        var query = firestore.collection("users").document(uid)
+            .collection("tags")
+            .whereEqualTo("deleted_at", null)
 
-    suspend fun getTags(uid: String): List<Map<String, Any?>> {
-        return firestore.collection("users").document(uid)
+        if (updatedAfterSeconds != null) {
+            query = query.whereGreaterThan("updated_at", updatedAfterSeconds)
+        }
+
+        return query.get().await().documents.mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+    }
+
+    suspend fun getTrashedTags(uid: String): List<Map<String, Any?>> {
+        val snapshot = firestore.collection("users").document(uid)
             .collection("tags")
             .get().await()
-            .documents
-            .mapNotNull { it.data?.plus(mapOf("id" to it.id)) }
-            .sortedBy { it["name"] as? String ?: "" }
+        return snapshot.documents
+            .mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+            .filter { it["deleted_at"] != null }
     }
 
     suspend fun saveTag(uid: String, tag: Map<String, Any?>) {
@@ -197,10 +233,26 @@ class FirestoreVaultRepository @Inject constructor(
             ?: error("tag must have an id")
         val ref = firestore.collection("users").document(uid)
             .collection("tags").document(tagId)
+        val existing = ref.get().await()
+        val now = System.currentTimeMillis() / 1000L
         val data = mutableMapOf<String, Any?>()
         data.putAll(tag)
         data["user_id"] = uid
+        data["updated_at"] = tag["updated_at"] ?: now
+        if (!existing.exists()) {
+            data["created_at"] = tag["created_at"] ?: now
+        }
         ref.set(data, com.google.firebase.firestore.SetOptions.merge()).await()
+    }
+
+    /**
+     * Soft-delete tag: sets deleted_at to current timestamp.
+     */
+    suspend fun softDeleteTag(uid: String, tagId: String) {
+        val now = System.currentTimeMillis() / 1000L
+        val ref = firestore.collection("users").document(uid)
+            .collection("tags").document(tagId)
+        ref.update(mapOf("deleted_at" to now, "updated_at" to now)).await()
     }
 
     suspend fun deleteTag(uid: String, tagId: String) {

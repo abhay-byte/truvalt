@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,30 +47,42 @@ fun PasswordStrengthBar(
     modifier: Modifier = Modifier
 ) {
     val strength = remember(password) { calculateStrength(password) }
-    val activeColor = if (password.isEmpty()) MaterialTheme.colorScheme.surfaceVariant
-                      else strengthColors[minOf(strength, strengthColors.lastIndex)]
-    val inactiveColor = MaterialTheme.colorScheme.surfaceVariant
+    
+    // Design System: Tertiary for "Weak", Primary for "Strong"
+    // Interpolating between Tertiary and Primary based on strength
+    val colorScheme = MaterialTheme.colorScheme
+    val strengthColor = when {
+        password.isEmpty() -> colorScheme.surfaceContainerHighest
+        strength <= 1 -> colorScheme.tertiary
+        strength == 2 -> colorScheme.tertiary.copy(alpha = 0.7f) // Intermediate
+        else -> colorScheme.primary
+    }
+    
+    val trackColor = colorScheme.surfaceContainerHighest
 
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(trackColor)
         ) {
-            repeat(4) { index ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(if (password.isNotEmpty() && index < strength) activeColor else inactiveColor)
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(if (password.isEmpty()) 0f else (strength + 1) / 5f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(strengthColor)
+            )
         }
+        
         if (password.isNotEmpty()) {
             Text(
-                text = strengthLabels[strength],
+                text = "Security Level: ${strengthLabels[strength]}",
                 style = MaterialTheme.typography.labelSmall,
-                color = activeColor
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                modifier = Modifier.padding(start = 2.dp)
             )
         }
     }

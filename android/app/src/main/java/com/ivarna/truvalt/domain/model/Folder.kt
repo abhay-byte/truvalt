@@ -7,12 +7,19 @@ data class Folder(
     val name: String,
     val icon: String? = null,
     val parentId: String? = null,
-    val updatedAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val deletedAt: Long? = null,
+    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD
 )
 
 data class Tag(
     val id: String = UUID.randomUUID().toString(),
-    val name: String
+    val name: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val deletedAt: Long? = null,
+    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD
 )
 
 data class VaultItemTag(
