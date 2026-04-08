@@ -5,7 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
-| 2026-04-08 | 1 |
+| 2026-04-08 | 2 |
 | 2026-04-07 | 2 |
 | 2026-04-06 | 4 |
 | 2026-04-02 | 3 |
@@ -25,6 +25,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-071 | Rehaul Vault Item Cards and Item Details Screen | 2026-04-08 | Overhauled `VaultItemCard.kt` and `VaultItemDetailScreen.kt` according to `DESIGN.md` guidelines ("The Fortified Sanctuary"). Implemented live 2FA countdowns, enhanced data display (usernames/URLs), and tonal layering. |
 | TASK-037 | Inline TOTP code generation with countdown | 2026-04-08 | Added TOTP display on vault item cards and detail screen, fixed QR scanner to portrait mode, improved image QR detection with multiple binarizer strategies, optimized Gradle build for ARM64. |
 | TASK-R2-10 | Fix crash on startup due to Room schema mismatch | 2026-04-07 | Incremented Room version to 2 and added fallbackToDestructiveMigration in AppModule.kt to fix IllegalStateException. |
 | TASK-R2-09 | Build and run APK on device | 2026-04-07 | Connected to device 192.168.137.114:44049, fixed missing Log import in SyncRepositoryImpl.kt, built and installed APK. |

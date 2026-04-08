@@ -29,9 +29,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ivarna.truvalt.core.crypto.TotpGenerator
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 private data class ItemTypeStyle(
     val icon: ImageVector,
@@ -76,13 +81,22 @@ fun VaultItemCard(
     val palette = rememberVaultPalette()
     val typeStyle = itemTypeStyle(item.type)
     val clipboardManager = LocalClipboardManager.current
-    var totpCode by remember { mutableStateOf<String?>(null) }
     
-    // Generate TOTP if seed exists
+    var totpCode by remember { mutableStateOf<String?>(null) }
+    var secondsRemaining by remember { mutableIntStateOf(30) }
+
     if (!item.totpSeed.isNullOrBlank()) {
-        totpCode = try {
-            TotpGenerator.generate(item.totpSeed)
-        } catch (e: Exception) { null }
+        LaunchedEffect(item.totpSeed) {
+            while (isActive) {
+                val epochSeconds = System.currentTimeMillis() / 1000L
+                val secondsElapsed = (epochSeconds % 30).toInt()
+                secondsRemaining = 30 - secondsElapsed
+                totpCode = try {
+                    TotpGenerator.generate(item.totpSeed)
+                } catch (e: Exception) { null }
+                delay(1000L)
+            }
+        }
     }
 
     Surface(
@@ -97,15 +111,16 @@ fun VaultItemCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Icon Tile
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(52.dp)
                         .background(palette.iconTileSurface, RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -113,19 +128,22 @@ fun VaultItemCard(
                         imageVector = typeStyle.icon,
                         contentDescription = null,
                         tint = typeStyle.iconColor,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
+                
                 Spacer(modifier = Modifier.width(16.dp))
+                
+                // Content
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = item.name,
+                            style = MaterialTheme.typography.titleLarge,
                             color = palette.title,
-                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         if (item.isFavorite) {
@@ -133,88 +151,108 @@ fun VaultItemCard(
                             Box(
                                 modifier = Modifier
                                     .background(
-                                        palette.chipSelectedSurface.copy(alpha = 0.6f),
+                                        palette.brand.copy(alpha = 0.1f),
                                         RoundedCornerShape(999.dp)
                                     )
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "Fav",
-                                    color = palette.chipSelectedText,
-                                    style = MaterialTheme.typography.labelSmall
+                                    text = "FAV",
+                                    color = palette.brand,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                     }
-                    Text(
-                        text = item.subtitle.ifBlank { item.typeLabel },
-                        color = palette.muted,
-                        fontSize = 14.sp,
-                        lineHeight = 18.sp
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onCopy) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy",
-                            tint = palette.body
+                    
+                    // Primary Data (Username or Subtitle)
+                    val primaryData = item.username.ifBlank { item.subtitle }
+                    if (primaryData.isNotBlank()) {
+                        Text(
+                            text = primaryData,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = palette.body
                         )
                     }
+                    
+                    // Secondary Data (URL if available and not used as subtitle)
+                    if (item.url.isNotBlank() && item.url != primaryData) {
+                        Text(
+                            text = item.url,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = palette.muted
+                        )
+                    }
+                }
+
+                // Copy Action
+                IconButton(
+                    onClick = onCopy,
+                    modifier = Modifier.background(palette.mutedSurface.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = palette.muted
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy",
+                        tint = palette.brand,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            
-            // TOTP Code Display
+
+            // 2FA / TOTP Section (Aggressive white space per DESIGN.md)
             if (totpCode != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+                
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            palette.iconTileSurface.copy(alpha = 0.5f),
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .background(palette.mutedSurface.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = palette.brandStrong,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "2FA:",
+                            text = "2FA CODE",
+                            style = MaterialTheme.typography.labelSmall,
                             color = palette.muted,
-                            fontSize = 12.sp
+                            letterSpacing = 1.sp
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${totpCode!!.substring(0, 3)} ${totpCode!!.substring(3)}",
-                            color = palette.title,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace,
-                            letterSpacing = 2.sp
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = FontFamily.Monospace,
+                                letterSpacing = 2.sp
+                            ),
+                            color = palette.brand,
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
-                    IconButton(
-                        onClick = { clipboardManager.setText(AnnotatedString(totpCode!!)) },
-                        modifier = Modifier.size(36.dp)
+                    
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy 2FA",
-                            tint = palette.brandStrong,
-                            modifier = Modifier.size(16.dp)
+                        IconButton(
+                            onClick = { clipboardManager.setText(AnnotatedString(totpCode!!)) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy 2FA",
+                                tint = palette.brand,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        
+                        // Small Progress indicator
+                        val progress = secondsRemaining.toFloat() / 30f
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.width(32.dp).height(2.dp),
+                            color = if (secondsRemaining > 5) palette.brand else MaterialTheme.colorScheme.error,
+                            trackColor = palette.mutedSurface
                         )
                     }
                 }

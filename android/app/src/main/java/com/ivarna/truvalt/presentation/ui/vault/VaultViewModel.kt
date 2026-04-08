@@ -108,7 +108,7 @@ class VaultViewModel @Inject constructor(
     private fun matchesQuery(item: VaultItemUi, query: String): Boolean {
         if (query.isBlank()) return true
         val loweredQuery = query.lowercase()
-        return listOf(item.name, item.subtitle, item.typeLabel)
+        return listOf(item.name, item.subtitle, item.typeLabel, item.username, item.url)
             .filter { it.isNotBlank() }
             .any { it.lowercase().contains(loweredQuery) }
     }
@@ -166,11 +166,21 @@ class VaultViewModel @Inject constructor(
     private fun VaultItem.toUi(): VaultItemUi {
         val payload = payloadJson()
         val typeLabel = VaultItemType.fromId(type).displayName
+        val legacyParts = payloadString().split("|||")
+        
         return VaultItemUi(
             id = id,
             name = name,
             type = type,
             typeLabel = typeLabel,
+            username = firstNonBlank(
+                payload.stringFor("username", "email"),
+                legacyParts.getOrNull(1).orEmpty()
+            ),
+            url = firstNonBlank(
+                payload.stringFor("url"),
+                legacyParts.getOrNull(0).orEmpty()
+            ),
             subtitle = buildSubtitle(type, payload, payloadString()),
             isFavorite = favorite,
             totpSeed = payload?.optString("totpSeed")?.takeIf { it.isNotBlank() }

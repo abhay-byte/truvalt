@@ -142,9 +142,9 @@ flowchart TD
 | Attribute | Value |
 |---|---|
 | **Route/ID** | `vault_item_detail` |
-| **Purpose** | Display and interact with vault item fields |
-| **UI Elements** | Item icon, name, type chip, field rows (label, value, copy button), Edit button, Delete button, Share button |
-| **States** | Loading, Loaded, TOTPDisplay (if applicable) |
+| **Purpose** | Display and interact with vault item fields using "The Fortified Sanctuary" design |
+| **UI Elements** | Display Large item name, editorial metadata, tonal layering for fields, surface-container-highest field backgrounds, live TOTP preview with countdown, copy CTAs, Favorite/Edit/Delete actions |
+| **States** | Loading, Loaded, 2FA Active |
 | **Navigation** | Edit → VaultItemEdit, Delete → Confirm dialog |
 
 ---
@@ -327,7 +327,7 @@ flowchart TD
 
 | Component | Description | Used In |
 |---|---|---|
-| `VaultItemCard` | High-contrast vault row card with icon tile, real item-specific subtitle, favorite badge, copy action, and chevron affordance; adapts palette between dark and light themes | VaultHome, Search |
+| `VaultItemCard` | High-fidelity "The Fortified Sanctuary" card using surface-container-lowest; features icon tile, real item-specific subtitle, dual data rows (username/URL), live TOTP code with mini-countdown, favorite badge, and copy action; follows the "No-Line" rule | VaultHome, Search |
 | `TotpCountdownRing` | Circular progress ring counting down TOTP period | VaultItemDetail, TotpView |
 | `PasswordStrengthBar` | 4-level color bar with zxcvbn score label | Generator, ItemEdit |
 | `EncryptedFieldRow` | Hidden field with eye toggle, copy button, reveal timeout | ItemDetail |

@@ -523,6 +523,8 @@ data class VaultItemUi(
     val type: String,
     val typeLabel: String,
     val subtitle: String = "",
+    val username: String = "",
+    val url: String = "",
     val isFavorite: Boolean = false,
     val totpSeed: String? = null
 )
