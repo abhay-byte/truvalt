@@ -41,7 +41,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 - [ ] TASK-035 TOTP 2FA setup and verification — Priority: Medium — Target: v1.0
 - [ ] TASK-036 TOTP seed storage — Priority: Medium — Target: v1.0
-- [ ] TASK-037 Inline TOTP code generation with countdown — Priority: Medium — Target: v1.0
+- [x] TASK-037 Inline TOTP code generation with countdown — Priority: Medium — Target: v1.0
 - [ ] TASK-038 Passphrase storage — Priority: Medium — Target: v1.0
 - [ ] TASK-039 Secure note storage — Priority: Medium — Target: v1.0
 - [ ] TASK-040 Security/recovery code storage — Priority: Medium — Target: v1.0
