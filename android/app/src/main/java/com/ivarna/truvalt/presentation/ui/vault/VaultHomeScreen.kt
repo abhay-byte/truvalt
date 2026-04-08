@@ -162,7 +162,7 @@ fun VaultHomeScreen(
                 item {
                     SectionHeader(
                         palette = palette,
-                        title = "Recent Access",
+                        title = "All Items",
                         count = uiState.items.size
                     )
                 }
@@ -523,5 +523,6 @@ data class VaultItemUi(
     val type: String,
     val typeLabel: String,
     val subtitle: String = "",
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val totpSeed: String? = null
 )

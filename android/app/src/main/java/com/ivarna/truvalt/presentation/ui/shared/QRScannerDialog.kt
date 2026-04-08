@@ -16,7 +16,10 @@ import com.google.zxing.BinaryBitmap
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
+import com.google.zxing.common.GlobalHistogramBinarizer
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
@@ -49,28 +52,22 @@ fun QRScannerDialog(
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
 
-                val width = bitmap.width
-                val height = bitmap.height
-                val pixels = IntArray(width * height)
-                bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+                if (bitmap == null) {
+                    errorMessage = "Could not decode image"
+                    return@let
+                }
 
-                val source = RGBLuminanceSource(width, height, pixels)
-                val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-                val reader = MultiFormatReader()
-
-                try {
-                    val result = reader.decode(binaryBitmap)
-                    val qrText = result.text
-                    
-                    val secret = if (qrText.startsWith("otpauth://")) {
-                        Uri.parse(qrText).getQueryParameter("secret") ?: qrText
+                val result = decodeQRFromBitmap(bitmap)
+                
+                if (result != null) {
+                    val secret = if (result.startsWith("otpauth://")) {
+                        Uri.parse(result).getQueryParameter("secret") ?: result
                     } else {
-                        qrText
+                        result
                     }
-                    
                     onQRCodeScanned(secret)
-                } catch (e: Exception) {
-                    errorMessage = "No QR code found in image"
+                } else {
+                    errorMessage = "No QR code found in image. Try a clearer image or use camera."
                 }
             } catch (e: Exception) {
                 errorMessage = "Failed to read image: ${e.message}"
@@ -94,7 +91,7 @@ fun QRScannerDialog(
                         options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
                         options.setPrompt("Scan 2FA QR Code")
                         options.setBeepEnabled(false)
-                        options.setOrientationLocked(false)
+                        options.setOrientationLocked(true)  // Lock to portrait
                         barcodeLauncher.launch(options)
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -129,4 +126,61 @@ fun QRScannerDialog(
             }
         }
     )
+}
+
+private fun decodeQRFromBitmap(bitmap: Bitmap): String? {
+    val width = bitmap.width
+    val height = bitmap.height
+    val pixels = IntArray(width * height)
+    bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+    val reader = MultiFormatReader()
+    
+    // Try 1: Normal with HybridBinarizer
+    try {
+        val source = RGBLuminanceSource(width, height, pixels)
+        val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
+        return reader.decode(binaryBitmap)?.text
+    } catch (e: Exception) { }
+    
+    // Try 2: Normal with GlobalHistogramBinarizer (better for low contrast)
+    try {
+        val source = RGBLuminanceSource(width, height, pixels)
+        val binaryBitmap = BinaryBitmap(GlobalHistogramBinarizer(source))
+        return reader.decode(binaryBitmap)?.text
+    } catch (e: Exception) { }
+    
+    // Try 3: Inverted colors with HybridBinarizer
+    try {
+        val invertedPixels = IntArray(pixels.size) { i ->
+            val pixel = pixels[i]
+            Color.argb(
+                Color.alpha(pixel),
+                255 - Color.red(pixel),
+                255 - Color.green(pixel),
+                255 - Color.blue(pixel)
+            )
+        }
+        val source = RGBLuminanceSource(width, height, invertedPixels)
+        val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
+        return reader.decode(binaryBitmap)?.text
+    } catch (e: Exception) { }
+    
+    // Try 4: Inverted with GlobalHistogramBinarizer
+    try {
+        val invertedPixels = IntArray(pixels.size) { i ->
+            val pixel = pixels[i]
+            Color.argb(
+                Color.alpha(pixel),
+                255 - Color.red(pixel),
+                255 - Color.green(pixel),
+                255 - Color.blue(pixel)
+            )
+        }
+        val source = RGBLuminanceSource(width, height, invertedPixels)
+        val binaryBitmap = BinaryBitmap(GlobalHistogramBinarizer(source))
+        return reader.decode(binaryBitmap)?.text
+    } catch (e: Exception) { }
+    
+    return null
 }

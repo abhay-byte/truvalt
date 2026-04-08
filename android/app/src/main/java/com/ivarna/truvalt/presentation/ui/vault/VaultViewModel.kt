@@ -172,7 +172,8 @@ class VaultViewModel @Inject constructor(
             type = type,
             typeLabel = typeLabel,
             subtitle = buildSubtitle(type, payload, payloadString()),
-            isFavorite = favorite
+            isFavorite = favorite,
+            totpSeed = payload?.optString("totpSeed")?.takeIf { it.isNotBlank() }
         )
     }
 
