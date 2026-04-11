@@ -16,8 +16,11 @@ import com.ivarna.truvalt.domain.model.SyncStatus
 import com.ivarna.truvalt.domain.model.Tag
 import com.ivarna.truvalt.domain.model.VaultItem
 import com.ivarna.truvalt.domain.model.VaultItemType
+import com.ivarna.truvalt.domain.repository.SyncRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -30,19 +33,23 @@ class VaultRepositoryImpl @Inject constructor(
     private val tagDao: TagDao,
     private val cryptoManager: CryptoManager,
     private val preferences: TruvaltPreferences,
-    private val vaultKeyManager: VaultKeyManager
+    private val vaultKeyManager: VaultKeyManager,
+    private val syncRepository: SyncRepository,
 ) : VaultRepository {
 
     private var vaultKey: ByteArray? = null
+    private val vaultKeyVersion = MutableStateFlow(0)
 
     fun setVaultKey(key: ByteArray) {
         Log.d("VaultRepository", "setVaultKey called, key size: ${key.size}")
         vaultKey = key
+        vaultKeyVersion.value += 1
     }
 
     fun clearVaultKey() {
         Log.d("VaultRepository", "clearVaultKey called")
         vaultKey = null
+        vaultKeyVersion.value += 1
     }
     
     private fun getVaultKey(): ByteArray {
@@ -65,39 +72,27 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override fun getAllItems(): Flow<List<VaultItem>> {
-        return vaultItemDao.getAllItems().map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.getAllItems())
     }
 
     override fun getFavoriteItems(): Flow<List<VaultItem>> {
-        return vaultItemDao.getFavoriteItems().map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.getFavoriteItems())
     }
 
     override fun getItemsByFolder(folderId: String): Flow<List<VaultItem>> {
-        return vaultItemDao.getItemsByFolder(folderId).map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.getItemsByFolder(folderId))
     }
 
     override fun getItemsByType(type: String): Flow<List<VaultItem>> {
-        return vaultItemDao.getItemsByType(type).map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.getItemsByType(type))
     }
 
     override fun getTrashItems(): Flow<List<VaultItem>> {
-        return vaultItemDao.getTrashItems().map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.getTrashItems())
     }
 
     override fun searchItems(query: String): Flow<List<VaultItem>> {
-        return vaultItemDao.searchItems(query).map { entities ->
-            entities.mapNotNull { it.toDomain() }
-        }
+        return observeDecryptedItems(vaultItemDao.searchItems(query))
     }
 
     override suspend fun getItemById(id: String): VaultItem? {
@@ -111,26 +106,32 @@ class VaultRepositoryImpl @Inject constructor(
         )
         val entity = updatedItem.toEntity()
         vaultItemDao.insertItem(entity)
+        syncPendingChanges("saveItem")
     }
 
     override suspend fun deleteItem(id: String) {
         vaultItemDao.deleteItemById(id)
+        syncPendingChanges("deleteItem")
     }
 
     override suspend fun softDeleteItem(id: String) {
         vaultItemDao.softDeleteItem(id, System.currentTimeMillis())
+        syncPendingChanges("softDeleteItem")
     }
 
     override suspend fun restoreItem(id: String) {
         vaultItemDao.restoreItem(id)
+        syncPendingChanges("restoreItem")
     }
 
     override suspend fun emptyTrash() {
         vaultItemDao.emptyTrash(System.currentTimeMillis())
+        syncPendingChanges("emptyTrash")
     }
 
     override suspend fun toggleFavorite(id: String, favorite: Boolean) {
         vaultItemDao.updateFavorite(id, favorite)
+        syncPendingChanges("toggleFavorite")
     }
 
     override fun getAllFolders(): Flow<List<Folder>> {
@@ -151,10 +152,12 @@ class VaultRepositoryImpl @Inject constructor(
             syncStatus = SyncStatus.PENDING_UPLOAD
         )
         folderDao.insertFolder(updatedFolder.toEntity())
+        syncPendingChanges("saveFolder")
     }
 
     override suspend fun deleteFolder(id: String) {
         folderDao.softDeleteFolder(id, System.currentTimeMillis())
+        syncPendingChanges("deleteFolder")
     }
 
     override fun getAllTags(): Flow<List<Tag>> {
@@ -169,23 +172,45 @@ class VaultRepositoryImpl @Inject constructor(
             syncStatus = SyncStatus.PENDING_UPLOAD
         )
         tagDao.insertTag(updatedTag.toEntity())
+        syncPendingChanges("saveTag")
     }
 
     override suspend fun deleteTag(id: String) {
         tagDao.softDeleteTag(id, System.currentTimeMillis())
+        syncPendingChanges("deleteTag")
     }
 
     override suspend fun addTagToItem(itemId: String, tagId: String) {
         tagDao.addTagToItem(VaultItemTagEntity(itemId, tagId))
+        syncPendingChanges("addTagToItem")
     }
 
     override suspend fun removeTagFromItem(itemId: String, tagId: String) {
         tagDao.removeTagFromItem(VaultItemTagEntity(itemId, tagId))
+        syncPendingChanges("removeTagFromItem")
     }
 
     override fun getTagsForItem(itemId: String): Flow<List<Tag>> {
         return tagDao.getTagsForItem(itemId).map { entities ->
             entities.map { it.toDomain() }
+        }
+    }
+
+    private fun observeDecryptedItems(source: Flow<List<VaultItemEntity>>): Flow<List<VaultItem>> {
+        return source.combine(vaultKeyVersion) { entities, _ ->
+            entities.mapNotNull { it.toDomain() }
+        }
+    }
+
+    private suspend fun syncPendingChanges(reason: String) {
+        val result = runCatching { syncRepository.sync() }
+            .getOrElse { error ->
+                Log.w("VaultRepository", "Auto-sync crashed after $reason", error)
+                return
+            }
+
+        result.exceptionOrNull()?.let { error ->
+            Log.w("VaultRepository", "Auto-sync skipped after $reason: ${error.message}")
         }
     }
 

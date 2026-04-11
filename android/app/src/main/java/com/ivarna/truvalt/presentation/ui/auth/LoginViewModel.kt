@@ -9,6 +9,7 @@ import com.ivarna.truvalt.core.lock.AppLockManager
 import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
+import com.ivarna.truvalt.domain.repository.SyncRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ data class LoginUiState(
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val vaultRepository: VaultRepository,
+    private val syncRepository: SyncRepository,
     private val cryptoManager: CryptoManager,
     private val vaultKeyManager: VaultKeyManager,
     private val appLockManager: AppLockManager
@@ -44,6 +46,7 @@ class LoginViewModel @Inject constructor(
                     val derivedKeys = cryptoManager.deriveKeyFromPassword(password, email)
                     vaultKeyManager.setInMemoryKey(derivedKeys.vaultKey)
                     (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(derivedKeys.vaultKey)
+                    syncAfterUnlock("password login")
                     appLockManager.unlock()
                     _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
                 },
@@ -71,6 +74,7 @@ class LoginViewModel @Inject constructor(
                         vaultKeyManager.setInMemoryKey(mk)
                         (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(mk)
                     }
+                    syncAfterUnlock("Google sign-in")
                     appLockManager.unlock()
                     _uiState.value = _uiState.value.copy(isLoading = false, isLoggedIn = true)
                 },
@@ -91,5 +95,17 @@ class LoginViewModel @Inject constructor(
         vaultKeyManager.setInMemoryKey(offlineKey)
         (vaultRepository as? VaultRepositoryImpl)?.setVaultKey(offlineKey)
         appLockManager.unlock()
+    }
+
+    private suspend fun syncAfterUnlock(reason: String) {
+        val result = runCatching { syncRepository.sync() }
+            .getOrElse { error ->
+                Log.w("LoginViewModel", "Sync crashed after $reason", error)
+                return
+            }
+
+        result.exceptionOrNull()?.let { error ->
+            Log.w("LoginViewModel", "Sync skipped after $reason: ${error.message}")
+        }
     }
 }

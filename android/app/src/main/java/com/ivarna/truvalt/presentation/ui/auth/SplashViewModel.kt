@@ -10,6 +10,7 @@ import com.ivarna.truvalt.core.lock.AppLockManager
 import com.ivarna.truvalt.core.pin.PinStorage
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
+import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,7 @@ class SplashViewModel @Inject constructor(
     private val cryptoManager: CryptoManager,
     private val vaultKeyManager: VaultKeyManager,
     private val vaultRepository: VaultRepositoryImpl,
+    private val syncRepository: SyncRepository,
     private val pinStorage: PinStorage
 ) : ViewModel() {
 
@@ -84,6 +86,7 @@ class SplashViewModel @Inject constructor(
             vaultKeyManager.setInMemoryKey(vaultKey)
             vaultRepository.setVaultKey(vaultKey)
             preferences.setVaultUnlocked(true)
+            syncRepository.sync()
             appLockManager.unlock()
             true
         } catch (_: Exception) {
