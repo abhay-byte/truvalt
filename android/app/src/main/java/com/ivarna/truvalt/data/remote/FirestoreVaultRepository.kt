@@ -43,15 +43,20 @@ class FirestoreVaultRepository @Inject constructor(
     // ── Vault items ───────────────────────────────────────────────────────────
 
     suspend fun getVaultItems(uid: String, updatedAfterSeconds: Long? = null): List<Map<String, Any?>> {
-        var query = firestore.collection("users").document(uid)
-            .collection("vault_items")
-            .whereEqualTo("deleted_at", null)
-
-        if (updatedAfterSeconds != null) {
-            query = query.whereGreaterThan("updated_at", updatedAfterSeconds)
+        // Note: Firestore doesn't efficiently query for null values.
+        // We fetch all items and filter client-side for deleted_at == null.
+        val query = if (updatedAfterSeconds != null) {
+            firestore.collection("users").document(uid)
+                .collection("vault_items")
+                .whereGreaterThan("updated_at", updatedAfterSeconds)
+        } else {
+            firestore.collection("users").document(uid)
+                .collection("vault_items")
         }
 
-        return query.get().await().documents.mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+        return query.get().await().documents
+            .mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+            .filter { it["deleted_at"] == null }
     }
 
     suspend fun getTrashedItems(uid: String): List<Map<String, Any?>> {
@@ -146,15 +151,20 @@ class FirestoreVaultRepository @Inject constructor(
 
     // ── Folders ───────────────────────────────────────────────────────────────
     suspend fun getFolders(uid: String, updatedAfterSeconds: Long? = null): List<Map<String, Any?>> {
-        var query = firestore.collection("users").document(uid)
-            .collection("folders")
-            .whereEqualTo("deleted_at", null)
-
-        if (updatedAfterSeconds != null) {
-            query = query.whereGreaterThan("updated_at", updatedAfterSeconds)
+        // Note: Firestore doesn't efficiently query for null values.
+        // We fetch all folders and filter client-side for deleted_at == null.
+        val query = if (updatedAfterSeconds != null) {
+            firestore.collection("users").document(uid)
+                .collection("folders")
+                .whereGreaterThan("updated_at", updatedAfterSeconds)
+        } else {
+            firestore.collection("users").document(uid)
+                .collection("folders")
         }
 
-        return query.get().await().documents.mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+        return query.get().await().documents
+            .mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+            .filter { it["deleted_at"] == null }
     }
 
     suspend fun getTrashedFolders(uid: String): List<Map<String, Any?>> {
@@ -208,15 +218,20 @@ class FirestoreVaultRepository @Inject constructor(
 
     // ── Tags ──────────────────────────────────────────────────────────────────
     suspend fun getTags(uid: String, updatedAfterSeconds: Long? = null): List<Map<String, Any?>> {
-        var query = firestore.collection("users").document(uid)
-            .collection("tags")
-            .whereEqualTo("deleted_at", null)
-
-        if (updatedAfterSeconds != null) {
-            query = query.whereGreaterThan("updated_at", updatedAfterSeconds)
+        // Note: Firestore doesn't efficiently query for null values.
+        // We fetch all tags and filter client-side for deleted_at == null.
+        val query = if (updatedAfterSeconds != null) {
+            firestore.collection("users").document(uid)
+                .collection("tags")
+                .whereGreaterThan("updated_at", updatedAfterSeconds)
+        } else {
+            firestore.collection("users").document(uid)
+                .collection("tags")
         }
 
-        return query.get().await().documents.mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+        return query.get().await().documents
+            .mapNotNull { it.data?.let { d -> d + mapOf("id" to it.id) } }
+            .filter { it["deleted_at"] == null }
     }
 
     suspend fun getTrashedTags(uid: String): List<Map<String, Any?>> {

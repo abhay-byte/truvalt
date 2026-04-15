@@ -134,7 +134,9 @@ fun VaultItemEditScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp, start = 12.dp, end = 12.dp)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .statusBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -146,7 +148,7 @@ fun VaultItemEditScreen(
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack, 
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             "Back",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -162,7 +164,7 @@ fun VaultItemEditScreen(
                         if (itemId != null) {
                             IconButton(onClick = { viewModel.deleteItem(itemId) }) {
                                 Icon(
-                                    Icons.Default.DeleteOutline, 
+                                    Icons.Default.DeleteOutline,
                                     "Delete",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -170,9 +172,9 @@ fun VaultItemEditScreen(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
                     text = if (itemId != null) "Edit Entry" else "New Entry",
                     style = MaterialTheme.typography.displaySmall,
@@ -181,7 +183,7 @@ fun VaultItemEditScreen(
                     letterSpacing = (-1).sp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                
+
                 Text(
                     text = selectedType.displayName,
                     style = MaterialTheme.typography.labelLarge,
@@ -190,7 +192,7 @@ fun VaultItemEditScreen(
                     letterSpacing = 0.5.sp,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
             }
         },
@@ -203,7 +205,8 @@ fun VaultItemEditScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                        .navigationBarsPadding()
+                        .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -215,19 +218,19 @@ fun VaultItemEditScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    
+
                     val signatureGradient = Brush.linearGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primary,
                             MaterialTheme.colorScheme.primaryContainer
                         )
                     )
-                    
+
                     Button(
                         onClick = {
                             validationErrors = viewModel.validateForm()
@@ -281,11 +284,10 @@ fun VaultItemEditScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.surface)
-            ) {
-                if (validationErrors.isNotEmpty()) {
+                    .verticalScroll(rememberScrollState())
+            ) {                if (validationErrors.isNotEmpty()) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
