@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.ivarna.truvalt.core.crypto.TotpGenerator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -124,12 +125,23 @@ fun VaultItemCard(
                         .background(palette.iconTileSurface, RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = typeStyle.icon,
-                        contentDescription = null,
-                        tint = typeStyle.iconColor,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    var hasFavicon by remember { mutableStateOf(true) }
+                    
+                    if (item.url.isNotBlank() && hasFavicon) {
+                        AsyncImage(
+                            model = "https://www.google.com/s2/favicons?domain=${item.url}&sz=128",
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp),
+                            onError = { hasFavicon = false }
+                        )
+                    } else {
+                        Icon(
+                            imageVector = typeStyle.icon,
+                            contentDescription = null,
+                            tint = typeStyle.iconColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.width(16.dp))
