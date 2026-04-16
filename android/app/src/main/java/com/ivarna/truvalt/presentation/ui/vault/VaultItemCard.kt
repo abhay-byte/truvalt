@@ -129,7 +129,10 @@ fun VaultItemCard(
                     
                     if (item.url.isNotBlank() && hasFavicon) {
                         AsyncImage(
-                            model = "https://www.google.com/s2/favicons?domain=${item.url}&sz=128",
+                            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                                .data("https://www.google.com/s2/favicons?domain=${item.url}&sz=128")
+                                .crossfade(true)
+                                .build(),
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
                             onError = { hasFavicon = false }
