@@ -20,6 +20,7 @@ import com.ivarna.truvalt.presentation.ui.vault.VaultItemTypeSelectionScreen
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
+    data object AutofillPermission : Screen("autofill_permission")
     data object ServerSetup : Screen("server_setup")
     data object MasterPasswordSetup : Screen("master_password_setup")
     data object MasterPasswordUnlock : Screen("master_password_unlock")
@@ -84,13 +85,28 @@ fun TruvaltNavHost(
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onComplete = {
-                    navController.navigate(Screen.ServerSetup.route) {
+                    navController.navigate(Screen.AutofillPermission.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    navController.navigate(Screen.ServerSetup.route) {
+                    navController.navigate(Screen.AutofillPermission.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.AutofillPermission.route) {
+            AutofillPermissionScreen(
+                onContinue = {
+                    navController.navigate(Screen.ServerSetup.route) {
+                        popUpTo(Screen.AutofillPermission.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Screen.ServerSetup.route) {
+                        popUpTo(Screen.AutofillPermission.route) { inclusive = true }
                     }
                 }
             )

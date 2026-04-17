@@ -47,6 +47,8 @@ class VaultKeyManager @Inject constructor() {
     
     fun getInMemoryKey(): ByteArray? = inMemoryVaultKey
     
+    fun hasKey(): Boolean = inMemoryVaultKey != null
+    
     fun clearInMemoryKey() {
         inMemoryVaultKey?.fill(0)
         inMemoryVaultKey = null

@@ -5,6 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
+| 2026-04-17 | 1 |
 | 2026-04-08 | 2 |
 | 2026-04-07 | 2 |
 | 2026-04-06 | 4 |
@@ -25,6 +26,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-072 | Android Autofill Service | 2026-04-17 | Implemented TruvaltAutofillService for password autofill in apps and browsers. Added AutofillPermissionScreen after onboarding. Supports credential filling and saving new logins. Works with both native apps and WebView websites. |
 | TASK-071 | Rehaul Vault Item Cards and Item Details Screen | 2026-04-08 | Overhauled `VaultItemCard.kt` and `VaultItemDetailScreen.kt` according to `DESIGN.md` guidelines ("The Fortified Sanctuary"). Implemented live 2FA countdowns, enhanced data display (usernames/URLs), and tonal layering. |
 | TASK-037 | Inline TOTP code generation with countdown | 2026-04-08 | Added TOTP display on vault item cards and detail screen, fixed QR scanner to portrait mode, improved image QR detection with multiple binarizer strategies, optimized Gradle build for ARM64. |
 | TASK-R2-10 | Fix crash on startup due to Room schema mismatch | 2026-04-07 | Incremented Room version to 2 and added fallbackToDestructiveMigration in AppModule.kt to fix IllegalStateException. |

@@ -16,6 +16,7 @@ Status legend: 🔴 Not Started | 🟡 In Progress | 🟢 Complete | ⚫ Cancell
 | F-006 | Auto-lock & Session Timeout | Configurable idle timeout, lock on background | Critical | 🔴 | v1.0 |
 | F-007 | Emergency Access | Trusted contact request + delay-based approval | Medium | 🔴 | v1.2 |
 | F-008 | Master Password Change | Re-derives key, re-encrypts all vault items | High | 🔴 | v1.0 |
+| F-009 | Autofill Service | Android autofill for apps and browsers, save new credentials | Critical | 🟢 | v1.0 |
 
 ---
 
