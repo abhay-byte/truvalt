@@ -1,5 +1,6 @@
 package com.ivarna.truvalt.presentation.ui.vault
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,12 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.ivarna.truvalt.core.crypto.TotpGenerator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -55,6 +60,10 @@ import kotlinx.coroutines.isActive
 private data class ItemTypeStyle(
     val icon: ImageVector,
     val iconColor: Color
+)
+
+private data class WebsiteIconRequest(
+    val imageRequest: ImageRequest?,
 )
 
 @Composable
@@ -82,6 +91,8 @@ fun VaultItemCard(
     val palette = rememberVaultPalette()
     val typeStyle = itemTypeStyle(item.type)
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+    val websiteIconRequest = remember(item.url, context) { buildWebsiteIconRequest(context, item.url) }
     
     var totpCode by remember { mutableStateOf<String?>(null) }
     var secondsRemaining by remember { mutableIntStateOf(30) }
@@ -125,17 +136,26 @@ fun VaultItemCard(
                         .background(palette.iconTileSurface, RoundedCornerShape(16.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    var hasFavicon by remember { mutableStateOf(true) }
-                    
-                    if (item.url.isNotBlank() && hasFavicon) {
-                        AsyncImage(
-                            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                                .data("https://www.google.com/s2/favicons?domain=${item.url}&sz=128")
-                                .crossfade(true)
-                                .build(),
+                    if (websiteIconRequest.imageRequest != null) {
+                        SubcomposeAsyncImage(
+                            model = websiteIconRequest.imageRequest,
                             contentDescription = null,
                             modifier = Modifier.size(28.dp),
-                            onError = { hasFavicon = false }
+                            loading = {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = typeStyle.iconColor
+                                )
+                            },
+                            error = {
+                                Icon(
+                                    imageVector = typeStyle.icon,
+                                    contentDescription = null,
+                                    tint = typeStyle.iconColor,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
                         )
                     } else {
                         Icon(
@@ -274,4 +294,36 @@ fun VaultItemCard(
             }
         }
     }
+}
+
+private fun buildWebsiteIconRequest(
+    context: android.content.Context,
+    websiteUrl: String
+): WebsiteIconRequest {
+    val trimmed = websiteUrl.trim()
+    if (trimmed.isBlank()) return WebsiteIconRequest(null)
+
+    val host = runCatching {
+        val normalizedUrl = when {
+            trimmed.startsWith("http://", ignoreCase = true) ||
+                trimmed.startsWith("https://", ignoreCase = true) -> trimmed
+            else -> "https://$trimmed"
+        }
+        Uri.parse(normalizedUrl).host?.removePrefix("www.")?.takeIf { it.isNotBlank() }
+    }.getOrNull().orEmpty()
+
+    if (host.isBlank()) return WebsiteIconRequest(null)
+
+    val faviconUrl = "https://www.google.com/s2/favicons?domain=${Uri.encode(host)}&sz=128"
+    val request = ImageRequest.Builder(context)
+        .data(faviconUrl)
+        .memoryCacheKey("favicon:$host")
+        .diskCacheKey("favicon:$host")
+        .crossfade(true)
+        .networkCachePolicy(CachePolicy.ENABLED)
+        .diskCachePolicy(CachePolicy.ENABLED)
+        .memoryCachePolicy(CachePolicy.ENABLED)
+        .build()
+
+    return WebsiteIconRequest(request)
 }
