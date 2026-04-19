@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Timer
@@ -59,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -79,8 +81,10 @@ fun SettingsScreen(
     onNavigateToPinSetup: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val deleteAccountState by viewModel.deleteAccountState.collectAsState()
+    val autofillEnabled by rememberTruvaltAutofillEnabled()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLockDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -224,8 +228,34 @@ fun SettingsScreen(
                 SettingsRowItem(
                     icon = Icons.Default.Security,
                     title = "Security Settings",
-                    subtitle = "Biometric, PIN, and lock settings",
+                    subtitle = if (autofillEnabled) {
+                        "Biometric, PIN, autofill, and lock settings"
+                    } else {
+                        "Biometric, PIN, and lock settings"
+                    },
                     onClick = onNavigateToSecuritySettings,
+                    isLast = true
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Autofill Section
+            SettingsSectionCard(title = "Autofill") {
+                SettingsRowItem(
+                    icon = Icons.Default.Password,
+                    title = "Autofill Service",
+                    subtitle = if (autofillEnabled) {
+                        "Enabled for apps and websites"
+                    } else {
+                        "Turn on Truvalt as your autofill service"
+                    },
+                    trailing = {
+                        TextButton(onClick = { openTruvaltAutofillSettings(context) }) {
+                            Text(if (autofillEnabled) "Enabled" else "Enable")
+                        }
+                    },
+                    onClick = { openTruvaltAutofillSettings(context) },
                     isLast = true
                 )
             }

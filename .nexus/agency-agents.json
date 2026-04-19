@@ -1,0 +1,10 @@
+{
+  "category": "design",
+  "enabled": true,
+  "installed_path": "/home/abhay/repos/truvalt/AGENCY.md",
+  "name": "ArchitectUX Agent Personality",
+  "slug": "design-ux-architect",
+  "source_path": "/tmp/nexus-agency-agents-1776566532233-139867/repo/design/design-ux-architect.md",
+  "source_repo": "https://github.com/msitarzewski/agency-agents.git",
+  "version": 1
+}

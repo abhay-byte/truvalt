@@ -8,3 +8,8 @@
 - Always follow MVVM/MVI with unidirectional data flow
 - Always use Hilt for DI, Room for local persistence, Retrofit for networking
 - Never access repository directly from ViewModel — always go through UseCase
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

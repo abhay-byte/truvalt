@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Base64
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.data.local.dao.FolderDao
 import com.ivarna.truvalt.data.local.dao.TagDao
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
@@ -13,6 +12,7 @@ import com.ivarna.truvalt.data.local.entity.FolderEntity
 import com.ivarna.truvalt.data.local.entity.TagEntity
 import com.ivarna.truvalt.data.local.entity.VaultItemEntity
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
+import com.ivarna.truvalt.data.remote.FirebaseSessionProvider
 import com.ivarna.truvalt.data.remote.FirestoreVaultRepository
 import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,7 +29,7 @@ class SyncRepositoryImpl @Inject constructor(
     private val vaultItemDao: VaultItemDao,
     private val folderDao: FolderDao,
     private val tagDao: TagDao,
-    private val firebaseAuth: FirebaseAuth,
+    private val firebaseSessionProvider: FirebaseSessionProvider,
     private val firestoreRepository: FirestoreVaultRepository,
 ) : SyncRepository {
 
@@ -37,7 +37,7 @@ class SyncRepositoryImpl @Inject constructor(
         if (isLocalOnly()) return Result.failure(IllegalStateException("Local-only mode"))
         if (!isOnline()) return Result.failure(IllegalStateException("No internet connection"))
 
-        val uid = firebaseAuth.currentUser?.uid
+        val uid = firebaseSessionProvider.currentUserUid()
             ?: return Result.failure(IllegalStateException("Not signed in to Firebase"))
 
         return try {

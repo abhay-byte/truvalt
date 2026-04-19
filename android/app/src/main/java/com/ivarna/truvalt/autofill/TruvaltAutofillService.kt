@@ -3,7 +3,10 @@ package com.ivarna.truvalt.autofill
 import android.app.PendingIntent
 import android.app.assist.AssistStructure
 import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Log
 import android.service.autofill.*
 import android.view.autofill.AutofillId
 import android.view.autofill.AutofillValue
@@ -40,6 +43,8 @@ class TruvaltAutofillService : AutofillService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val json = Json { ignoreUnknownKeys = true }
 
+    private val tag = "TruvaltAutofill"
+
     override fun onConnected() {
         super.onConnected()
     }
@@ -60,20 +65,26 @@ class TruvaltAutofillService : AutofillService() {
             return
         }
 
-        val packageName = structure.activityComponent.packageName
+        val targetPackageName = structure.activityComponent.packageName
+        val appPackageName = this.packageName
         
         // Parse the structure to find autofillable fields
         val parsedStructure = parseStructure(structure)
+        Log.d(
+            tag,
+            "onFillRequest package=$targetPackageName usernameId=${parsedStructure.usernameId != null} passwordId=${parsedStructure.passwordId != null} webDomain=${parsedStructure.webDomain}"
+        )
         if (parsedStructure.usernameId == null && parsedStructure.passwordId == null) {
             callback.onSuccess(null)
             return
         }
+        val clientState = buildClientState(parsedStructure)
 
         // Check if vault is unlocked
         if (!vaultKeyManager.hasKey()) {
             // Show authentication prompt
             val authIntent = Intent(this, AutofillAuthActivity::class.java).apply {
-                putExtra("package_name", packageName)
+                putExtra("package_name", targetPackageName)
                 putExtra("request_type", "fill")
             }
             val authPendingIntent = PendingIntent.getActivity(
@@ -83,7 +94,7 @@ class TruvaltAutofillService : AutofillService() {
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             
-            val presentation = RemoteViews(packageName, R.layout.autofill_auth_prompt).apply {
+            val presentation = RemoteViews(appPackageName, R.layout.autofill_auth_prompt).apply {
                 setTextViewText(R.id.auth_prompt_text, "Unlock Truvalt to autofill")
             }
             
@@ -97,6 +108,7 @@ class TruvaltAutofillService : AutofillService() {
                     authPendingIntent.intentSender,
                     presentation
                 )
+                .setClientState(clientState)
                 .build()
             
             callback.onSuccess(response)
@@ -110,7 +122,7 @@ class TruvaltAutofillService : AutofillService() {
                     .filter { it.type == "login" && it.deletedAt == null }
                 
                 val credentials = items.mapNotNull { decryptLoginItem(it) }
-                    .filter { matchesPackageOrDomain(it, packageName, parsedStructure.webDomain) }
+                    .filter { matchesPackageOrDomain(it, targetPackageName, parsedStructure.webDomain) }
 
                 if (credentials.isEmpty()) {
                     callback.onSuccess(null)
@@ -118,10 +130,11 @@ class TruvaltAutofillService : AutofillService() {
                 }
 
                 val datasets = credentials.take(MAX_DATASETS).map { cred ->
-                    createDataset(cred, parsedStructure, packageName)
+                    createDataset(cred, parsedStructure, appPackageName)
                 }
 
                 val responseBuilder = FillResponse.Builder()
+                    .setClientState(clientState)
                 datasets.forEach { responseBuilder.addDataset(it) }
 
                 // Add save info if we have both username and password fields
@@ -151,9 +164,16 @@ class TruvaltAutofillService : AutofillService() {
             return
         }
 
+        val clientState = request.clientState
+        val usernameId = clientState?.getAutofillId(EXTRA_USERNAME_ID)
+        val passwordId = clientState?.getAutofillId(EXTRA_PASSWORD_ID)
+        val webDomain = clientState?.getString(EXTRA_WEB_DOMAIN)
+
         val parsedStructure = parseStructure(structure)
-        val username = parsedStructure.usernameValue
-        val password = parsedStructure.passwordValue
+        val username = usernameId?.let { extractTextValue(request.fillContexts, it) }
+            ?: parsedStructure.usernameValue
+        val password = passwordId?.let { extractTextValue(request.fillContexts, it) }
+            ?: parsedStructure.passwordValue
 
         if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             callback.onFailure("Missing credentials")
@@ -164,7 +184,10 @@ class TruvaltAutofillService : AutofillService() {
         val saveIntent = Intent(this, AutofillSaveActivity::class.java).apply {
             putExtra("username", username)
             putExtra("password", password)
-            putExtra("url", parsedStructure.webDomain ?: structure.activityComponent.packageName)
+            putExtra(
+                "url",
+                canonicalizeStorageTarget(webDomain ?: parsedStructure.webDomain ?: structure.activityComponent.packageName)
+            )
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(saveIntent)
@@ -172,11 +195,10 @@ class TruvaltAutofillService : AutofillService() {
     }
 
     private fun parseStructure(structure: AssistStructure): ParsedStructure {
-        var usernameId: AutofillId? = null
-        var passwordId: AutofillId? = null
-        var usernameValue: String? = null
-        var passwordValue: String? = null
+        var usernameMatch: FieldMatch? = null
+        var passwordMatch: FieldMatch? = null
         var webDomain: String? = null
+        var traversalIndex = 0
 
         for (i in 0 until structure.windowNodeCount) {
             val windowNode = structure.getWindowNodeAt(i)
@@ -185,28 +207,65 @@ class TruvaltAutofillService : AutofillService() {
                 val hints = node.autofillHints?.toList() ?: emptyList()
                 val inputType = node.inputType
                 val autofillValue = node.autofillValue
-                
-                // Detect username/email field
-                if (hints.any { it in listOf(View.AUTOFILL_HINT_USERNAME, View.AUTOFILL_HINT_EMAIL_ADDRESS) } ||
-                    isUsernameField(inputType, hints)) {
-                    usernameId = node.autofillId
-                    usernameValue = autofillValue?.textValue?.toString()
-                }
-                
-                // Detect password field
-                if (hints.contains(View.AUTOFILL_HINT_PASSWORD) || isPasswordField(inputType)) {
-                    passwordId = node.autofillId
-                    passwordValue = autofillValue?.textValue?.toString()
+                val htmlAttributes = node.htmlInfo?.attributes ?: emptyList()
+                val htmlAutocomplete = htmlAttributeValue(htmlAttributes, "autocomplete")
+                val htmlInputType = htmlAttributeValue(htmlAttributes, "type")
+                val viewHint = node.hint?.toString()
+
+                val passwordField = isPasswordField(inputType, hints, viewHint, htmlAutocomplete, htmlInputType)
+                val usernameField = !passwordField &&
+                    isUsernameField(inputType, hints, viewHint, htmlAutocomplete, htmlInputType)
+
+                if (passwordField) {
+                    buildFieldMatch(
+                            node = node,
+                            value = autofillValue?.textValue?.toString(),
+                            role = FieldRole.PASSWORD,
+                            order = traversalIndex,
+                            hints = hints,
+                            viewHint = viewHint,
+                            htmlAutocomplete = htmlAutocomplete,
+                            htmlInputType = htmlInputType,
+                            inputType = inputType
+                        )?.let {
+                        passwordMatch = selectBetterMatch(passwordMatch, it)
+                    }
+                } else if (usernameField) {
+                    buildFieldMatch(
+                            node = node,
+                            value = autofillValue?.textValue?.toString(),
+                            role = FieldRole.USERNAME,
+                            order = traversalIndex,
+                            hints = hints,
+                            viewHint = viewHint,
+                            htmlAutocomplete = htmlAutocomplete,
+                            htmlInputType = htmlInputType,
+                            inputType = inputType
+                        )?.let {
+                        usernameMatch = selectBetterMatch(usernameMatch, it)
+                    }
                 }
 
                 // Get web domain for WebView
                 if (node.webDomain != null) {
                     webDomain = node.webDomain
                 }
+                traversalIndex++
             }
         }
 
-        return ParsedStructure(usernameId, passwordId, usernameValue, passwordValue, webDomain)
+        return ParsedStructure(
+            usernameMatch?.id,
+            passwordMatch?.id,
+            usernameMatch?.value,
+            passwordMatch?.value,
+            webDomain
+        ).also {
+            Log.d(
+                tag,
+                "parseStructure usernameMatch=${usernameMatch?.score}:${usernameMatch?.order} passwordMatch=${passwordMatch?.score}:${passwordMatch?.order} webDomain=$webDomain"
+            )
+        }
     }
 
     private fun traverseViewNode(node: AssistStructure.ViewNode, action: (AssistStructure.ViewNode) -> Unit) {
@@ -216,15 +275,36 @@ class TruvaltAutofillService : AutofillService() {
         }
     }
 
-    private fun isUsernameField(inputType: Int, hints: List<String>): Boolean {
-        return inputType and android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS != 0 ||
-                inputType and android.text.InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS != 0 ||
-                hints.any { it.contains("email", ignoreCase = true) || it.contains("username", ignoreCase = true) }
+    private fun isUsernameField(
+        inputType: Int,
+        hints: List<String>,
+        viewHint: String?,
+        htmlAutocomplete: String?,
+        htmlInputType: String?
+    ): Boolean {
+        return AutofillFieldClassifier.isUsernameField(
+            inputType = inputType,
+            hints = hints,
+            viewHint = viewHint,
+            htmlAutocomplete = htmlAutocomplete,
+            htmlInputType = htmlInputType
+        )
     }
 
-    private fun isPasswordField(inputType: Int): Boolean {
-        return inputType and android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD != 0 ||
-                inputType and android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD != 0
+    private fun isPasswordField(
+        inputType: Int,
+        hints: List<String>,
+        viewHint: String?,
+        htmlAutocomplete: String?,
+        htmlInputType: String?
+    ): Boolean {
+        return AutofillFieldClassifier.isPasswordField(
+            inputType = inputType,
+            hints = hints,
+            viewHint = viewHint,
+            htmlAutocomplete = htmlAutocomplete,
+            htmlInputType = htmlInputType
+        )
     }
 
     private fun decryptLoginItem(entity: VaultItemEntity): LoginItemData? {
@@ -242,10 +322,12 @@ class TruvaltAutofillService : AutofillService() {
     }
 
     private fun matchesPackageOrDomain(item: LoginItemData, packageName: String, webDomain: String?): Boolean {
-        val itemUrl = item.url
-        if (itemUrl.isBlank()) return false
-        return itemUrl.contains(packageName, ignoreCase = true) ||
-                (webDomain != null && itemUrl.contains(webDomain, ignoreCase = true))
+        val storedTarget = canonicalizeStorageTarget(item.url) ?: return false
+        val normalizedPackage = packageName.trim().lowercase()
+        if (storedTarget == normalizedPackage) return true
+
+        val normalizedWebDomain = webDomain?.let(::canonicalizeStorageTarget) ?: return false
+        return hostMatches(storedTarget, normalizedWebDomain)
     }
 
     private fun createDataset(
@@ -268,6 +350,139 @@ class TruvaltAutofillService : AutofillService() {
         }.build()
     }
 
+    private fun buildClientState(parsedStructure: ParsedStructure): Bundle {
+        return Bundle().apply {
+            parsedStructure.usernameId?.let { putParcelable(EXTRA_USERNAME_ID, it) }
+            parsedStructure.passwordId?.let { putParcelable(EXTRA_PASSWORD_ID, it) }
+            parsedStructure.webDomain?.let { putString(EXTRA_WEB_DOMAIN, it) }
+        }
+    }
+
+    private fun extractTextValue(fillContexts: List<FillContext>, targetId: AutofillId): String? {
+        for (context in fillContexts.asReversed()) {
+            val structure = context.structure ?: continue
+            for (i in 0 until structure.windowNodeCount) {
+                val rootNode = structure.getWindowNodeAt(i).rootViewNode
+                val matchedNode = findViewNodeByAutofillId(rootNode, targetId) ?: continue
+                val value = matchedNode.autofillValue?.textValue?.toString()
+                    ?: matchedNode.text?.toString()
+                if (!value.isNullOrBlank()) {
+                    return value
+                }
+            }
+        }
+        return null
+    }
+
+    private fun findViewNodeByAutofillId(
+        node: AssistStructure.ViewNode,
+        targetId: AutofillId
+    ): AssistStructure.ViewNode? {
+        if (node.autofillId == targetId) {
+            return node
+        }
+        for (i in 0 until node.childCount) {
+            val child = findViewNodeByAutofillId(node.getChildAt(i), targetId)
+            if (child != null) {
+                return child
+            }
+        }
+        return null
+    }
+
+    private fun buildFieldMatch(
+        node: AssistStructure.ViewNode,
+        value: String?,
+        role: FieldRole,
+        order: Int,
+        hints: List<String>,
+        viewHint: String?,
+        htmlAutocomplete: String?,
+        htmlInputType: String?,
+        inputType: Int
+    ): FieldMatch? {
+        val autofillId = node.autofillId ?: return null
+        var score = 0
+        val normalizedAutocomplete = htmlAutocomplete?.lowercase()
+        val normalizedHtmlInputType = htmlInputType?.lowercase()
+        val normalizedViewHint = viewHint?.lowercase()
+
+        when (role) {
+            FieldRole.USERNAME -> {
+                if (normalizedAutocomplete == "username" ||
+                    normalizedAutocomplete == "email" ||
+                    normalizedAutocomplete == "emailaddress"
+                ) {
+                    score += 100
+                } else if (normalizedAutocomplete?.contains("username") == true ||
+                    normalizedAutocomplete?.contains("email") == true
+                ) {
+                    score += 90
+                }
+                if (inputType and android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS != 0 ||
+                    inputType and android.text.InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS != 0
+                ) {
+                    score += 80
+                }
+                if (hints.any { it.contains("username", ignoreCase = true) || it.contains("email", ignoreCase = true) }) {
+                    score += 70
+                }
+                if (normalizedViewHint?.contains("username") == true ||
+                    normalizedViewHint?.contains("email") == true ||
+                    normalizedViewHint?.contains("login") == true ||
+                    normalizedViewHint?.contains("user") == true
+                ) {
+                    score += 85
+                }
+                if (normalizedHtmlInputType == "email") {
+                    score += 20
+                }
+            }
+
+            FieldRole.PASSWORD -> {
+                if (normalizedAutocomplete == "current-password" ||
+                    normalizedAutocomplete == "new-password" ||
+                    normalizedAutocomplete == "password"
+                ) {
+                    score += 100
+                } else if (normalizedAutocomplete?.contains("password") == true) {
+                    score += 90
+                }
+                if (inputType and android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD != 0 ||
+                    inputType and android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD != 0
+                ) {
+                    score += 80
+                }
+                if (hints.any { it.contains("password", ignoreCase = true) }) {
+                    score += 70
+                }
+                if (normalizedViewHint?.contains("password") == true) {
+                    score += 85
+                }
+                if (normalizedHtmlInputType == "password") {
+                    score += 20
+                }
+            }
+        }
+
+        return FieldMatch(
+            id = autofillId,
+            value = value,
+            score = score,
+            order = order
+        )
+    }
+
+    private fun selectBetterMatch(current: FieldMatch?, candidate: FieldMatch): FieldMatch {
+        if (current == null) return candidate
+        return when {
+            candidate.score > current.score -> candidate
+            candidate.score < current.score -> current
+            candidate.order < current.order -> candidate
+            else -> current
+        }
+    }
+
     data class ParsedStructure(
         val usernameId: AutofillId?,
         val passwordId: AutofillId?,
@@ -276,9 +491,24 @@ class TruvaltAutofillService : AutofillService() {
         val webDomain: String?
     )
 
+    private data class FieldMatch(
+        val id: AutofillId,
+        val value: String?,
+        val score: Int,
+        val order: Int
+    )
+
+    private enum class FieldRole {
+        USERNAME,
+        PASSWORD
+    }
+
     companion object {
         private const val MAX_DATASETS = 5
         private const val AUTOFILL_AUTH_REQUEST_CODE = 1001
+        private const val EXTRA_USERNAME_ID = "username_id"
+        private const val EXTRA_PASSWORD_ID = "password_id"
+        private const val EXTRA_WEB_DOMAIN = "web_domain"
     }
 }
 
@@ -287,4 +517,43 @@ private object View {
     const val AUTOFILL_HINT_USERNAME = "username"
     const val AUTOFILL_HINT_PASSWORD = "password"
     const val AUTOFILL_HINT_EMAIL_ADDRESS = "emailAddress"
+}
+
+private fun canonicalizeStorageTarget(rawTarget: String): String? {
+    val trimmed = rawTarget.trim()
+    if (trimmed.isEmpty()) return null
+
+    val hostFromUri = runCatching { Uri.parse(trimmed).host }.getOrNull()
+        ?.takeIf { it.isNotBlank() }
+        ?.let(::normalizeHost)
+    if (hostFromUri != null) return hostFromUri
+
+    val stripped = trimmed
+        .removePrefix("https://")
+        .removePrefix("http://")
+        .substringBefore('/')
+        .substringBefore('?')
+        .substringBefore('#')
+    return normalizeHost(stripped)
+}
+
+private fun normalizeHost(host: String): String {
+    return host.trim().lowercase().removePrefix("www.")
+}
+
+private fun hostMatches(stored: String, requested: String): Boolean {
+    if (stored == requested) return true
+    return stored.endsWith(".$requested") || requested.endsWith(".$stored")
+}
+
+private fun htmlAttributeValue(
+    attributes: List<android.util.Pair<String, String>>,
+    key: String
+): String? {
+    return attributes.firstOrNull { it.first.equals(key, ignoreCase = true) }?.second
+}
+
+@Suppress("DEPRECATION")
+private fun Bundle.getAutofillId(key: String): AutofillId? {
+    return getParcelable(key) as? AutofillId
 }

@@ -219,14 +219,14 @@ class AutofillSaveActivity : AppCompatActivity() {
                     createdAt = now,
                     updatedAt = now,
                     deletedAt = null,
-                    syncStatus = "pending"
+                    syncStatus = "PENDING_UPLOAD"
                 )
 
                 vaultItemDao.insertItem(entity)
-                syncRepository.sync()
+                val syncResult = syncRepository.sync()
 
                 withContext(Dispatchers.Main) {
-                    onComplete(null)
+                    onComplete(syncResult.exceptionOrNull()?.message)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

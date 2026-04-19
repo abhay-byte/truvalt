@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,9 +39,11 @@ fun SecuritySettingsScreen(
     onNavigateToPinSetup: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val biometricStatus = remember { viewModel.biometricHelper.canAuthenticate() }
     val isPinEnabled = remember { viewModel.pinStorage.isEnabled() }
+    val autofillEnabled by rememberTruvaltAutofillEnabled()
     var showAutoLockDialog by remember { mutableStateOf(false) }
     val biometricToggleEnabled =
         biometricStatus == BiometricStatus.AVAILABLE && uiState.canUseBiometricUnlock
@@ -147,6 +151,21 @@ fun SecuritySettingsScreen(
 
             // Unlock Methods Section
             SecuritySectionCard(title = "Unlock Methods") {
+                SecurityRowItem(
+                    icon = Icons.Default.Password,
+                    title = "Autofill",
+                    subtitle = if (autofillEnabled) {
+                        "Enabled for apps and websites"
+                    } else {
+                        "Select Truvalt in system autofill settings"
+                    },
+                    trailing = {
+                        TextButton(onClick = { openTruvaltAutofillSettings(context) }) {
+                            Text(if (autofillEnabled) "Enabled" else "Enable")
+                        }
+                    },
+                    onClick = { openTruvaltAutofillSettings(context) }
+                )
                 SecurityRowItem(
                     icon = Icons.Default.Fingerprint,
                     title = "Biometric Unlock",

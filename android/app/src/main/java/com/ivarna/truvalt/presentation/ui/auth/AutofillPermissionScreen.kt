@@ -14,10 +14,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import android.content.ComponentName
 
 @Composable
 fun AutofillPermissionScreen(
@@ -25,7 +30,31 @@ fun AutofillPermissionScreen(
     onSkip: () -> Unit
 ) {
     val context = LocalContext.current
-    var hasOpenedSettings by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasAdvanced by rememberSaveable { mutableStateOf(false) }
+
+    fun maybeAdvance() {
+        if (!hasAdvanced && isTruvaltAutofillEnabled(context)) {
+            hasAdvanced = true
+            onContinue()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        maybeAdvance()
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                maybeAdvance()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold { padding ->
         Column(
@@ -117,7 +146,6 @@ fun AutofillPermissionScreen(
             // Buttons
             Button(
                 onClick = {
-                    hasOpenedSettings = true
                     val intent = Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE).apply {
                         data = android.net.Uri.parse("package:com.ivarna.truvalt")
                     }
@@ -142,6 +170,16 @@ fun AutofillPermissionScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
+
+private fun isTruvaltAutofillEnabled(context: android.content.Context): Boolean {
+    val enabledService = Settings.Secure.getString(
+        context.contentResolver,
+        "autofill_service"
+    ) ?: return false
+
+    val component = ComponentName.unflattenFromString(enabledService) ?: return false
+    return component.packageName == context.packageName
 }
 
 @Composable

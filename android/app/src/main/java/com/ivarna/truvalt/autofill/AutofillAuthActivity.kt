@@ -19,11 +19,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.ivarna.truvalt.core.crypto.CryptoManager
 import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -35,6 +37,11 @@ class AutofillAuthActivity : AppCompatActivity() {
     @Inject
     lateinit var preferences: TruvaltPreferences
 
+    @Inject
+    lateinit var cryptoManager: CryptoManager
+
+    private var authError by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -43,13 +50,16 @@ class AutofillAuthActivity : AppCompatActivity() {
 
         setContent {
             val isBiometricEnabled by preferences.isBiometricEnabled.collectAsState(initial = false)
-            var authError by remember { mutableStateOf<String?>(null) }
 
             LaunchedEffect(isBiometricEnabled) {
                 if (vaultKeyManager.hasKey()) {
                     finishWithSuccess()
+                } else if (restoreVaultKey()) {
+                    finishWithSuccess()
                 } else if (isBiometricEnabled) {
                     showBiometricPrompt()
+                } else {
+                    authError = "Open Truvalt and unlock the vault first"
                 }
             }
 
@@ -134,10 +144,13 @@ class AutofillAuthActivity : AppCompatActivity() {
             ContextCompat.getMainExecutor(this),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    runBlocking {
-                        restoreVaultKey()
+                    lifecycleScope.launch {
+                        if (restoreVaultKey()) {
+                            finishWithSuccess()
+                        } else {
+                            authError = "Unable to restore vault key"
+                        }
                     }
-                    finishWithSuccess()
                 }
 
                 override fun onAuthenticationFailed() {
@@ -155,10 +168,13 @@ class AutofillAuthActivity : AppCompatActivity() {
         biometricPrompt.authenticate(promptInfo)
     }
 
-    private suspend fun restoreVaultKey() {
-        val encodedKey = preferences.encryptedVaultKey.first() ?: return
+    private suspend fun restoreVaultKey(): Boolean {
+        val encodedKey = preferences.encryptedVaultKey.first() ?: return false
         val encryptedKey = android.util.Base64.decode(encodedKey, android.util.Base64.DEFAULT)
-        // Key should be restored by the main unlock flow
+        val vaultKey = cryptoManager.decryptWithKeystore(encryptedKey)
+        vaultKeyManager.setInMemoryKey(vaultKey)
+        preferences.setVaultUnlocked(true)
+        return true
     }
 
     private fun finishWithSuccess() {
