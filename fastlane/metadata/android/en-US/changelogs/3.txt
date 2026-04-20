@@ -1,0 +1,8 @@
+- Android Autofill Service support
+- Vault management improvements with Firebase sync
+- Favicon loading and caching for vault items
+- TOTP display and QR scanner improvements
+- Redesigned vault cards and item details screen
+- Biometric unlock flow fixes
+- Delete account feature
+- Various bug fixes and performance improvements
