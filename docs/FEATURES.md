@@ -115,7 +115,7 @@ Status legend: 🔴 Not Started | 🟡 In Progress | 🟢 Complete | ⚫ Cancell
 | F-048 | Material You Dynamic Color | Android 12+ Monet dynamic color | Medium | 🔴 | v1.0 |
 | F-049 | Clipboard Timeout Setting | User-configurable clipboard clear delay (15s–5min or never) | High | 🔴 | v1.0 |
 | F-050 | Auto-Lock Setting | Configure idle timeout (immediate, 1min, 5min, 15min, 1h, never) | High | 🔴 | v1.0 |
-| F-051 | Server URL Configuration | User sets their own self-hosted backend URL | Critical | 🔴 | v1.0 |
+| F-051 | Cloud / Local-Only Mode | User chooses Firebase cloud sync or local-only offline vault | Critical | 🔴 | v1.0 |
 
 ---
 

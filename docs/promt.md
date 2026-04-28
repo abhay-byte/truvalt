@@ -4,7 +4,9 @@
 
 ---
 
-You are building **truvalt**, a cross-platform password manager with an **Android app** (Kotlin + Jetpack Compose) and a **web app** (Laravel 12 + Blade). Before writing any code, create a complete `/docs` folder in the project root with all the files listed below. All files must be in Markdown format. Use Mermaid syntax for all diagrams.
+You are building **truvalt**, a native Android password manager (Kotlin + Jetpack Compose). Before writing any code, create a complete `/docs` folder in the project root with all the files listed below. All files must be in Markdown format. Use Mermaid syntax for all diagrams.
+
+> **Architecture note:** There is **no intermediate backend server.** The Android app communicates directly with Firebase Authentication and Cloud Firestore via the Firebase Android SDK.
 
 ---
 
@@ -12,20 +14,16 @@ You are building **truvalt**, a cross-platform password manager with an **Androi
 
 - **App Name:** `truvalt`
 - **Package Name:** `com.ivarna.truvalt`
-- **Web App URL Slug:** `truvalt`
-- **Description:** truvalt is a cross-platform, end-to-end encrypted password manager that runs as a native Android app and a full Laravel 12 web application. Users can securely store passwords, passkeys, passphrases, secure notes, TOTP 2FA codes, and security/recovery codes — with optional cloud sync or fully local-only operation.
-- **Target Users:** Privacy-conscious individuals, developers, and teams who need secure, self-hostable credential management across Android and the web.
-- **Architecture (Android):** Clean Architecture + MVVM
-- **Architecture (Web):** Laravel MVC with Service/Repository pattern
-- **UI Framework (Android):** Jetpack Compose with Material Design 3 (Material You)
-- **UI Framework (Web):** Laravel 12 Blade + Tailwind CSS + Alpine.js
+- **Description:** truvalt is an end-to-end encrypted password manager that runs as a native Android app. Users can securely store passwords, passkeys, passphrases, secure notes, TOTP 2FA codes, and security/recovery codes — with optional Firebase cloud sync or fully local-only operation.
+- **Target Users:** Privacy-conscious individuals, developers, and teams who need secure credential management on Android.
+- **Architecture:** Clean Architecture + MVVM
+- **UI Framework:** Jetpack Compose with Material Design 3 (Material You)
 - **Min SDK:** API 26 (Android 8.0)
 - **Target SDK:** API 36
-- **Key Features:** Password vault, password generator, passkey storage, passphrase storage, TOTP 2FA authenticator codes storage, security & recovery code storage, secure notes, biometric unlock, email+password auth, TOTP-based 2FA login, passkey login (WebAuthn), end-to-end encryption (AES-256-GCM + Argon2id key derivation), cloud sync (self-hosted), local-only offline mode, import/export (CSV, JSON, encrypted `.truvalt` format), password strength analyzer, breach check (Have I Been Pwned API), folder/tag organization, secure clipboard with auto-clear, password sharing (encrypted link), browser-accessible web vault, dark/light/AMOLED themes, audit log, emergency access, session management
-- **Backend Required:** Yes
-- **Backend Type:** Laravel 12 REST API (JSON) + web vault UI (Blade)
-- **Database:** PostgreSQL (server) + Room (Android local vault)
-- **Auth Method:** Email + Password (Argon2id hashed) + TOTP 2FA + Passkey (WebAuthn / FIDO2)
+- **Key Features:** Password vault, password generator, passkey storage, passphrase storage, TOTP 2FA authenticator codes storage, security & recovery code storage, secure notes, biometric unlock, email+password auth (Firebase), TOTP-based 2FA login, passkey login (WebAuthn), end-to-end encryption (AES-256-GCM + Argon2id key derivation), Firebase cloud sync, local-only offline mode, import/export (CSV, JSON, encrypted `.truvalt` format), password strength analyzer, breach check (Have I Been Pwned API), folder/tag organization, secure clipboard with auto-clear, password sharing (encrypted link), dark/light/AMOLED themes, audit log, emergency access, session management
+- **Cloud Backend:** Firebase Authentication + Cloud Firestore (direct SDK — no intermediate server)
+- **Local Database:** Room (Android local vault)
+- **Auth Method:** Email + Password (Firebase Auth) + TOTP 2FA + Passkey (WebAuthn / FIDO2)
 - **Distribution:** Google Play Store + F-Droid
 - **Locales:** en-US (initial), with i18n scaffolding for hi-IN, de-DE
 
@@ -33,17 +31,17 @@ You are building **truvalt**, a cross-platform password manager with an **Androi
 
 ## PLATFORM SCOPE CLARIFICATION
 
-This project has **three distinct sub-projects** in one monorepo:
+This project is an **Android-first** monorepo:
 
 ```
 truvalt/
-├── android/          ← Kotlin + Compose Android app (this prompt's primary focus)
-├── web/              ← Laravel 12 + Blade web vault + REST API backend
-├── docs/             ← Shared documentation (this prompt creates this)
+├── android/          ← Kotlin + Compose Android app (primary focus)
+├── docs/             ← Project documentation (this prompt creates this)
+├── delete-account-site/ ← Static site for Google Play compliance
 └── fastlane/         ← Release automation (this prompt creates this)
 ```
 
-All documentation in `/docs` covers BOTH platforms. Diagrams must reflect both the Android client and the Laravel web/backend.
+All documentation in `/docs` covers the Android app and Firebase cloud architecture.
 
 ---
 
@@ -62,11 +60,11 @@ Also include a "change type → documents to update" mapping table. Example rows
 | Change Type | Documents to Update |
 |---|---|
 | New vault item type added | FEATURES.md, SRS.md, SDD.md, UI_UX_DOCUMENTATION.md, DIAGRAMS.md, TODO.md |
-| New API endpoint | SDD.md, DIAGRAMS.md, backend/API_DOCS.md |
-| New screen (Android or Web) | UI_UX_DOCUMENTATION.md, UI_DESIGN_SYSTEM.md, DIAGRAMS.md |
-| Database schema change | SDD.md, DIAGRAMS.md (ER), backend/API_DOCS.md |
+| New Firebase integration | SDD.md, DIAGRAMS.md |
+| New screen | UI_UX_DOCUMENTATION.md, UI_DESIGN_SYSTEM.md, DIAGRAMS.md |
+| Database schema change | SDD.md, DIAGRAMS.md (ER) |
 | Feature completed | FEATURES.md (status), TODO.md → FINISHED.md |
-| Security model change | SRS.md, SDD.md, DIAGRAMS.md, backend/README.md |
+| Security model change | SRS.md, SDD.md, DIAGRAMS.md |
 
 ---
 
@@ -107,14 +105,12 @@ Include all standard SRS sections. Use requirement IDs in format `FR-[MODULE]-[N
 - `AUDIT` — Audit Log & Session Management
 - `NOTIF` — Notifications & Clipboard
 - `SETTINGS` — User Preferences & Themes
-- `ADMIN` — Server Administration (web only)
-
 **Key functional requirements to include (add full tables with Priority column):**
 
-- FR-AUTH-01: User registers with email + master password. Master password is NEVER sent to server; only a derived authentication key is used.
-- FR-AUTH-02: Login with email + auth key.
+- FR-AUTH-01: User registers with email + master password via Firebase Auth. Master password is NEVER sent to any server; only a derived authentication key is used locally.
+- FR-AUTH-02: Login with email + auth key via Firebase Auth.
 - FR-AUTH-03: TOTP 2FA via authenticator app (RFC 6238).
-- FR-AUTH-04: Passkey login (WebAuthn FIDO2) on web and Android (Credential Manager API).
+- FR-AUTH-04: Passkey login (WebAuthn FIDO2) on Android (Credential Manager API).
 - FR-AUTH-05: Biometric unlock (Android — unlocks local vault key from Android Keystore).
 - FR-AUTH-06: Session timeout + auto-lock (configurable).
 - FR-AUTH-07: Emergency access (trusted contact can request access after configurable delay).
@@ -127,26 +123,25 @@ Include all standard SRS sections. Use requirement IDs in format `FR-[MODULE]-[N
 - FR-GEN-01: Generate strong random passwords (configurable length, charset: uppercase, lowercase, digits, symbols, exclude ambiguous).
 - FR-GEN-02: Generate passphrases (configurable word count, separator, capitalize, append number — uses EFF large wordlist).
 - FR-GEN-03: Password strength meter (zxcvbn algorithm).
-- FR-SYNC-01: Full vault encrypted sync to self-hosted Laravel backend.
+- FR-SYNC-01: Full vault encrypted sync to Firebase Cloud Firestore via Android SDK.
 - FR-SYNC-02: Local-only mode — no network calls, all data stored in Room DB only.
 - FR-SYNC-03: Conflict resolution strategy: last-write-wins with per-field timestamps.
 - FR-CRYPTO-01: Vault encryption: AES-256-GCM. Every item encrypted individually client-side.
 - FR-CRYPTO-02: Key derivation: Argon2id (memory: 64MB, iterations: 3, parallelism: 4) from master password + email salt.
-- FR-CRYPTO-03: The server never receives the master password or the vault encryption key. Zero-knowledge architecture.
+- FR-CRYPTO-03: Firestore never receives the master password or the vault encryption key. Zero-knowledge architecture.
 - FR-CRYPTO-04: Encrypted export blob uses the same AES-256-GCM key with a separate export IV.
 - FR-IMPORT-01: Import from: Bitwarden JSON, 1Password 1PUX, LastPass CSV, KeePass XML, Chrome CSV, Firefox CSV, generic CSV.
 - FR-IMPORT-02: Export to: truvalt encrypted `.truvalt` (AES-256-GCM JSON), unencrypted JSON, unencrypted CSV.
 - FR-BREACH-01: Check passwords against HaveIBeenPwned k-Anonymity API (sends only first 5 chars of SHA-1 hash — privacy-preserving).
 - FR-BREACH-02: Vault health dashboard: weak passwords, reused passwords, old passwords (>180 days), breached passwords.
 - FR-SHARE-01: Generate an encrypted time-limited share link for a single vault item (AES key in URL fragment — never sent to server).
-- FR-AUDIT-01: Full audit log: every login, item access, item change, export, share event logged server-side.
-- FR-AUDIT-02: Active session management — list and revoke sessions (Android + web).
+- FR-AUDIT-01: Full audit log: every login, item access, item change, export, share event logged locally.
+- FR-AUDIT-02: Active session management — list and revoke Firebase sessions on Android.
 
 **Non-functional requirements:**
 - Vault unlock time: < 500ms on mid-range Android (Argon2id pre-computed at login, key cached in-memory)
-- Zero-knowledge: server stores only encrypted blobs, auth key hash, and metadata
-- HTTPS only (TLS 1.2+)
-- OWASP Top 10 compliance for web vault
+- Zero-knowledge: Firestore stores only encrypted blobs, auth key hash, and metadata
+- HTTPS only via Firebase SDK (TLS 1.2+)
 - Android Keystore used for biometric-protected key storage
 - Unit test coverage target: ≥ 80% for crypto, generator, and sync modules
 
@@ -156,47 +151,41 @@ Include all standard SRS sections. Use requirement IDs in format `FR-[MODULE]-[N
 
 Include:
 
-**System architecture — two-layer diagram:**
+**System architecture:**
 
 ```
-Android App                          Web Browser
-┌─────────────────┐                  ┌──────────────────┐
-│  Compose UI     │                  │  Blade + Alpine  │
-│  ViewModels     │                  │  (Web Vault UI)  │
-│  Use Cases      │◄────HTTPS/REST──►│                  │
-│  Repositories   │                  └──────────────────┘
-│  Room DB (local)│                           │
-└─────────────────┘                           ▼
-         │                         ┌─────────────────────┐
-         └────────HTTPS/REST──────►│  Laravel 12 API     │
-                                   │  Controllers        │
-                                   │  Services           │
-                                   │  Repositories       │
-                                   │  PostgreSQL DB      │
-                                   └─────────────────────┘
+Android App
+┌─────────────────┐
+│  Compose UI     │
+│  ViewModels     │
+│  Use Cases      │
+│  Repositories   │◄────Firebase Android SDK────► Firebase Auth + Cloud Firestore
+│  Room DB (local)│
+└─────────────────┘
 ```
+
+> There is **no intermediate backend server.** The app talks directly to Firebase.
 
 **Full tech stack table:**
 
-| Layer | Android | Web/Backend |
-|---|---|---|
-| Language | Kotlin | PHP 8.3, Blade, Alpine.js |
-| UI | Jetpack Compose + Material 3 | Blade templates + Tailwind CSS |
-| Architecture | Clean Architecture + MVVM | Laravel MVC + Service/Repo pattern |
-| DI | Hilt | Laravel IoC Container |
-| Navigation | Compose Navigation | Laravel Router |
-| Async | Kotlin Coroutines + Flow | Laravel Queues + async jobs |
-| Local DB | Room + SQLCipher | — |
-| Server DB | — | PostgreSQL 16 |
-| ORM | — | Eloquent |
-| Networking | Retrofit 2 + OkHttp 4 | Laravel HTTP Client |
-| Crypto | Android Keystore + BouncyCastle (Argon2id) | PHP sodium extension (libsodium) |
-| Auth | Email+Password, Biometric, WebAuthn Credential Manager | Laravel Sanctum, TOTP (pragmarx/google2fa), WebAuthn (asbiin/laravel-webauthn) |
-| Import/Export | Kotlin serialization | PHP league/csv, Symfony serializer |
-| Image loading | Coil | — |
-| Testing (Android) | JUnit 5, MockK, Turbine, Espresso | — |
-| Testing (Web) | — | PHPUnit, Pest, Laravel Dusk |
-| Linting | Detekt, ktlint | Laravel Pint |
+| Layer | Technology |
+|---|---|
+| Language | Kotlin |
+| UI | Jetpack Compose + Material 3 |
+| Architecture | Clean Architecture + MVVM |
+| DI | Hilt |
+| Navigation | Compose Navigation |
+| Async | Kotlin Coroutines + Flow |
+| Local DB | Room + SQLCipher |
+| Cloud DB | Cloud Firestore (direct SDK) |
+| Identity | Firebase Authentication |
+| Networking | Firebase Android SDK + OkHttp 4 |
+| Crypto | Android Keystore + BouncyCastle (Argon2id) |
+| Auth | Firebase Email+Password, Biometric, WebAuthn Credential Manager |
+| Import/Export | Kotlin serialization |
+| Image loading | Coil |
+| Testing | JUnit 5, MockK, Turbine, Espresso |
+| Linting | Detekt, ktlint |
 
 **Package/folder structure — Android:**
 
@@ -241,40 +230,7 @@ android/
         └── xml/               # network_security_config, backup_rules
 ```
 
-**Package/folder structure — Laravel:**
-
-```
-web/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/Api/   # API controllers (AuthController, VaultController, etc.)
-│   │   ├── Controllers/Web/   # Web vault Blade controllers
-│   │   ├── Middleware/        # Auth, 2FA enforcement, rate limiting
-│   │   └── Requests/          # Form request validation
-│   ├── Models/                # Eloquent models
-│   ├── Services/              # Business logic (CryptoService, SyncService, BreachService)
-│   ├── Repositories/          # DB access abstraction
-│   └── Jobs/                  # Queue jobs (breach check, audit flush)
-├── database/
-│   ├── migrations/
-│   └── seeders/
-├── resources/
-│   ├── views/                 # Blade templates
-│   │   ├── auth/
-│   │   ├── vault/
-│   │   ├── settings/
-│   │   └── layouts/
-│   ├── css/                   # Tailwind
-│   └── js/                    # Alpine.js components
-├── routes/
-│   ├── api.php                # All /api/v1/* routes
-│   └── web.php                # Blade web vault routes
-└── tests/
-    ├── Feature/               # Pest feature tests
-    └── Unit/                  # Unit tests
-```
-
-**Database design — Room (Android local, mirrors server schema):**
+**Database design — Room (Android local):
 
 | Table | Column | Type | Constraints |
 |---|---|---|---|
@@ -305,33 +261,14 @@ web/
 | | `item_id` | TEXT | nullable |
 | | `performed_at` | INTEGER | |
 
-**Database design — PostgreSQL (server):**
+**Cloud data design — Firestore:**
 
-Same structure as above, plus:
-
-| Table | Notes |
-|---|---|
-| `users` | id, email, auth_key_hash (Argon2id of derived auth key), two_factor_secret, two_factor_confirmed_at, emergency_access_*, created_at |
-| `devices` | id, user_id, name, platform, push_token, last_seen_at |
-| `share_links` | id, item_id, encrypted_item_blob, expires_at, max_views, view_count |
-| `passkeys` | id, user_id, credential_id, public_key, sign_count (WebAuthn) |
-
-**API design** — document fully in `/backend/API_DOCS.md`, but summarize here:
-
-Base URL: `https://[your-domain]/api/v1`
-
-Key endpoint groups:
-- `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`
-- `POST /auth/two-factor/verify`, `POST /auth/passkey/*` (WebAuthn registration/assertion)
-- `GET/POST/PUT/DELETE /vault/items`
-- `GET/POST/PUT/DELETE /vault/folders`
-- `GET/POST/DELETE /vault/tags`
-- `POST /vault/sync` (delta sync with server timestamp)
-- `POST /vault/export`, `POST /vault/import`
-- `GET /breach/check` (proxies HIBP k-anon API)
-- `GET /audit/log`
-- `GET/DELETE /sessions`
-- `GET/POST /share-links`, `GET /share-links/{token}` (public — unauthenticated)
+```
+users/{uid}                        ← user profile
+users/{uid}/vault_items/{itemId}   ← encrypted vault items
+users/{uid}/folders/{folderId}     ← folders
+users/{uid}/tags/{tagId}           ← tags
+```
 
 **ViewModel UiState pattern (Kotlin):**
 
@@ -371,29 +308,27 @@ Master Password + Email
         │
         └──► 256-bit Auth Key = HKDF(masterKey, "auth")
                   │
-                  └──► Argon2id hash → stored on server
-                            (server only sees this hash)
+                  └──► Argon2id hash → stored locally / verified by Firebase Auth
+                            (cloud only sees encrypted blobs and metadata)
 ```
 
 **Error handling strategy:**
 
 | Layer | Strategy |
 |---|---|
-| Network (Android) | Sealed Result<T, AppError>, retry with exponential backoff on 5xx, offline queue |
+| Network (Android) | Sealed Result<T, AppError>, retry with exponential backoff, offline queue |
 | Crypto errors | Throw `CryptoException`, surface as vault-locked state |
 | Import parser | Per-item error collection; partial import with error report |
-| Laravel API | JSON error envelope: `{success, message, errors{}}`, HTTP status codes per RFC 7807 |
-| Web vault (Blade) | Laravel exception handler → user-friendly Blade error pages |
+| Firebase errors | Firebase Android SDK exceptions surfaced as user-friendly messages |
 
 **Security considerations:**
 
 - Master password never transmitted, never stored — not even in memory beyond unlock flow
 - Auth key rotated on password change (re-encrypts entire vault)
 - Android: vault key stored in Android Keystore (hardware-backed if available), unlocked by biometric
-- All API routes require Sanctum bearer token (no cookies on API routes)
-- CSRF protection on all web vault form submissions
-- Content Security Policy headers on all web routes
-- Rate limiting: 10 login attempts / 15 min per IP; 3 2FA attempts then lockout
+- Firebase Auth handles token refresh and session security
+- Firestore security rules enforce per-user data isolation
+- Rate limiting: handled by Firebase Auth
 - WebAuthn challenge nonces expire in 5 minutes
 - Share links: AES key in URL fragment (#), never sent to server, 24h TTL default
 
@@ -412,7 +347,7 @@ Group features by module. Use IDs in format `F-[NUMBER]`. All features start at 
 | F-001 | Email + Password Registration | Register with email, master password, hint | Critical | 🔴 | v1.0 |
 | F-002 | Email + Password Login | Login flow with auth key derivation | Critical | 🔴 | v1.0 |
 | F-003 | TOTP 2FA Setup & Verify | Enroll authenticator app, verify at login | Critical | 🔴 | v1.0 |
-| F-004 | Passkey Login (WebAuthn) | FIDO2 passkey registration & login on web + Android | High | 🔴 | v1.1 |
+| F-004 | Passkey Login (WebAuthn) | FIDO2 passkey registration & login on Android | High | 🔴 | v1.1 |
 | F-005 | Biometric Unlock (Android) | Fingerprint/face unlock via Android Keystore | Critical | 🔴 | v1.0 |
 | F-006 | Auto-lock & Session Timeout | Configurable idle timeout, lock on background | Critical | 🔴 | v1.0 |
 | F-007 | Emergency Access | Trusted contact request + delay-based approval | Medium | 🔴 | v1.2 |
@@ -451,10 +386,10 @@ Group features by module. Use IDs in format `F-[NUMBER]`. All features start at 
 
 | ID | Feature | Description | Priority | Status | Version |
 |---|---|---|---|---|---|
-| F-028 | Cloud Sync | Encrypted delta sync with Laravel backend | Critical | 🔴 | v1.0 |
+| F-028 | Cloud Sync | Encrypted delta sync with Firebase/Firestore | Critical | 🔴 | v1.0 |
 | F-029 | Local-Only Mode | No server connection, Room-only vault | High | 🔴 | v1.0 |
 | F-030 | Conflict Resolution | Last-write-wins with per-field updated_at | High | 🔴 | v1.0 |
-| F-031 | Multi-Device Sync | Sync across Android + web vault | High | 🔴 | v1.0 |
+| F-031 | Multi-Device Sync | Sync across Android devices via Firebase | High | 🔴 | v1.0 |
 
 **Module: IMPORT / EXPORT**
 
@@ -499,7 +434,7 @@ Group features by module. Use IDs in format `F-[NUMBER]`. All features start at 
 | F-048 | Material You Dynamic Color | Android 12+ Monet dynamic color | Medium | 🔴 | v1.0 |
 | F-049 | Clipboard Timeout Setting | User-configurable clipboard clear delay (15s–5min or never) | High | 🔴 | v1.0 |
 | F-050 | Auto-Lock Setting | Configure idle timeout (immediate, 1min, 5min, 15min, 1h, never) | High | 🔴 | v1.0 |
-| F-051 | Server URL Configuration | User sets their own self-hosted backend URL | Critical | 🔴 | v1.0 |
+| F-051 | Cloud / Local-Only Mode | User chooses Firebase cloud sync or local-only offline vault | Critical | 🔴 | v1.0 |
 
 **Version Roadmap:**
 
@@ -522,14 +457,11 @@ Include:
 ```mermaid
 flowchart TD
     Splash --> Onboarding
-    Splash --> ServerSetup
-    Onboarding --> ServerSetup
-    ServerSetup --> Register
-    ServerSetup --> Login
-    Register --> TwoFactorSetup
+    Splash --> Login
+    Onboarding --> Login
+    Login --> Register
+    Login --> VaultHome
     Register --> VaultHome
-    Login --> TwoFAVerify
-    TwoFAVerify --> VaultHome
     Login --> BiometricUnlock
     BiometricUnlock --> VaultHome
     VaultHome --> VaultItemDetail
@@ -549,16 +481,14 @@ flowchart TD
     Settings --> ImportWizard
     Settings --> ExportDialog
     Settings --> AppearanceSettings
-    Settings --> ServerSettings
+    Settings --> SyncSettings
 ```
 
 **One dedicated section per screen.** Screens to include (at minimum):
 
 - Splash Screen
-- Onboarding (3-step: intro, server setup, account)
-- Server URL Setup
-- Register
-- Login
+- Onboarding (3-step: intro, security, account)
+- Login / Register
 - Two-Factor Verify (TOTP + passkey option)
 - Biometric Unlock
 - Vault Home (list with search, filter bar, folder sidebar/sheet)
@@ -578,7 +508,7 @@ flowchart TD
 - Session Manager
 - Audit Log
 - Appearance Settings
-- Server / Sync Settings
+- Sync Settings
 - Trash
 
 Each screen section must include:
@@ -649,19 +579,19 @@ Provide full color roles table (primary, secondary, tertiary, background, surfac
 
 Create ALL 13 diagrams using Mermaid syntax, each with heading, description, and code block. Diagrams must use truvalt's real entities and flows:
 
-1. **Architecture Overview** — Android app layers + Laravel layers + PostgreSQL + external services (HIBP API, push notification service, FIDO2)
+1. **Architecture Overview** — Android app layers + Firebase Auth + Cloud Firestore + external services (HIBP API, FIDO2)
 2. **ER Diagram** — `users`, `vault_items`, `folders`, `tags`, `vault_item_tags`, `sessions`, `audit_log`, `passkeys`, `share_links` with attributes and relationships
-3. **App Flow Flowchart** — Full journey: launch → server setup OR offline → login/register → 2FA → biometric → vault home → all major branch paths
+3. **App Flow Flowchart** — Full journey: launch → onboarding → login/register → 2FA → biometric → vault home → all major branch paths
 4. **Component Diagram** — All major Android classes/modules and their dependencies
 5. **Class Diagram** — `VaultItem`, `Folder`, `Tag`, `VaultRepository`, `VaultItemViewModel`, `CryptoManager`, `SyncManager`
 6. **Object Diagram** — Runtime snapshot: a Login-type `VaultItem` with example encrypted blob, a `Folder`, and a `Tag`
-7. **Sequence — Login Flow** — User → LoginScreen → LoginViewModel → AuthRepository → Retrofit API → Laravel AuthController → DB → response chain back + 2FA branch
-8. **Sequence — Vault Sync** — Android SyncManager → Repository → API `POST /vault/sync` → Laravel SyncService → DB delta query → encrypted items response → Room upsert
-9. **Use Case Diagram** — Actors: `Unauthenticated User`, `Vault Owner`, `Emergency Contact`, `Admin` — all use cases
+7. **Sequence — Login Flow** — User → LoginScreen → LoginViewModel → AuthRepository → Firebase Auth SDK → Firebase Auth → response chain back + 2FA branch
+8. **Sequence — Vault Sync** — Android SyncManager → Repository → Firebase Android SDK → Firestore delta query → encrypted items response → Room upsert
+9. **Use Case Diagram** — Actors: `Unauthenticated User`, `Vault Owner`, `Emergency Contact` — all use cases
 10. **Activity Diagram** — Full app activity including offline detection branch, sync branch, biometric branch
 11. **State Machine — Network Request** — Idle → Loading → Success/Error → Idle (for vault sync)
-12. **Deployment Diagram** — Android device + web browser + self-hosted VPS (Laravel + Nginx + PostgreSQL + Redis) + HIBP API + Play Store/F-Droid
-13. **Data Flow — Vault Item Save** — UI action → ViewModel → SaveVaultItemUseCase → CryptoManager (encrypt) → VaultRepository → (Room DAO + sync queue) → SyncManager → API → Laravel → PostgreSQL
+12. **Deployment Diagram** — Android device + Firebase project + HIBP API + Play Store/F-Droid
+13. **Data Flow — Vault Item Save** — UI action → ViewModel → SaveVaultItemUseCase → CryptoManager (encrypt) → VaultRepository → (Room DAO + sync queue) → SyncManager → Firebase Android SDK → Cloud Firestore
 
 ---
 
@@ -670,10 +600,8 @@ Create ALL 13 diagrams using Mermaid syntax, each with heading, description, and
 Pre-populate with a task for every feature in FEATURES.md plus all setup tasks. Format:
 
 ```
-- [ ] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Retrofit) — Priority: High — Target: v1.0
-- [ ] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
-- [ ] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
-- [ ] TASK-003 Implement Argon2id key derivation (Android + PHP) — Priority: High — Target: v1.0
+- [ ] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Firebase) — Priority: High — Target: v1.0
+- [ ] TASK-003 Implement Argon2id key derivation (Android) — Priority: High — Target: v1.0
 - [ ] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
 ... (one task per feature F-001 through F-051, plus all testing, CI/CD, and release tasks)
 ```
@@ -750,10 +678,10 @@ Secure, encrypted password manager with cloud & offline support
 
 Write a real full description (max 4,000 chars) covering:
 
-- Hook: "Your passwords, your rules — zero-knowledge encryption, self-hosted or offline."
-- Key Features (8–10 bullet points): password vault, passphrase & passkey storage, TOTP code storage, security code storage, secure notes, password generator, vault health & breach check, import/export, biometric unlock, cloud sync or fully local
+- Hook: "Your passwords, your rules — zero-knowledge encryption, cloud or offline."
+- Key Features (8–10 bullet points): password vault, passphrase & passkey storage, TOTP code storage, security code storage, secure notes, password generator, vault health & breach check, import/export, biometric unlock, Firebase cloud sync or fully local
 - How It Works: explain zero-knowledge encryption in plain language
-- Who It's For: privacy-conscious users, self-hosters, developers, teams
+- Who It's For: privacy-conscious users, developers, teams
 - Privacy & Permissions: explain biometric, network, storage permissions
 - Call to action
 
@@ -769,7 +697,7 @@ Initial release of truvalt.
 - TOTP 2FA code and security/recovery code storage
 - AES-256-GCM end-to-end encryption, Argon2id key derivation
 - Password generator and passphrase generator
-- Cloud sync with self-hosted server or fully local offline mode
+- Firebase cloud sync or fully local offline mode
 - Biometric unlock, TOTP 2FA login
 - Import from Bitwarden, LastPass, Chrome CSV
 - Encrypted .truvalt export format
@@ -795,89 +723,6 @@ Complete setup guide:
 
 ---
 
-## Backend Folder — `/backend/`
-
-Backend Required = **Yes** — create all backend files.
-
-### `/backend/README.md`
-
-Tech stack: PHP 8.3, Laravel 12, PostgreSQL 16, Redis (queue + session cache), Nginx, Laravel Sanctum (API auth), pragmarx/google2fa (TOTP), asbiin/laravel-webauthn (FIDO2/WebAuthn), Argon2id (PHP's `password_hash` with `PASSWORD_ARGON2ID`)
-
-Include: local dev setup (step by step), env variables table, `php artisan serve` + queue worker instructions, test commands (`php artisan test` / `./vendor/bin/pest`), deployment instructions.
-
-### `/backend/API_DOCS.md`
-
-Full REST API documentation for all endpoints listed in SDD.md. For every endpoint include: method, path, description, auth required (Y/N), request body JSON example, success response JSON example, error response table.
-
-Authentication: `Authorization: Bearer {sanctum_token}` header on all authenticated routes.
-
-Include the zero-knowledge constraint note: the server never decrypts vault items. `encrypted_data` field is always an opaque base64 string from the server's perspective.
-
-### `/backend/.env.example`
-
-```env
-# Application
-APP_NAME=truvalt
-APP_ENV=production
-APP_KEY=
-APP_DEBUG=false
-APP_URL=https://your-domain.com
-
-# Database
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=truvalt
-DB_USERNAME=truvalt
-DB_PASSWORD=
-
-# Cache / Queue
-CACHE_DRIVER=redis
-QUEUE_CONNECTION=redis
-SESSION_DRIVER=redis
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-
-# Mail (for emergency access notifications)
-MAIL_MAILER=smtp
-MAIL_HOST=
-MAIL_PORT=587
-MAIL_USERNAME=
-MAIL_PASSWORD=
-MAIL_FROM_ADDRESS=noreply@your-domain.com
-
-# Have I Been Pwned (no key needed — uses k-anon API)
-HIBP_API_URL=https://api.pwnedpasswords.com
-
-# Registration (set to false to disable new registrations on self-hosted)
-ALLOW_REGISTRATION=true
-
-# Self-hosted instance identifier
-INSTANCE_NAME=truvalt Self-Hosted
-
-# Argon2id settings
-ARGON2_MEMORY=65536
-ARGON2_THREADS=4
-ARGON2_TIME=3
-```
-
-### `/backend/folder-structure.md`
-
-Full Laravel folder structure as a code block with one-line comment per folder matching the package layout defined in SDD.md.
-
-### `/backend/DEPLOYMENT.md`
-
-Deployment guide covering:
-- Recommended hosts: DigitalOcean, Hetzner, any VPS with Ubuntu 22.04
-- Full `Dockerfile` (PHP 8.3-fpm base, Composer install, artisan optimize)
-- `docker-compose.yml` (app, nginx, postgres, redis services)
-- GitHub Actions CI/CD workflow (`.github/workflows/deploy.yml`)
-- Database migration: `php artisan migrate --force`
-- Env config in production
-- Health check endpoint: `GET /api/health` → `{"status":"ok","version":"1.0.0"}`
-- Monitoring: Laravel Telescope (dev), Sentry (prod errors), log to `/var/log/truvalt/`
-- Nginx config block for SSL + proxy to PHP-FPM
-
 ---
 
 ## Final Instructions for the Agent
@@ -890,7 +735,6 @@ After creating all files:
 4. Ensure `progress/TODO.md` has one task per feature (TASK-001 through TASK-05X) plus setup tasks, grouped by priority.
 5. Ensure `fastlane/Fastfile` uses `com.ivarna.truvalt` everywhere and has real lane logic for all 11 lanes.
 6. Ensure `fastlane/metadata/android/en-US/full_description.txt` contains real truvalt-specific content — not Lorem Ipsum.
-7. Ensure all backend files (`/backend/*`) reflect the Laravel 12 + PostgreSQL + Redis stack and the zero-knowledge architecture.
-8. Print a final summary table of every file created, grouped by folder, with path and one-line description.
+7. Print a final summary table of every file created, grouped by folder, with path and one-line description.
 
-**Critical zero-knowledge reminder for the agent:** When implementing any feature that touches credential data — the Android app must NEVER send the master password or vault encryption key over the network. Only the derived auth key hash goes to the server. All encryption and decryption happens client-side. The Laravel backend is a zero-knowledge encrypted blob store. Enforce this constraint in code review comments, inline code comments, and API documentation.
+**Critical zero-knowledge reminder for the agent:** When implementing any feature that touches credential data — the Android app must NEVER send the master password or vault encryption key over the network. All encryption and decryption happens client-side. Firestore stores only encrypted blobs and metadata. Enforce this constraint in code review comments and inline code comments.
