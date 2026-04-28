@@ -1,6 +1,7 @@
 # Diagrams
 
-> Updated for the Firebase Auth + Firestore backend pivot on 2026-03-23.
+> Updated for the Firebase-direct architecture on 2026-04-28.
+> There is **no intermediate backend server**. The Android app communicates directly with Firebase.
 
 ---
 
@@ -14,15 +15,7 @@ flowchart TB
         Repo["Repositories"]
         Room["Room DB"]
         Prefs["DataStore / Prefs"]
-        Remote["Retrofit API"]
         Crypto["Crypto"]
-    end
-
-    subgraph Web["Laravel Backend"]
-        API["REST API"]
-        Middleware["Firebase Auth Middleware"]
-        Services["Firebase Services"]
-        FirestoreRepo["Firestore Repository"]
     end
 
     subgraph Firebase["Firebase / Google Cloud"]
@@ -34,15 +27,9 @@ flowchart TB
     VM --> Repo
     Repo --> Room
     Repo --> Prefs
-    Repo --> Remote
+    Repo -->|Firebase Android SDK| Auth
+    Repo -->|Firebase Android SDK| Store
     Crypto --> Repo
-
-    Remote -->|HTTPS/REST| API
-    API --> Middleware
-    Middleware --> Services
-    Services --> Auth
-    Services --> FirestoreRepo
-    FirestoreRepo --> Store
 ```
 
 ---
@@ -56,7 +43,6 @@ flowchart TD
     id
     email
     providers[]
-    auth_key_hash?
     email_verified
     created_at
     updated_at
@@ -77,44 +63,32 @@ flowchart TD
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Laravel
-    participant IdentityToolkit as Firebase Auth REST
-    participant Admin as Firebase Admin SDK
+    participant Client as Android App
+    participant FirebaseSDK as Firebase Auth SDK
     participant Firestore
 
-    Client->>Laravel: POST /login {email, password, auth_key_hash?}
-    Laravel->>IdentityToolkit: accounts:signInWithPassword
-    IdentityToolkit-->>Laravel: idToken, refreshToken, localId
-    Laravel->>Admin: getUser(localId)
-    Admin-->>Laravel: Firebase user record
-    Laravel->>Firestore: upsert users/{uid}
-    Firestore-->>Laravel: profile document
-    Laravel-->>Client: user + token + refresh_token + expires_in
+    Client->>FirebaseSDK: createUserWithEmailAndPassword(email, password)
+    FirebaseSDK-->>Client: FirebaseUser + idToken
+    Client->>Firestore: upsert users/{uid} profile
+    Firestore-->>Client: profile document
+    Client->>Client: derive vault key from password + email (Argon2id)
+    Client->>Client: encrypt vault key with Android Keystore
 ```
 
 ---
 
-## 4. Protected Route Verification
+## 4. Firestore Security Rules
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Middleware as AuthenticateWithFirebase
-    participant AuthService as FirebaseAuthService
-    participant Admin as Firebase Admin SDK
-    participant Controller
-    participant Firestore
+    participant Client as Android App
+    participant FirestoreRules as Firestore Security Rules
+    participant FirestoreDB as Cloud Firestore
 
-    Client->>Middleware: Authorization: Bearer <firebase_id_token>
-    Middleware->>AuthService: authenticate(idToken)
-    AuthService->>Admin: verifyIdToken(idToken, checkRevoked=true)
-    Admin-->>AuthService: verified token claims
-    AuthService->>Admin: getUser(uid)
-    Admin-->>AuthService: user record
-    AuthService-->>Middleware: authenticated user
-    Middleware->>Controller: request with resolved user
-    Controller->>Firestore: read/write user-scoped documents
+    Client->>FirestoreRules: read/write request with Firebase Auth token
+    FirestoreRules->>FirestoreRules: verify request.auth != null && request.auth.uid == uid
+    FirestoreRules->>FirestoreDB: allow operation if rule passes
+    FirestoreDB-->>Client: data response
 ```
 
 ---
@@ -123,19 +97,16 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Laravel
+    participant Client as Android App
     participant Firestore
 
-    Client->>Laravel: POST /vault/sync {items[]}
+    Client->>Firestore: getVaultItems(uid, updatedAfterSeconds)
+    Firestore-->>Client: remote items
     loop for each item
-        Laravel->>Firestore: load users/{uid}/vault_items/{id}
-        Firestore-->>Laravel: existing item or null
-        alt existing.updated_at > incoming.updated_at
-            Laravel-->>Client: add existing item to conflicts[]
-        else incoming is newest
-            Laravel->>Firestore: upsert incoming item
-            Laravel-->>Client: add saved item to synced[]
+        alt server.updated_at > local.updated_at
+            Client->>Client: overwrite local with remote
+        else local is newer
+            Client->>Firestore: setDocument(remote path, local item)
         end
     end
 ```
@@ -146,26 +117,23 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Laravel
-    participant Admin as Firebase Admin SDK
+    participant Client as Android App
+    participant FirebaseSDK as Firebase Auth SDK
 
-    Client->>Laravel: POST /logout with bearer token
-    Laravel->>Admin: revokeRefreshTokens(uid)
-    Admin-->>Laravel: success
-    Laravel-->>Client: revocation confirmation message
+    Client->>FirebaseSDK: signOut()
+    FirebaseSDK-->>Client: local session cleared
+    Client->>Client: clear local vault key from memory
+    Client->>Client: wipe DataStore auth tokens
 ```
 
 ---
 
-## 7. Render Runtime Flow
+## 7. Firebase Project Setup
 
 ```mermaid
 flowchart LR
-    Blueprint["render.yaml"] --> Docker["web/Dockerfile"]
-    Docker --> Build["render-build.sh"]
-    Docker --> Run["render-run.sh"]
-    Run --> Supervisor["Supervisor + Nginx + PHP-FPM"]
-    Supervisor --> Laravel["Laravel API"]
-    Laravel --> Firebase["Firebase Auth + Firestore"]
+    Android["Android App"] -->|Firebase BOM| Auth["Firebase Auth"]
+    Android -->|Firebase BOM| Firestore["Cloud Firestore"]
+    Auth -->|ID Token| FirestoreRules["Firestore Security Rules"]
+    FirestoreRules --> Firestore
 ```

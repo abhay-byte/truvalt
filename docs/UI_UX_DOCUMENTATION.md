@@ -7,14 +7,11 @@
 ```mermaid
 flowchart TD
     Splash --> Onboarding
-    Splash --> ServerSetup
-    Onboarding --> ServerSetup
-    ServerSetup --> Register
-    ServerSetup --> Login
-    Register --> TwoFactorSetup
+    Splash --> Login
+    Onboarding --> Login
+    Login --> Register
+    Login --> VaultHome
     Register --> VaultHome
-    Login --> TwoFAVerify
-    TwoFAVerify --> VaultHome
     Login --> BiometricUnlock
     BiometricUnlock --> VaultHome
     VaultHome --> VaultItemDetail
@@ -34,7 +31,7 @@ flowchart TD
     Settings --> ImportWizard
     Settings --> ExportDialog
     Settings --> AppearanceSettings
-    Settings --> ServerSettings
+    Settings --> SyncSettings
 ```
 
 ---
@@ -65,15 +62,16 @@ flowchart TD
 
 ---
 
-### 2.3 Server URL Setup
+### 2.3 Mode Selection (Cloud / Local-Only)
 
 | Attribute | Value |
 |---|---|
-| **Route/ID** | `server_setup` |
-| **Purpose** | Configure backend URL, choose cloud mode vs local-only mode, and choose whether to continue to login or sign-up |
-| **UI Elements** | TextField (URL), "Use local only" checkbox, Sign Up/Login destination chooser, Save button |
-| **Validation** | URL required unless local-only mode is selected |
-| **Navigation** | Exit → Register, Login, or local vault setup |
+| **Route/ID** | `login` |
+| **Purpose** | Users choose between Firebase cloud sync or local-only mode during login/registration |
+| **UI Elements** | "Continue offline" button on Login and Register screens |
+| **Navigation** | Exit → VaultHome (cloud or local-only) |
+
+> **Note:** The app communicates directly with Firebase — there is no intermediate backend server. Cloud mode uses Firebase Authentication + Cloud Firestore. Local-only mode stores all data in Room with no network calls.
 
 ---
 
@@ -302,14 +300,14 @@ flowchart TD
 
 ---
 
-### 2.24 Server/Sync Settings
+### 2.24 Sync Settings
 
 | Attribute | Value |
 |---|---|
-| **Route/ID** | `settings_server` |
+| **Route/ID** | `settings_sync` |
 | **Purpose** | Configure sync settings |
-| **UI Elements** | Sync toggle, Last sync time, Sync now button, Clear local data |
-| **Notes** | Cloud mode syncs directly to Firebase/Firestore — no server URL required. Server URL field only shown in self-hosted (local-only override) mode. |
+| **UI Elements** | Local-only toggle, Last sync time, Sync now button, Clear local data |
+| **Notes** | Cloud mode syncs directly to Firebase/Firestore via the Firebase Android SDK. There is no intermediate backend server. |
 
 ---
 
@@ -356,9 +354,9 @@ flowchart TD
 
 ---
 
-## 5. Web Vault Screens
+## 5. Web Vault (Future)
 
-The web vault mirrors the Android screens with appropriate adaptations:
+A web vault may be built in the future to mirror the Android screens with appropriate adaptations:
 
 - **Login/Register:** Web forms with browser WebAuthn support
 - **Vault Home:** Responsive grid/list with sidebar navigation
@@ -366,4 +364,4 @@ The web vault mirrors the Android screens with appropriate adaptations:
 - **Settings:** Full-page web forms
 - **Generator:** Accessible as floating button
 
-All web screens use Laravel Blade templates with Tailwind CSS styling and Alpine.js for interactivity.
+> **Current scope:** The v1.0 product is Android-only. There is no backend server — the app communicates directly with Firebase.

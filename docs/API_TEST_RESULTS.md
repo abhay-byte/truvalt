@@ -1,10 +1,17 @@
-# Truvalt API Test Results
+# Truvalt API Test Results — ARCHIVED
+
+> **This document is archived.** The Laravel REST backend has been removed.
+>
+> Truvalt now communicates **directly with Firebase** — there is no intermediate backend server or REST API.
+> All operations are performed via the Firebase Android SDK.
+
+---
 
 ## Test Execution Summary
 
 **Date:** 2026-03-23  
 **Base URL:** `http://127.0.0.1:8000/api`  
-**Backend Mode Tested:** Laravel + Firebase Authentication + Cloud Firestore  
+**Backend Mode Tested:** Laravel + Firebase Authentication + Cloud Firestore *(removed on 2026-04-28)*  
 **Firebase Project:** `truvalt`  
 **Live Firebase Admin Credentials:** Configured
 
@@ -170,4 +177,4 @@ This is materially better than the previous external PostgreSQL path, but the ba
 
 ## Conclusion
 
-The current Laravel backend is now live-verified against the real `truvalt` Firebase project for email/password auth and Firestore persistence. The Firebase pivot is operational on the backend side; the next work is client integration and optional live Google sign-in verification.
+The Laravel backend was live-verified against the real `truvalt` Firebase project for email/password auth and Firestore persistence on 2026-03-23. **On 2026-04-28, the Laravel backend was removed.** The Android app now communicates directly with Firebase Authentication and Cloud Firestore via the Firebase Android SDK. This archived document is kept for historical reference only.
