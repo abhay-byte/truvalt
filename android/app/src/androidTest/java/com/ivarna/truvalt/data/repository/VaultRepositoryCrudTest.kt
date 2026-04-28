@@ -45,8 +45,6 @@ class VaultRepositoryCrudTest {
             override suspend fun isOnline(): Boolean = true
             override suspend fun isLocalOnly(): Boolean = false
             override suspend fun setLocalOnly(localOnly: Boolean) {}
-            override suspend fun getServerUrl(): String? = null
-            override suspend fun setServerUrl(url: String) {}
         }
 
         repository = VaultRepositoryImpl(

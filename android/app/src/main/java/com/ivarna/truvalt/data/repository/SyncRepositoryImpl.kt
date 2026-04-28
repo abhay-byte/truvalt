@@ -74,10 +74,6 @@ class SyncRepositoryImpl @Inject constructor(
 
     override suspend fun setLocalOnly(localOnly: Boolean) = preferences.setLocalOnly(localOnly)
 
-    override suspend fun getServerUrl(): String? = preferences.getServerUrlSync()
-
-    override suspend fun setServerUrl(url: String) = preferences.setServerUrl(url)
-
     // ── Push local folders → Firestore ────────────────────────────────────────
 
     private suspend fun pushFolders(uid: String) {

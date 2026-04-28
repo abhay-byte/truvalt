@@ -87,9 +87,9 @@ class AuthRepositoryImpl @Inject constructor(
 
                 // Store Firebase session info
                 val idToken = firebaseUser.getIdToken(false).await().token ?: ""
-                preferences.setBackendUserId(firebaseUser.uid)
-                preferences.setBackendIdToken(idToken)
-                preferences.setBackendRefreshToken(null)
+                preferences.setFirebaseUserId(firebaseUser.uid)
+                preferences.setFirebaseIdToken(idToken)
+                preferences.setFirebaseRefreshToken(null)
 
                 // Bootstrap Firestore user profile
                 firestoreRepository.upsertUserProfile(
@@ -127,9 +127,9 @@ class AuthRepositoryImpl @Inject constructor(
                     ?: return Result.failure(IllegalStateException("Firebase sign-in returned no user"))
 
                 val idToken = firebaseUser.getIdToken(true).await().token ?: ""
-                preferences.setBackendUserId(firebaseUser.uid)
-                preferences.setBackendIdToken(idToken)
-                preferences.setBackendRefreshToken(null)
+                preferences.setFirebaseUserId(firebaseUser.uid)
+                preferences.setFirebaseIdToken(idToken)
+                preferences.setFirebaseRefreshToken(null)
 
                 firestoreRepository.upsertUserProfile(
                     uid = firebaseUser.uid,
@@ -167,9 +167,9 @@ class AuthRepositoryImpl @Inject constructor(
             val email = firebaseUser.email ?: firebaseUser.uid
             val idToken = firebaseUser.getIdToken(true).await().token ?: ""
 
-            preferences.setBackendUserId(firebaseUser.uid)
-            preferences.setBackendIdToken(idToken)
-            preferences.setBackendRefreshToken(null)
+            preferences.setFirebaseUserId(firebaseUser.uid)
+            preferences.setFirebaseIdToken(idToken)
+            preferences.setFirebaseRefreshToken(null)
             preferences.setUserEmail(email)
 
             // For Google accounts: derive vault key from UID (deterministic, no master password)
@@ -197,7 +197,7 @@ class AuthRepositoryImpl @Inject constructor(
     fun getCurrentUid(): String? = firebaseAuth.currentUser?.uid
 
     /**
-     * Permanently delete the current cloud account — Firebase-direct, no backend needed.
+     * Permanently delete the current cloud account — direct Firebase SDK, no intermediate server.
      * Sequence:
      *  1. Delete all Firestore data (vault_items, folders, tags, user profile) directly via SDK.
      *  2. Delete the Firebase Auth user client-side.
@@ -222,9 +222,9 @@ class AuthRepositoryImpl @Inject constructor(
             masterKey?.fill(0)
             masterKey = null
             preferences.clearVaultData()
-            preferences.setBackendIdToken(null)
-            preferences.setBackendRefreshToken(null)
-            preferences.setBackendUserId(null)
+            preferences.setFirebaseIdToken(null)
+            preferences.setFirebaseRefreshToken(null)
+            preferences.setFirebaseUserId(null)
             preferences.setUserEmail(null)
             preferences.setAuthKeyHash(null)
             preferences.setVaultUnlocked(false)

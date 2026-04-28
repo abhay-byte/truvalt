@@ -151,7 +151,7 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    // Retrofit (kept for any residual use, can be removed later)
+    // Retrofit + OkHttp (available for future extensions; currently unused — app talks directly to Firebase)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

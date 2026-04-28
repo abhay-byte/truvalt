@@ -55,6 +55,4 @@ interface SyncRepository {
     suspend fun isOnline(): Boolean
     suspend fun isLocalOnly(): Boolean
     suspend fun setLocalOnly(localOnly: Boolean)
-    suspend fun getServerUrl(): String?
-    suspend fun setServerUrl(url: String)
 }

@@ -21,7 +21,6 @@ sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")
     data object AutofillPermission : Screen("autofill_permission")
-    data object ServerSetup : Screen("server_setup")
     data object MasterPasswordSetup : Screen("master_password_setup")
     data object MasterPasswordUnlock : Screen("master_password_unlock")
     data object Login : Screen("login")
@@ -67,7 +66,6 @@ fun TruvaltNavHost(
                 onNavigationDecided = { destination ->
                     val route = when (destination) {
                         SplashDestination.ONBOARDING -> Screen.Onboarding.route
-                        SplashDestination.SERVER_SETUP -> Screen.ServerSetup.route
                         SplashDestination.LOGIN -> Screen.Login.route
                         SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
                         SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
@@ -100,12 +98,12 @@ fun TruvaltNavHost(
         composable(Screen.AutofillPermission.route) {
             AutofillPermissionScreen(
                 onContinue = {
-                    navController.navigate(Screen.ServerSetup.route) {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.AutofillPermission.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    navController.navigate(Screen.ServerSetup.route) {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.AutofillPermission.route) { inclusive = true }
                     }
                 }
@@ -151,26 +149,6 @@ fun TruvaltNavHost(
                 },
                 onBack = {
                     navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Screen.ServerSetup.route) {
-            ServerSetupScreen(
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.ServerSetup.route) { inclusive = true }
-                    }
-                },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route) {
-                        popUpTo(Screen.ServerSetup.route) { inclusive = true }
-                    }
-                },
-                onNavigateToVault = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
                 }
             )
         }

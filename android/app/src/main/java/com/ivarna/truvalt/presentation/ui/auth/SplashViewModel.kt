@@ -56,7 +56,7 @@ class SplashViewModel @Inject constructor(
         val hasWrappedLocalVault = preferences.wrappedVaultKey.first() != null
         val hasEncryptedVaultKey = preferences.encryptedVaultKey.first() != null
         val hasFirebaseSession = firebaseAuth.currentUser != null
-        val hasKnownAccount = preferences.userEmail.first() != null || preferences.backendUserId.first() != null
+        val hasKnownAccount = preferences.userEmail.first() != null || preferences.firebaseUserId.first() != null
 
         if (hasEncryptedVaultKey) {
             if (isBiometricEnabled) return SplashDestination.UNLOCK_BIOMETRIC
@@ -75,7 +75,7 @@ class SplashViewModel @Inject constructor(
             return SplashDestination.LOGIN
         }
 
-        return SplashDestination.SERVER_SETUP
+        return SplashDestination.LOGIN
     }
 
     private suspend fun restoreCloudVaultIfPossible(): Boolean {

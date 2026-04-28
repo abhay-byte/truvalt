@@ -26,6 +26,7 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-073 | Remove Laravel backend — Firebase-direct architecture | 2026-04-28 | Deleted `backend/` docs, `render.yaml`, Android Retrofit API classes (`BackendApiFactory`, `TruvaltApiService`, `BackendDtos`), and `ServerSetupScreen`/`ViewModel`. Renamed DataStore keys `backend*` → `firebase*`. Removed `serverUrl` preference and sync repository methods. Updated `NavHost` to route onboarding → Login directly. Rewrote `SRS.md` and `FEATURES.md` to reflect Firebase-direct architecture. |
 | TASK-072 | Android Autofill Service | 2026-04-17 | Implemented TruvaltAutofillService for password autofill in apps and browsers. Added AutofillPermissionScreen after onboarding. Supports credential filling and saving new logins. Works with both native apps and WebView websites. |
 | TASK-071 | Rehaul Vault Item Cards and Item Details Screen | 2026-04-08 | Overhauled `VaultItemCard.kt` and `VaultItemDetailScreen.kt` according to `DESIGN.md` guidelines ("The Fortified Sanctuary"). Implemented live 2FA countdowns, enhanced data display (usernames/URLs), and tonal layering. |
 | TASK-037 | Inline TOTP code generation with countdown | 2026-04-08 | Added TOTP display on vault item cards and detail screen, fixed QR scanner to portrait mode, improved image QR detection with multiple binarizer strategies, optimized Gradle build for ARM64. |

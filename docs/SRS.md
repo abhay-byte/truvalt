@@ -4,17 +4,18 @@
 
 ### 1.1 Purpose
 
-This document defines the current product requirements for Truvalt across Android, web, and the Laravel backend.
+This document defines the current product requirements for the Truvalt Android app.
 
 ### 1.2 Scope
 
 Truvalt provides:
 - Native Android app
-- Laravel-based web/API backend
 - Local-only mode
 - Client-side encrypted vault storage
 - Firebase-backed account authentication
 - Firestore-backed cloud vault metadata storage
+
+> **There is no intermediate backend server.** The Android app communicates directly with Firebase Authentication and Cloud Firestore via the Firebase Android SDK.
 
 ### 1.3 Definitions
 
@@ -23,8 +24,8 @@ Truvalt provides:
 | Argon2id | Memory-hard password hashing algorithm |
 | AES-256-GCM | Symmetric authenticated encryption used for vault payloads |
 | Firebase Auth | Account identity provider for email/password and Google sign-in |
-| Firestore | Document database used for backend vault/profile persistence |
-| ID Token | Firebase bearer token sent to protected Laravel API routes |
+| Firestore | Document database used for cloud vault/profile persistence |
+| ID Token | Firebase bearer token used by the Android client |
 
 ---
 
@@ -34,11 +35,11 @@ Truvalt provides:
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-AUTH-01 | Users can register backend accounts with Firebase email/password credentials. | Critical |
-| FR-AUTH-02 | Users can sign in to the backend with Firebase email/password credentials. | Critical |
-| FR-AUTH-03 | Users can sign in to the backend with Google through Firebase Authentication. | Critical |
-| FR-AUTH-04 | Protected Laravel API routes must verify Firebase ID tokens server-side. | Critical |
-| FR-AUTH-05 | The backend may store optional client-derived vault-auth material only as an Argon2id hash. | High |
+| FR-AUTH-01 | Users can register accounts with Firebase email/password credentials directly from the Android app. | Critical |
+| FR-AUTH-02 | Users can sign in with Firebase email/password credentials directly from the Android app. | Critical |
+| FR-AUTH-03 | Users can sign in with Google through Firebase Authentication directly from the Android app. | Critical |
+| FR-AUTH-04 | Firebase ID tokens are managed client-side by the Firebase Android SDK. | Critical |
+| FR-AUTH-05 | Client-derived vault-auth material may be stored locally as an Argon2id hash. | High |
 | FR-AUTH-06 | Biometric unlock remains an Android-local capability. | Critical |
 | FR-AUTH-07 | Auto-lock and session timeout remain configurable on Android. | Critical |
 
@@ -46,19 +47,19 @@ Truvalt provides:
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-VAULT-01 | Backend supports CRUD for encrypted vault items. | Critical |
-| FR-VAULT-02 | Backend supports folders and tags per authenticated user. | High |
-| FR-VAULT-03 | Backend supports favorites and trash/restore state for vault items. | High |
-| FR-VAULT-04 | Backend stores encrypted item payloads as opaque base64-encoded blobs. | Critical |
+| FR-VAULT-01 | The app supports CRUD for encrypted vault items in Room (local) and Firestore (cloud). | Critical |
+| FR-VAULT-02 | The app supports folders and tags per authenticated user. | High |
+| FR-VAULT-03 | The app supports favorites and trash/restore state for vault items. | High |
+| FR-VAULT-04 | Cloud store keeps encrypted item payloads as opaque base64-encoded blobs. | Critical |
 
 ### 2.3 Sync
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-SYNC-01 | Cloud sync uses the Laravel API with Firestore-backed persistence. | Critical |
+| FR-SYNC-01 | Cloud sync uses the Firebase Android SDK to read/write Firestore directly. | Critical |
 | FR-SYNC-02 | Client item UUIDs must be preserved during sync. | Critical |
 | FR-SYNC-03 | Conflict handling is last-write-wins based on `updated_at`. | High |
-| FR-SYNC-04 | Local-only mode must remain available when no backend is configured. | High |
+| FR-SYNC-04 | Local-only mode must remain available when no cloud account is signed in. | High |
 
 ### 2.4 Crypto
 
@@ -66,8 +67,8 @@ Truvalt provides:
 |---|---|---|
 | FR-CRYPTO-01 | Vault items are encrypted client-side using AES-256-GCM. | Critical |
 | FR-CRYPTO-02 | Vault key derivation uses Argon2id on the client. | Critical |
-| FR-CRYPTO-03 | The Laravel backend must never decrypt vault contents. | Critical |
-| FR-CRYPTO-04 | The backend must reject invalid encrypted payload encodings. | High |
+| FR-CRYPTO-03 | Firestore never receives decrypted vault contents. | Critical |
+| FR-CRYPTO-04 | The app rejects invalid encrypted payload encodings before storage. | High |
 
 ---
 
@@ -77,48 +78,38 @@ Truvalt provides:
 
 | Requirement | Description |
 |---|---|
-| HTTPS only | All backend traffic must use TLS in deployed environments |
-| Token verification | Laravel must verify Firebase ID tokens before any protected Firestore access |
-| Zero-knowledge vault storage | Server stores encrypted blobs and metadata only |
-| Hashing | Optional stored vault-auth material must use Argon2id |
-| Authorization isolation | Folder/tag/item access must be scoped to the authenticated Firebase UID |
+| HTTPS only | All Firebase traffic uses TLS |
+| Token verification | Firebase Auth SDK handles token refresh and verification automatically |
+| Zero-knowledge vault storage | Firestore stores encrypted blobs and metadata only |
+| Hashing | Local auth key hash uses Argon2id |
+| Authorization isolation | Firestore security rules scope access to the authenticated Firebase UID |
 
 Clarification:
-- The vault encryption key and decrypted vault contents are never sent to the backend.
-- Firebase email/password credentials are handled by Firebase Authentication, not by Laravel.
+- The vault encryption key and decrypted vault contents are never sent to any server.
+- Firebase email/password credentials are handled by Firebase Authentication.
 
 ### 3.2 Performance
 
 | Requirement | Target |
 |---|---|
-| Public health response | Fast enough for uptime probes |
-| API validation overhead | Minimal compared with remote auth/storage latency |
-| Sync path | Suitable for incremental item-based sync, with pagination still pending |
+| Vault unlock | < 500 ms on mid-range Android |
+| Sync path | Suitable for incremental item-based sync |
 
 ### 3.3 Reliability
 
 | Requirement | Target |
 |---|---|
-| Automated backend verification | PHPUnit feature coverage for route/middleware behavior |
-| Offline support | Android remains usable in local-only mode |
+| Offline support | Android remains fully usable in local-only mode |
+| Data persistence | Room database survives app restarts and supports encrypted backups |
 
 ---
 
 ## 4. Interface Requirements
 
-### 4.1 Backend API
+### 4.1 Android
 
-- REST API served from `/api`
-- Public auth endpoints:
-  - `POST /register`
-  - `POST /login`
-  - `POST /login/google`
-- Protected routes require `Authorization: Bearer <firebase_id_token>`
-
-### 4.2 Android
-
-- Android currently remains local-first
-- Backend cloud sync integration is in progress
+- The Android app uses the Firebase Android SDK for all cloud operations
+- No REST API client is required for normal operation
 
 ---
 
@@ -128,18 +119,17 @@ Clarification:
 
 - Room database for local/offline vault data
 
-### 5.2 Backend Data
+### 5.2 Cloud Data
 
 - Firestore user profile documents
 - Firestore vault item, folder, and tag documents
-- No SQL database is required in the normal backend request path
+- No SQL database or backend server is involved
 
 ---
 
 ## 6. Acceptance Criteria
 
-The current backend pivot is acceptable when:
-- Laravel public routes boot without Firebase-only failures
-- Protected routes return JSON `401` without a bearer token
-- Firebase-backed auth routes and protected routes pass automated feature tests
-- Firestore-backed controllers enforce ownership and payload validation rules
+- Firebase Authentication routes (register, login, Google sign-in) work from the Android app
+- Firestore security rules enforce per-user data isolation
+- Unauthenticated Firestore access is denied
+- Local-only mode functions without any network connection

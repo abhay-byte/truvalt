@@ -57,7 +57,7 @@ Status legend: 🔴 Not Started | 🟡 In Progress | 🟢 Complete | ⚫ Cancell
 
 | ID | Feature | Description | Priority | Status | Version |
 |---|---|---|---|---|---|
-| F-028 | Cloud Sync | Encrypted delta sync with Laravel backend | Critical | 🔴 | v1.0 |
+| F-028 | Cloud Sync | Encrypted delta sync with Firebase/Firestore | Critical | 🔴 | v1.0 |
 | F-029 | Local-Only Mode | No server connection, Room-only vault | High | 🔴 | v1.0 |
 | F-030 | Conflict Resolution | Last-write-wins with per-field updated_at | High | 🔴 | v1.0 |
 | F-031 | Multi-Device Sync | Sync across Android + web vault | High | 🔴 | v1.0 |

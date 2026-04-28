@@ -18,8 +18,7 @@ data class AuthUiState(
     val error: String? = null,
     val isVaultUnlocked: Boolean = false,
     val hasVault: Boolean = false,
-    val isLocalOnly: Boolean = false,
-    val serverUrl: String? = null
+    val isLocalOnly: Boolean = false
 )
 
 @HiltViewModel
@@ -43,14 +42,12 @@ class AuthViewModel @Inject constructor(
             val hasVault = authRepository.hasVault()
             val isVaultUnlocked = authRepository.isVaultUnlocked()
             val isLocalOnly = syncRepository.isLocalOnly()
-            val serverUrl = syncRepository.getServerUrl()
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 hasVault = hasVault,
                 isVaultUnlocked = isVaultUnlocked,
-                isLocalOnly = isLocalOnly,
-                serverUrl = serverUrl
+                isLocalOnly = isLocalOnly
             )
 
             when {

@@ -35,7 +35,6 @@ data class SettingsUiState(
     val clipboardTimeout: Long = 30L,
     val themeMode: String = "system",
     val isLocalOnly: Boolean = false,
-    val serverUrl: String? = null,
     val lastSyncTime: Long = 0L,
     val accountProfile: AccountProfileUiState? = null,
     val isLoading: Boolean = false
@@ -90,7 +89,6 @@ class SettingsViewModel @Inject constructor(
                 clipboardTimeout = preferences.clipboardTimeout.first(),
                 themeMode = preferences.themeMode.first(),
                 isLocalOnly = preferences.isLocalOnly.first(),
-                serverUrl = preferences.serverUrl.first(),
                 lastSyncTime = preferences.lastSyncTime.first(),
                 accountProfile = firebaseAuth.currentUser?.toAccountProfile(),
                 isLoading = false
@@ -150,9 +148,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.lockVault()
             firebaseAuth.signOut()
-            preferences.setBackendIdToken(null)
-            preferences.setBackendRefreshToken(null)
-            preferences.setBackendUserId(null)
+            preferences.setFirebaseIdToken(null)
+            preferences.setFirebaseRefreshToken(null)
+            preferences.setFirebaseUserId(null)
             preferences.setUserEmail(null)
             preferences.setAuthKeyHash(null)
             _uiState.value = _uiState.value.copy(accountProfile = null)

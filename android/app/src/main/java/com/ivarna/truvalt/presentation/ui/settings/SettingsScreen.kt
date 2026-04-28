@@ -302,12 +302,6 @@ fun SettingsScreen(
                 if (!uiState.isLocalOnly) {
                     SettingsRowItem(
                         icon = Icons.Default.Sync,
-                        title = "Server URL",
-                        subtitle = uiState.serverUrl ?: "Not configured",
-                        onClick = {}
-                    )
-                    SettingsRowItem(
-                        icon = Icons.Default.Sync,
                         title = "Last Synced",
                         subtitle = if (uiState.lastSyncTime > 0) "Just now" else "Never",
                         onClick = { viewModel.syncNow() },

@@ -1,5 +1,7 @@
 # TODO - Task List
 
+> **2026-04-28:** The Laravel backend has been removed. The app communicates directly with Firebase Authentication and Cloud Firestore. All backend/web-specific tasks are cancelled or repurposed.
+
 Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 Backlog
 
 ---
@@ -8,9 +10,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 
 - [x] TASK-069 Rehaul Security Settings & UI Cleanup — Priority: High — Target: v1.0
 - [x] TASK-000 Initialize Android project (Kotlin, Compose, Hilt, Room, Retrofit) — Priority: High — Target: v1.0
-- [x] TASK-001 Initialize Laravel 12 project (Sanctum, WebAuthn, Google2FA, Pest) — Priority: High — Target: v1.0
-- [x] TASK-002 PostgreSQL schema migrations (all tables) — Priority: High — Target: v1.0
-- [x] TASK-003 Implement Argon2id key derivation (Android + PHP) — Priority: High — Target: v1.0
+- [x] TASK-003 Implement Argon2id key derivation (Android) — Priority: High — Target: v1.0
 - [x] TASK-004 Implement AES-256-GCM vault item encryption/decryption (Android) — Priority: High — Target: v1.0
 - [x] TASK-008 Email + password authentication (Android) — Priority: High — Target: v1.0
 - [x] TASK-009 Room database setup with vault items, folders, tags tables — Priority: High — Target: v1.0
@@ -27,11 +27,11 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-026 Export unencrypted CSV — Priority: High — Target: v1.0
 - [x] TASK-027 HIBP breach check (k-anonymity) — Priority: High — Target: v1.0
 - [x] TASK-028 Vault health dashboard — Priority: High — Target: v1.0
-- [ ] TASK-029 Audit log backend — Priority: High — Target: v1.0
-- [ ] TASK-030 Session management backend — Priority: High — Target: v1.0
+- [ ] TASK-029 Audit log (client-side) — Priority: High — Target: v1.0
+- [ ] TASK-030 Session management (Firebase) — Priority: High — Target: v1.0
 - [x] TASK-031 Auto-lock timeout implementation — Priority: High — Target: v1.0
 - [ ] TASK-032 Master password change — Priority: High — Target: v1.0
-- [x] TASK-033 Server URL configuration (Android) — Priority: High — Target: v1.0
+- [x] TASK-033 Cloud/local-only mode selection (Android) — Priority: High — Target: v1.0
 - [x] TASK-034 Clipboard timeout setting — Priority: High — Target: v1.0
 - [x] TASK-070 Opaque TopBars for Scrolled Screens — Priority: High — Target: v1.0
 
@@ -52,7 +52,7 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [ ] TASK-045 Soft delete / Trash — Priority: Medium — Target: v1.0
 - [x] TASK-047 Dark / Light / AMOLED theme — Priority: Medium — Target: v1.0
 - [ ] TASK-048 Material You dynamic color (Android 12+) — Priority: Medium — Target: v1.0
-- [ ] TASK-049 Web vault UI (Laravel Blade) — Priority: Medium — Target: v1.0
+- [ ] TASK-049 Web vault UI — Priority: Medium — Target: v1.1
 
 ---
 

@@ -22,7 +22,6 @@ class TruvaltPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        private val SERVER_URL = stringPreferencesKey("server_url")
         private val IS_LOCAL_ONLY = booleanPreferencesKey("is_local_only")
         private val IS_BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         private val CLIPBOARD_TIMEOUT = longPreferencesKey("clipboard_timeout")
@@ -35,13 +34,12 @@ class TruvaltPreferences @Inject constructor(
         private val WRAPPED_VAULT_KEY = stringPreferencesKey("wrapped_vault_key")
         private val USER_EMAIL = stringPreferencesKey("user_email")
         private val AUTH_KEY_HASH = stringPreferencesKey("auth_key_hash")
-        private val BACKEND_ID_TOKEN = stringPreferencesKey("backend_id_token")
-        private val BACKEND_REFRESH_TOKEN = stringPreferencesKey("backend_refresh_token")
-        private val BACKEND_USER_ID = stringPreferencesKey("backend_user_id")
+        private val FIREBASE_ID_TOKEN = stringPreferencesKey("firebase_id_token")
+        private val FIREBASE_REFRESH_TOKEN = stringPreferencesKey("firebase_refresh_token")
+        private val FIREBASE_USER_ID = stringPreferencesKey("firebase_user_id")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
     }
 
-    val serverUrl: Flow<String?> = context.dataStore.data.map { it[SERVER_URL] }
     val isLocalOnly: Flow<Boolean> = context.dataStore.data.map { it[IS_LOCAL_ONLY] ?: false }
     val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { it[IS_BIOMETRIC_ENABLED] ?: false }
     val clipboardTimeout: Flow<Long> = context.dataStore.data.map { it[CLIPBOARD_TIMEOUT] ?: 30L }
@@ -58,14 +56,10 @@ class TruvaltPreferences @Inject constructor(
     }
     val userEmail: Flow<String?> = context.dataStore.data.map { it[USER_EMAIL] }
     val authKeyHash: Flow<String?> = context.dataStore.data.map { it[AUTH_KEY_HASH] }
-    val backendIdToken: Flow<String?> = context.dataStore.data.map { it[BACKEND_ID_TOKEN] }
-    val backendRefreshToken: Flow<String?> = context.dataStore.data.map { it[BACKEND_REFRESH_TOKEN] }
-    val backendUserId: Flow<String?> = context.dataStore.data.map { it[BACKEND_USER_ID] }
+    val firebaseIdToken: Flow<String?> = context.dataStore.data.map { it[FIREBASE_ID_TOKEN] }
+    val firebaseRefreshToken: Flow<String?> = context.dataStore.data.map { it[FIREBASE_REFRESH_TOKEN] }
+    val firebaseUserId: Flow<String?> = context.dataStore.data.map { it[FIREBASE_USER_ID] }
     val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { it[IS_FIRST_LAUNCH] ?: true }
-
-    suspend fun setServerUrl(url: String?) {
-        context.dataStore.edit { it[SERVER_URL] = url ?: "" }
-    }
 
     suspend fun setLocalOnly(localOnly: Boolean) {
         context.dataStore.edit { it[IS_LOCAL_ONLY] = localOnly }
@@ -134,24 +128,24 @@ class TruvaltPreferences @Inject constructor(
         }
     }
 
-    suspend fun setBackendIdToken(token: String?) {
+    suspend fun setFirebaseIdToken(token: String?) {
         context.dataStore.edit {
-            if (token != null) it[BACKEND_ID_TOKEN] = token
-            else it.remove(BACKEND_ID_TOKEN)
+            if (token != null) it[FIREBASE_ID_TOKEN] = token
+            else it.remove(FIREBASE_ID_TOKEN)
         }
     }
 
-    suspend fun setBackendRefreshToken(token: String?) {
+    suspend fun setFirebaseRefreshToken(token: String?) {
         context.dataStore.edit {
-            if (token != null) it[BACKEND_REFRESH_TOKEN] = token
-            else it.remove(BACKEND_REFRESH_TOKEN)
+            if (token != null) it[FIREBASE_REFRESH_TOKEN] = token
+            else it.remove(FIREBASE_REFRESH_TOKEN)
         }
     }
 
-    suspend fun setBackendUserId(userId: String?) {
+    suspend fun setFirebaseUserId(userId: String?) {
         context.dataStore.edit {
-            if (userId != null) it[BACKEND_USER_ID] = userId
-            else it.remove(BACKEND_USER_ID)
+            if (userId != null) it[FIREBASE_USER_ID] = userId
+            else it.remove(FIREBASE_USER_ID)
         }
     }
 
@@ -160,17 +154,16 @@ class TruvaltPreferences @Inject constructor(
             it.remove(ENCRYPTED_VAULT_KEY)
             it.remove(USER_EMAIL)
             it.remove(AUTH_KEY_HASH)
-            it.remove(BACKEND_ID_TOKEN)
-            it.remove(BACKEND_REFRESH_TOKEN)
-            it.remove(BACKEND_USER_ID)
+            it.remove(FIREBASE_ID_TOKEN)
+            it.remove(FIREBASE_REFRESH_TOKEN)
+            it.remove(FIREBASE_USER_ID)
             it[IS_VAULT_UNLOCKED] = false
         }
     }
 
-    suspend fun getServerUrlSync(): String? = serverUrl.first().takeIf { it?.isNotEmpty() == true }
     suspend fun isLocalOnlySync(): Boolean = isLocalOnly.first()
     suspend fun isBiometricEnabledSync(): Boolean = isBiometricEnabled.first()
-    suspend fun getBackendIdTokenSync(): String? = backendIdToken.first().takeIf { it?.isNotEmpty() == true }
-    suspend fun getBackendRefreshTokenSync(): String? = backendRefreshToken.first().takeIf { it?.isNotEmpty() == true }
-    suspend fun getBackendUserIdSync(): String? = backendUserId.first().takeIf { it?.isNotEmpty() == true }
+    suspend fun getFirebaseIdTokenSync(): String? = firebaseIdToken.first().takeIf { it?.isNotEmpty() == true }
+    suspend fun getFirebaseRefreshTokenSync(): String? = firebaseRefreshToken.first().takeIf { it?.isNotEmpty() == true }
+    suspend fun getFirebaseUserIdSync(): String? = firebaseUserId.first().takeIf { it?.isNotEmpty() == true }
 }

@@ -279,7 +279,7 @@ class FirestoreVaultRepository @Inject constructor(
     /**
      * Hard-delete ALL Firestore data for a user account.
      * Deletes every vault_item, folder, and tag document, then the user profile root document.
-     * Called during account deletion — no Laravel backend needed.
+     * Called during account deletion — direct Firestore SDK, no intermediate server.
      */
     suspend fun deleteAllUserData(uid: String) {
         val userRef = firestore.collection("users").document(uid)

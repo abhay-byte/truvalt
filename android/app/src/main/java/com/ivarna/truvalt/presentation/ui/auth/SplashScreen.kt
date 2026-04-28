@@ -32,7 +32,6 @@ import kotlinx.coroutines.delay
 
 enum class SplashDestination {
     ONBOARDING,
-    SERVER_SETUP,
     LOGIN,
     UNLOCK_BIOMETRIC,
     UNLOCK_PIN,
