@@ -4,7 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.core.utils.ImportExportService
+import com.ivarna.truvalt.data.local.dao.TagDao
+import com.ivarna.truvalt.domain.model.VaultItemTag
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -28,17 +31,22 @@ data class ImportUiState(
 @HiltViewModel
 class ImportViewModel @Inject constructor(
     private val importExportService: ImportExportService,
-    private val vaultRepository: VaultRepository
+    private val vaultRepository: VaultRepository,
+    private val tagDao: TagDao,
+    private val vaultKeyManager: VaultKeyManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ImportUiState())
     val uiState: StateFlow<ImportUiState> = _uiState.asStateFlow()
 
     private var pendingItems: List<com.ivarna.truvalt.domain.model.VaultItem> = emptyList()
+    private var pendingFolders: List<com.ivarna.truvalt.domain.model.Folder> = emptyList()
+    private var pendingTags: List<com.ivarna.truvalt.domain.model.Tag> = emptyList()
+    private var pendingItemTags: List<VaultItemTag> = emptyList()
 
     fun importFile(context: Context, uri: Uri, format: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isImporting = true, progress = 10)
+            _uiState.value = _uiState.value.copy(isImporting = true, progress = 10, error = null)
 
             try {
                 val content = withContext(Dispatchers.IO) {
@@ -57,14 +65,25 @@ class ImportViewModel @Inject constructor(
                     "chrome_csv" -> ImportExportService.ImportFormat.CHROME_CSV
                     "firefox_csv" -> ImportExportService.ImportFormat.FIREFOX_CSV
                     "generic_csv" -> ImportExportService.ImportFormat.GENERIC_CSV
+                    "truvalt_encrypted" -> ImportExportService.ImportFormat.TRUVALT_ENCRYPTED
+                    "truvalt_json" -> ImportExportService.ImportFormat.TRUVALT_JSON
                     else -> throw Exception("Unknown format")
                 }
 
-                val result = importExportService.importData(content, importFormat)
+                // For encrypted truvalt, vault must be unlocked
+                val vaultKey = if (importFormat == ImportExportService.ImportFormat.TRUVALT_ENCRYPTED) {
+                    vaultKeyManager.getInMemoryKey()
+                        ?: throw Exception("Vault must be unlocked to import encrypted .truvalt file")
+                } else null
+
+                val result = importExportService.importData(content, importFormat, vaultKey)
 
                 when (result) {
                     is ImportExportService.ImportResult.Success -> {
                         pendingItems = result.items
+                        pendingFolders = result.folders
+                        pendingTags = result.tags
+                        pendingItemTags = result.itemTags
                         _uiState.value = _uiState.value.copy(
                             isImporting = false,
                             progress = 0,
@@ -92,14 +111,36 @@ class ImportViewModel @Inject constructor(
 
     fun confirmImport() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isImporting = true, progress = 50)
+            _uiState.value = _uiState.value.copy(isImporting = true, progress = 10)
 
             try {
+                // Save folders first
+                pendingFolders.forEach { folder ->
+                    vaultRepository.saveFolder(folder)
+                }
+                _uiState.value = _uiState.value.copy(progress = 25)
+
+                // Save tags
+                pendingTags.forEach { tag ->
+                    vaultRepository.saveTag(tag)
+                }
+                _uiState.value = _uiState.value.copy(progress = 40)
+
+                // Save items
                 pendingItems.forEachIndexed { index, item ->
                     vaultRepository.saveItem(item)
                     _uiState.value = _uiState.value.copy(
-                        progress = 50 + ((index + 1) * 50 / pendingItems.size)
+                        progress = 40 + ((index + 1) * 40 / pendingItems.size)
                     )
+                }
+
+                // Save item-tag mappings
+                pendingItemTags.forEach { mapping ->
+                    try {
+                        vaultRepository.addTagToItem(mapping.itemId, mapping.tagId)
+                    } catch (e: Exception) {
+                        // Item or tag may not exist, skip
+                    }
                 }
 
                 _uiState.value = _uiState.value.copy(

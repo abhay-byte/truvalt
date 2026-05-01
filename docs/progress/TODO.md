@@ -22,9 +22,9 @@ Group by: 🔴 High Priority | 🟡 Medium Priority | 🟢 Low Priority | 📝 B
 - [x] TASK-021 Import from Bitwarden JSON — Priority: High — Target: v1.0
 - [x] TASK-022 Import from LastPass CSV — Priority: High — Target: v1.0
 - [x] TASK-023 Import from Chrome/Firefox CSV — Priority: High — Target: v1.0
-- [ ] TASK-024 Export encrypted .truvalt format — Priority: High — Target: v1.0
-- [ ] TASK-025 Export unencrypted JSON — Priority: High — Target: v1.0
-- [ ] TASK-026 Export unencrypted CSV — Priority: High — Target: v1.0
+- [x] TASK-024 Export encrypted .truvalt format — Priority: High — Target: v1.0
+- [x] TASK-025 Export unencrypted JSON — Priority: High — Target: v1.0
+- [x] TASK-026 Export unencrypted CSV — Priority: High — Target: v1.0
 - [x] TASK-027 HIBP breach check (k-anonymity) — Priority: High — Target: v1.0
 - [x] TASK-028 Vault health dashboard — Priority: High — Target: v1.0
 - [ ] TASK-029 Audit log (client-side) — Priority: High — Target: v1.0

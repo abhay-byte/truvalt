@@ -79,6 +79,8 @@ fun SettingsScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToSecuritySettings: () -> Unit = {},
     onNavigateToPinSetup: () -> Unit = {},
+    onNavigateToImport: () -> Unit = {},
+    onNavigateToExport: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -318,13 +320,13 @@ fun SettingsScreen(
                     icon = Icons.Default.Upload,
                     title = "Import",
                     subtitle = "Import from other password managers",
-                    onClick = {}
+                    onClick = onNavigateToImport
                 )
                 SettingsRowItem(
                     icon = Icons.Default.Download,
                     title = "Export",
                     subtitle = "Export vault to file",
-                    onClick = {},
+                    onClick = onNavigateToExport,
                     isLast = true
                 )
             }

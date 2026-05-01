@@ -5,6 +5,7 @@
 ## Summary
 
 | Completed Date | Task Count |
+| 2026-05-01 | 3 |
 | 2026-04-17 | 1 |
 | 2026-04-08 | 2 |
 | 2026-04-07 | 2 |
@@ -26,6 +27,9 @@
 
 | Task ID | Description | Completed Date | Notes |
 |---|---|---|---|
+| TASK-024 | Export encrypted .truvalt format | 2026-05-01 | Implemented `exportToEncryptedTruvalt()` in `ImportExportService` using AES-256-GCM + Argon2id password-derived key. Exports items, folders, tags, and item-tag mappings in a versioned JSON envelope. |
+| TASK-025 | Export unencrypted JSON | 2026-05-01 | Implemented `exportToJson()` producing plaintext JSON with full vault data. Items include decrypted JSON payloads. Compatible with `importTruvaltJson()`. |
+| TASK-026 | Export unencrypted CSV | 2026-05-01 | Implemented `exportToCsv()` generating login-only CSV with name, type, url, username, password, notes columns. Non-login items export payload as notes. |
 | TASK-073 | Remove Laravel backend — Firebase-direct architecture | 2026-04-28 | Deleted `backend/` docs, `render.yaml`, Android Retrofit API classes (`BackendApiFactory`, `TruvaltApiService`, `BackendDtos`), and `ServerSetupScreen`/`ViewModel`. Renamed DataStore keys `backend*` → `firebase*`. Removed `serverUrl` preference and sync repository methods. Updated `NavHost` to route onboarding → Login directly. Rewrote `SRS.md` and `FEATURES.md` to reflect Firebase-direct architecture. |
 | TASK-072 | Android Autofill Service | 2026-04-17 | Implemented TruvaltAutofillService for password autofill in apps and browsers. Added AutofillPermissionScreen after onboarding. Supports credential filling and saving new logins. Works with both native apps and WebView websites. |
 | TASK-071 | Rehaul Vault Item Cards and Item Details Screen | 2026-04-08 | Overhauled `VaultItemCard.kt` and `VaultItemDetailScreen.kt` according to `DESIGN.md` guidelines ("The Fortified Sanctuary"). Implemented live 2FA countdowns, enhanced data display (usernames/URLs), and tonal layering. |

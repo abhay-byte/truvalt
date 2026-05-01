@@ -59,4 +59,7 @@ interface TagDao {
 
     @Query("DELETE FROM vault_item_tags WHERE itemId = :itemId")
     suspend fun removeAllTagsFromItem(itemId: String)
+
+    @Query("SELECT * FROM vault_item_tags")
+    suspend fun getAllItemTagMappings(): List<VaultItemTagEntity>
 }

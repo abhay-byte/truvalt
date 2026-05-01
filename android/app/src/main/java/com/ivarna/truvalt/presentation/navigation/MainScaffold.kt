@@ -284,6 +284,12 @@ fun MainScaffold(rootNavController: NavHostController) {
                         },
                         onNavigateToPinSetup = {
                             rootNavController.navigate(Screen.PinSetup.route)
+                        },
+                        onNavigateToImport = {
+                            tabNavController.navigate(Screen.Import.route)
+                        },
+                        onNavigateToExport = {
+                            tabNavController.navigate(Screen.Export.route)
                         }
                     )
                 }
