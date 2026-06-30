@@ -42,7 +42,7 @@ interface TagDao {
     @Query("UPDATE tags SET syncStatus = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: String)
 
-    @Query("UPDATE tags SET deletedAt = :deletedAt, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    @Query("UPDATE tags SET deletedAt = :deletedAt, syncStatus = 'SYNCED' WHERE id = :id")
     suspend fun softDeleteTag(id: String, deletedAt: Long)
 
     @Query("SELECT tags.* FROM tags INNER JOIN vault_item_tags ON tags.id = vault_item_tags.tagId WHERE vault_item_tags.itemId = :itemId")

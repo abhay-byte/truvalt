@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
 import com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette
 import com.ivarna.truvalt.presentation.ui.vault.rememberVaultPalette
@@ -66,9 +65,6 @@ fun HealthScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val palette = rememberVaultPalette()
-    val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
-    val profileFallback = firebaseUser?.displayName?.firstOrNull()?.uppercase()
-        ?: firebaseUser?.email?.firstOrNull()?.uppercase() ?: "T"
 
     val orangeAlert = Color(0xFFF97316)
     val yellowAlert = Color(0xFFEAB308)
@@ -95,9 +91,7 @@ fun HealthScreen(
             ) {
                 TruvaltTopAppBar(
                     title = "Health",
-                    palette = palette,
-                    photoUrl = firebaseUser?.photoUrl?.toString(),
-                    profileFallback = profileFallback
+                    palette = palette
                 )
 
                 LazyColumn(

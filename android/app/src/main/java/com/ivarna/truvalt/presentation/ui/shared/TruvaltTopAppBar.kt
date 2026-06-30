@@ -24,16 +24,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.ivarna.truvalt.R
 import com.ivarna.truvalt.presentation.ui.vault.VaultHomePalette
 
 @Composable
 fun TruvaltTopAppBar(
     title: String,
-    palette: VaultHomePalette,
-    photoUrl: String? = null,
-    profileFallback: String = "U"
+    palette: VaultHomePalette
 ) {
     Surface(
         color = palette.background,
@@ -71,34 +68,6 @@ fun TruvaltTopAppBar(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
-            }
-
-            Surface(
-                modifier = Modifier.size(42.dp),
-                shape = CircleShape,
-                color = palette.mutedSurface,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    palette.cardBorder.copy(alpha = 0.2f)
-                )
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    if (!photoUrl.isNullOrBlank()) {
-                        AsyncImage(
-                            model = photoUrl,
-                            contentDescription = "Profile",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = profileFallback,
-                            color = palette.brand,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
             }
         }
     }

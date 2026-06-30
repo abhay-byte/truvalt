@@ -59,8 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.R
 import com.ivarna.truvalt.core.utils.PasswordGenerator
 import com.ivarna.truvalt.core.utils.PasswordStrength
@@ -92,7 +90,6 @@ fun GeneratorScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val palette = rememberVaultPalette()
-    val firebaseUser = remember { FirebaseAuth.getInstance().currentUser }
 
     var selectedMode by remember { mutableIntStateOf(0) }
     var generatedPassword by remember { mutableStateOf("") }
@@ -197,13 +194,7 @@ fun GeneratorScreen(
             ) {
                 TruvaltTopAppBar(
                     title = "Generator",
-                    palette = palette,
-                    photoUrl = firebaseUser?.photoUrl?.toString(),
-                    profileFallback = firebaseUser?.displayName
-                        ?.firstOrNull()
-                        ?.uppercase()
-                        ?: firebaseUser?.email?.firstOrNull()?.uppercase()
-                        ?: "T"
+                    palette = palette
                 )
 
                 LazyColumn(

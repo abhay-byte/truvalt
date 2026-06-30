@@ -21,7 +21,6 @@ import com.ivarna.truvalt.core.crypto.VaultKeyManager
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
 import com.ivarna.truvalt.data.local.entity.VaultItemEntity
 import com.ivarna.truvalt.domain.model.LoginItemData
-import com.ivarna.truvalt.domain.repository.SyncRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +42,6 @@ class AutofillSaveActivity : AppCompatActivity() {
 
     @Inject
     lateinit var cryptoManager: CryptoManager
-
-    @Inject
-    lateinit var syncRepository: SyncRepository
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -219,14 +215,13 @@ class AutofillSaveActivity : AppCompatActivity() {
                     createdAt = now,
                     updatedAt = now,
                     deletedAt = null,
-                    syncStatus = "PENDING_UPLOAD"
+                    syncStatus = "SYNCED"
                 )
 
                 vaultItemDao.insertItem(entity)
-                val syncResult = syncRepository.sync()
 
                 withContext(Dispatchers.Main) {
-                    onComplete(syncResult.exceptionOrNull()?.message)
+                    onComplete(null)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

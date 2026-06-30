@@ -22,7 +22,6 @@ class TruvaltPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        private val IS_LOCAL_ONLY = booleanPreferencesKey("is_local_only")
         private val IS_BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         private val CLIPBOARD_TIMEOUT = longPreferencesKey("clipboard_timeout")
         private val AUTO_LOCK_TIMEOUT = longPreferencesKey("auto_lock_timeout")
@@ -34,13 +33,9 @@ class TruvaltPreferences @Inject constructor(
         private val WRAPPED_VAULT_KEY = stringPreferencesKey("wrapped_vault_key")
         private val USER_EMAIL = stringPreferencesKey("user_email")
         private val AUTH_KEY_HASH = stringPreferencesKey("auth_key_hash")
-        private val FIREBASE_ID_TOKEN = stringPreferencesKey("firebase_id_token")
-        private val FIREBASE_REFRESH_TOKEN = stringPreferencesKey("firebase_refresh_token")
-        private val FIREBASE_USER_ID = stringPreferencesKey("firebase_user_id")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
     }
 
-    val isLocalOnly: Flow<Boolean> = context.dataStore.data.map { it[IS_LOCAL_ONLY] ?: false }
     val isBiometricEnabled: Flow<Boolean> = context.dataStore.data.map { it[IS_BIOMETRIC_ENABLED] ?: false }
     val clipboardTimeout: Flow<Long> = context.dataStore.data.map { it[CLIPBOARD_TIMEOUT] ?: 30L }
     val autoLockTimeout: Flow<Long> = context.dataStore.data.map { it[AUTO_LOCK_TIMEOUT] ?: 300000L }
@@ -56,14 +51,7 @@ class TruvaltPreferences @Inject constructor(
     }
     val userEmail: Flow<String?> = context.dataStore.data.map { it[USER_EMAIL] }
     val authKeyHash: Flow<String?> = context.dataStore.data.map { it[AUTH_KEY_HASH] }
-    val firebaseIdToken: Flow<String?> = context.dataStore.data.map { it[FIREBASE_ID_TOKEN] }
-    val firebaseRefreshToken: Flow<String?> = context.dataStore.data.map { it[FIREBASE_REFRESH_TOKEN] }
-    val firebaseUserId: Flow<String?> = context.dataStore.data.map { it[FIREBASE_USER_ID] }
     val isFirstLaunch: Flow<Boolean> = context.dataStore.data.map { it[IS_FIRST_LAUNCH] ?: true }
-
-    suspend fun setLocalOnly(localOnly: Boolean) {
-        context.dataStore.edit { it[IS_LOCAL_ONLY] = localOnly }
-    }
 
     suspend fun setBiometricEnabled(enabled: Boolean) {
         context.dataStore.edit { it[IS_BIOMETRIC_ENABLED] = enabled }
@@ -128,42 +116,15 @@ class TruvaltPreferences @Inject constructor(
         }
     }
 
-    suspend fun setFirebaseIdToken(token: String?) {
-        context.dataStore.edit {
-            if (token != null) it[FIREBASE_ID_TOKEN] = token
-            else it.remove(FIREBASE_ID_TOKEN)
-        }
-    }
-
-    suspend fun setFirebaseRefreshToken(token: String?) {
-        context.dataStore.edit {
-            if (token != null) it[FIREBASE_REFRESH_TOKEN] = token
-            else it.remove(FIREBASE_REFRESH_TOKEN)
-        }
-    }
-
-    suspend fun setFirebaseUserId(userId: String?) {
-        context.dataStore.edit {
-            if (userId != null) it[FIREBASE_USER_ID] = userId
-            else it.remove(FIREBASE_USER_ID)
-        }
-    }
-
     suspend fun clearVaultData() {
         context.dataStore.edit {
             it.remove(ENCRYPTED_VAULT_KEY)
+            it.remove(WRAPPED_VAULT_KEY)
             it.remove(USER_EMAIL)
             it.remove(AUTH_KEY_HASH)
-            it.remove(FIREBASE_ID_TOKEN)
-            it.remove(FIREBASE_REFRESH_TOKEN)
-            it.remove(FIREBASE_USER_ID)
             it[IS_VAULT_UNLOCKED] = false
         }
     }
 
-    suspend fun isLocalOnlySync(): Boolean = isLocalOnly.first()
     suspend fun isBiometricEnabledSync(): Boolean = isBiometricEnabled.first()
-    suspend fun getFirebaseIdTokenSync(): String? = firebaseIdToken.first().takeIf { it?.isNotEmpty() == true }
-    suspend fun getFirebaseRefreshTokenSync(): String? = firebaseRefreshToken.first().takeIf { it?.isNotEmpty() == true }
-    suspend fun getFirebaseUserIdSync(): String? = firebaseUserId.first().takeIf { it?.isNotEmpty() == true }
 }

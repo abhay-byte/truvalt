@@ -272,13 +272,8 @@ fun MainScaffold(rootNavController: NavHostController) {
 
             navigation(startDestination = Screen.Settings.route, route = "settings_graph") {
                 composable(Screen.Settings.route) {
-                    com.ivarna.truvalt.presentation.ui.settings.SettingsScreen(
+                    com.ivarna.truvalt.presentation.ui.settings.                    SettingsScreen(
                         onNavigateBack = { },
-                        onNavigateToLogin = {
-                            rootNavController.navigate(Screen.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
                         onNavigateToSecuritySettings = {
                             tabNavController.navigate(Screen.SecuritySettings.route)
                         },

@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.ivarna.truvalt.R
 import com.ivarna.truvalt.presentation.ui.shared.TruvaltTopAppBar
 
@@ -83,10 +82,6 @@ fun VaultHomeScreen(
         VaultFilterOption(id = "secure_note", label = "Notes"),
         VaultFilterOption(id = "credit_card", label = "Cards")
     )
-    val firebaseUser = androidx.compose.runtime.remember { FirebaseAuth.getInstance().currentUser }
-    val profileFallback = firebaseUser?.displayName?.firstOrNull()?.uppercase()
-        ?: firebaseUser?.email?.firstOrNull()?.uppercase() ?: "T"
-
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0),
@@ -127,9 +122,7 @@ fun VaultHomeScreen(
             ) {
                 TruvaltTopAppBar(
                     title = "TRUVALT",
-                    palette = palette,
-                    photoUrl = firebaseUser?.photoUrl?.toString(),
-                    profileFallback = profileFallback
+                    palette = palette
                 )
 
                 LazyColumn(

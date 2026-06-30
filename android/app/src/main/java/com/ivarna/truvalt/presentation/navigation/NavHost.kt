@@ -3,7 +3,6 @@ package com.ivarna.truvalt.presentation.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -23,8 +22,6 @@ sealed class Screen(val route: String) {
     data object AutofillPermission : Screen("autofill_permission")
     data object MasterPasswordSetup : Screen("master_password_setup")
     data object MasterPasswordUnlock : Screen("master_password_unlock")
-    data object Login : Screen("login")
-    data object Register : Screen("register")
     data object BiometricUnlock : Screen("biometric_unlock")
     data object PinUnlock : Screen("pin_unlock")
     data object PinSetup : Screen("pin_setup")
@@ -66,7 +63,7 @@ fun TruvaltNavHost(
                 onNavigationDecided = { destination ->
                     val route = when (destination) {
                         SplashDestination.ONBOARDING -> Screen.Onboarding.route
-                        SplashDestination.LOGIN -> Screen.Login.route
+                        SplashDestination.MASTER_PASSWORD_SETUP -> Screen.MasterPasswordSetup.route
                         SplashDestination.UNLOCK_BIOMETRIC -> Screen.BiometricUnlock.route
                         SplashDestination.UNLOCK_PIN -> Screen.PinUnlock.route
                         SplashDestination.UNLOCK_MASTER_PASSWORD -> Screen.MasterPasswordUnlock.route
@@ -98,12 +95,12 @@ fun TruvaltNavHost(
         composable(Screen.AutofillPermission.route) {
             AutofillPermissionScreen(
                 onContinue = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.MasterPasswordSetup.route) {
                         popUpTo(Screen.AutofillPermission.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.MasterPasswordSetup.route) {
                         popUpTo(Screen.AutofillPermission.route) { inclusive = true }
                     }
                 }
@@ -166,34 +163,6 @@ fun TruvaltNavHost(
         composable(Screen.MasterPasswordUnlock.route) {
             MasterPasswordUnlockScreen(
                 onUnlockSuccess = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Login.route) {
-            LoginScreen(
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
-                },
-                onNavigateToVault = {
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Register.route) {
-            RegisterScreen(
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
-                    }
-                },
-                onNavigateToVault = {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(0) { inclusive = true }
                     }

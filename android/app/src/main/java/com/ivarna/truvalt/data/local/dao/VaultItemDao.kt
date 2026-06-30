@@ -54,13 +54,13 @@ interface VaultItemDao {
     @Query("DELETE FROM vault_items WHERE id = :id")
     suspend fun deleteItemById(id: String)
 
-    @Query("UPDATE vault_items SET deletedAt = :deletedAt, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    @Query("UPDATE vault_items SET deletedAt = :deletedAt, syncStatus = 'SYNCED' WHERE id = :id")
     suspend fun softDeleteItem(id: String, deletedAt: Long)
 
-    @Query("UPDATE vault_items SET deletedAt = NULL, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    @Query("UPDATE vault_items SET deletedAt = NULL, syncStatus = 'SYNCED' WHERE id = :id")
     suspend fun restoreItem(id: String)
 
-    @Query("UPDATE vault_items SET favorite = :favorite, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    @Query("UPDATE vault_items SET favorite = :favorite, syncStatus = 'SYNCED' WHERE id = :id")
     suspend fun updateFavorite(id: String, favorite: Boolean)
 
     @Query("UPDATE vault_items SET syncStatus = :status WHERE id = :id")

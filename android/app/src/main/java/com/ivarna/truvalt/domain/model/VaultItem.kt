@@ -12,7 +12,7 @@ data class VaultItem(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val deletedAt: Long? = null,
-    val syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -50,7 +50,5 @@ data class VaultItem(
 }
 
 enum class SyncStatus {
-    SYNCED,
-    PENDING_UPLOAD,
-    PENDING_DELETE
+    SYNCED
 }

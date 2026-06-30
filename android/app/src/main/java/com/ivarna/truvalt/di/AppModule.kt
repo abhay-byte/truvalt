@@ -8,13 +8,9 @@ import com.ivarna.truvalt.data.local.dao.TagDao
 import com.ivarna.truvalt.data.local.dao.VaultItemDao
 import com.ivarna.truvalt.data.local.database.TruvaltDatabase
 import com.ivarna.truvalt.data.preferences.TruvaltPreferences
-import com.ivarna.truvalt.data.remote.FirebaseAuthSessionProvider
-import com.ivarna.truvalt.data.remote.FirebaseSessionProvider
 import com.ivarna.truvalt.data.repository.AuthRepositoryImpl
-import com.ivarna.truvalt.data.repository.SyncRepositoryImpl
 import com.ivarna.truvalt.data.repository.VaultRepositoryImpl
 import com.ivarna.truvalt.domain.repository.AuthRepository
-import com.ivarna.truvalt.domain.repository.SyncRepository
 import com.ivarna.truvalt.domain.repository.VaultRepository
 import dagger.Binds
 import dagger.Module
@@ -76,12 +72,4 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindFirebaseSessionProvider(impl: FirebaseAuthSessionProvider): FirebaseSessionProvider
-
-    @Binds
-    @Singleton
-    abstract fun bindSyncRepository(impl: SyncRepositoryImpl): SyncRepository
 }

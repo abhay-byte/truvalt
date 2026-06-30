@@ -168,7 +168,7 @@ class VaultItemEditViewModel @Inject constructor(
                     name = _itemName.value.trim(),
                     encryptedData = encryptedData,
                     favorite = _isFavorite.value,
-                    syncStatus = SyncStatus.PENDING_UPLOAD,
+                    syncStatus = SyncStatus.SYNCED,
                     updatedAt = System.currentTimeMillis()
                 )
 

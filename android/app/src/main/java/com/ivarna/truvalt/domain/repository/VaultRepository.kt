@@ -47,12 +47,3 @@ interface AuthRepository {
     suspend fun createVault(email: String, password: String): Result<Unit>
     suspend fun unlockWithPassword(email: String, password: String): Result<Unit>
 }
-
-interface SyncRepository {
-    suspend fun sync(): Result<Unit>
-    suspend fun getLastSyncTime(): Long
-    suspend fun setLastSyncTime(time: Long)
-    suspend fun isOnline(): Boolean
-    suspend fun isLocalOnly(): Boolean
-    suspend fun setLocalOnly(localOnly: Boolean)
-}

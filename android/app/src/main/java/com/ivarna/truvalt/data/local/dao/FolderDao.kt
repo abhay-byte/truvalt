@@ -48,6 +48,6 @@ interface FolderDao {
     @Query("UPDATE folders SET syncStatus = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: String, status: String)
 
-    @Query("UPDATE folders SET deletedAt = :deletedAt, syncStatus = 'PENDING_UPLOAD' WHERE id = :id")
+    @Query("UPDATE folders SET deletedAt = :deletedAt, syncStatus = 'SYNCED' WHERE id = :id")
     suspend fun softDeleteFolder(id: String, deletedAt: Long)
 }
